@@ -2,15 +2,15 @@
 
 ## Fase 0 — Fondasi & Domain Model
 
-- [ ] Lengkapi `.env` (`DATABASE_URL` pooling Supabase, `BETTER_AUTH_SECRET`, `ORIGIN`, `PUBLIC_APP_URL`)
-- [ ] Tulis `src/lib/server/db/schema.ts`:
+- [x] Lengkapi `.env` (`DATABASE_URL` pooling Supabase, `BETTER_AUTH_SECRET`, `ORIGIN`, `PUBLIC_APP_URL`)
+- [x] Tulis `src/lib/server/db/schema.ts`:
   - `store_settings` (singleton row: nama toko, ig, twitter, email_from, qris_url, no_rek, va_info, payment_note)
   - `categories` (id, name, sort_order)
   - `products` (id, category_id, name, price_int, stock, track_stock boolean, active, sort_order)
   - `orders` (id, order_id 5-char unique, access_token, handle, email, note, subtotal, total, invoice_status, payment_status, invoice_url, pdf_file_path, error, created_at)
   - `order_items` (id, order_id fk, product_id fk nullable, category_snapshot, name_snapshot, price_snapshot, qty, subtotal)
-- [ ] `npm run auth:schema` → cek `auth.schema.ts` ter-generate, sesuaikan relasi kalau perlu
-- [ ] `npm run db:push`, verifikasi tabel muncul di Supabase Studio
+- [x] `npm run auth:schema` → cek `auth.schema.ts` ter-generate, sesuaikan relasi kalau perlu
+- [x] `npm run db:push`, verifikasi tabel muncul di Supabase Studio
 - [ ] Setup Supabase Storage bucket `qris` (public) dan `invoices` (public, karena buyer akses via link)
 - [ ] Konfigurasi `@sveltejs/adapter-vercel`, set Node runtime (bukan edge) untuk semua route yang sentuh DB/PDF
 - [ ] Deploy kosong ke Vercel, isi semua env di dashboard Vercel, pastikan build sukses

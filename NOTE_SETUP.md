@@ -1,4 +1,5 @@
-Oke, aku pecah jadi 5 bagian. Ini fase keputusan, jadi aku kasih rekomendasi + alasan singkat, dan beberapa titik yang perlu kamu putuskan sendiri di akhir.
+RESET SEBELUM SEED
+truncate table order_items, orders, products, categories, store_settings restart identity cascade;
 
 ---
 
