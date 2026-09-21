@@ -11,9 +11,8 @@
   - `order_items` (id, order_id fk, product_id fk nullable, category_snapshot, name_snapshot, price_snapshot, qty, subtotal)
 - [x] `npm run auth:schema` → cek `auth.schema.ts` ter-generate, sesuaikan relasi kalau perlu
 - [x] `npm run db:push`, verifikasi tabel muncul di Supabase Studio
-- [ ] Setup Supabase Storage bucket `qris` (public) dan `invoices` (public, karena buyer akses via link)
-- [ ] Konfigurasi `@sveltejs/adapter-vercel`, set Node runtime (bukan edge) untuk semua route yang sentuh DB/PDF
-- [ ] Deploy kosong ke Vercel, isi semua env di dashboard Vercel, pastikan build sukses
+- [x] Setup Supabase Storage bucket `qris` (public) dan `invoices` (public, karena buyer akses via link)
+- [x] Deploy kosong ke Vercel, isi semua env di dashboard Vercel, pastikan build sukses
 
 ## Fase 1 — Auth & Admin Shell
 
