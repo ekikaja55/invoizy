@@ -1,3 +1,5 @@
+// src/lib/server/logger.ts
+
 import { dev } from '$app/environment';
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -24,7 +26,26 @@ function serializeError(err: unknown) {
   return err;
 }
 
-function write(level: LogLevel, message: string, context?: LogContext) {
+const levelColors: Record<LogLevel, string> = {
+  debug: '\x1b[90m', // abu-abu
+  info: '\x1b[36m', // cyan
+  warn: '\x1b[33m', // kuning
+  error: '\x1b[31m' // merah
+};
+const RESET = '\x1b[0m';
+
+function writeDev(level: LogLevel, message: string, context?: LogContext) {
+  const color = levelColors[level];
+  const time = new Date().toLocaleTimeString('id-ID', { hour12: false });
+
+  console.log(`${color}[${level.toUpperCase()}]${RESET} ${time} — ${message}`);
+
+  if (context && Object.keys(context).length > 0) {
+    console.dir(context, { depth: null, colors: true });
+  }
+}
+
+function writeProd(level: LogLevel, message: string, context?: LogContext) {
   const entry: LogEntry = {
     timestamp: new Date().toISOString(),
     level,
@@ -32,7 +53,6 @@ function write(level: LogLevel, message: string, context?: LogContext) {
     ...context
   };
 
-  // Normalisasi error object supaya tidak jadi "{}" saat di-JSON.stringify
   if (entry.error) {
     entry.error = serializeError(entry.error);
   }
@@ -46,6 +66,18 @@ function write(level: LogLevel, message: string, context?: LogContext) {
   }
 }
 
+function write(level: LogLevel, message: string, context?: LogContext) {
+  if (context?.error) {
+    context = { ...context, error: serializeError(context.error) };
+  }
+
+  if (dev) {
+    writeDev(level, message, context);
+  } else {
+    writeProd(level, message, context);
+  }
+}
+
 export const logger = {
   debug: (message: string, context?: LogContext) => {
     if (dev) write('debug', message, context);
@@ -54,20 +86,7 @@ export const logger = {
   warn: (message: string, context?: LogContext) => write('warn', message, context),
   error: (message: string, context?: LogContext) => write('error', message, context),
 
-  /**
-   * Helper khusus untuk membungkus operasi async yang butuh log sukses/gagal
-   * secara konsisten (misal: generate PDF, kirim email).
-   *
-   * Contoh:
-   *   const file = await logger.track('generate-invoice-pdf', { orderId }, () =>
-   *     createAndSaveInvoice(order)
-   *   );
-   */
-  async track<T>(
-    label: string,
-    context: LogContext,
-    fn: () => Promise<T>
-  ): Promise<T> {
+  async track<T>(label: string, context: LogContext, fn: () => Promise<T>): Promise<T> {
     const startedAt = Date.now();
     write('info', `${label}:start`, context);
     try {

@@ -16,24 +16,25 @@
 
 ## Fase 1 — Auth & Admin Shell
 
-- [ ] Setup Better Auth: email+password saja (single admin, tidak perlu social login)
-- [ ] Seed 1 admin user (script atau manual via Studio)
-- [ ] `+layout.server.ts` di `/admin` — guard, redirect ke `/login` kalau tidak ada sesi
-- [ ] Halaman `/login` sederhana
-- [ ] **Floating sidebar (desktop) + FAB popup (mobile)** — bangun sebagai komponen bersama:
+- [x] Setup Better Auth: email+password saja (single admin, tidak perlu social login)
+- [x] Seed 1 admin user (script atau manual via Studio)
+- [x] `+layout.server.ts` di `/admin` — guard, redirect ke `/login` kalau tidak ada sesi
+- [x] Halaman `/login` sederhana
+- [x] **Floating sidebar (desktop) + FAB popup (mobile)** — bangun sebagai komponen bersama:
   - `SidebarNav.svelte` (state collapsed/expanded, persist ke localStorage)
   - `MobileFab.svelte` (popup anchor ke FAB, close on outside click/Escape)
   - Item nav admin: Dashboard, Orders, Products, Categories, Settings, Logout
-  - Dark/light toggle terintegrasi di nav (sesuai referensi)
-- [ ] Layout `/admin` pakai sidebar tsb sebagai shell
+  - Dark/light toggle terintegrasi di nav (belum)
+- [x] Layout `/admin` pakai sidebar tsb sebagai shell
 
 ## Fase 2 — CRUD Katalog
 
-- [ ] `/admin/categories`: list, create, edit, delete, reorder (drag atau tombol up/down cukup untuk v1)
-- [ ] `/admin/products`: list per kategori, create, edit (nama, harga, stok, track_stock toggle, active toggle)
-- [ ] `/admin/settings`: form store info + upload QRIS ke Supabase Storage (bucket `qris`) + input No Rek/VA + payment note (textarea bebas, ditampilkan di invoice)
-- [ ] Seed data awal dari produk lama (Gintoki/Shin/Zura, kategori Sticker/Keychain, Ongkir)
-- [ ] Validasi zod untuk semua form (harga integer > 0, stok integer >= 0)
+- [ ] Buat helper `handleFormResult()` — wrapper `use:enhance` yang otomatis toast sukses/gagal + detect 401 (sesi habis) → trigger `handleSessionExpired()`
+- [ ] `/admin/categories`: list, create, edit, delete, reorder (pakai helper di atas)
+- [ ] `/admin/products`: list per kategori, create, edit (pakai helper di atas)
+- [ ] `/admin/settings`: form store info + upload QRIS + info pembayaran (pakai helper di atas)
+- [ ] Seed data awal dari produk lama
+- [ ] Validasi zod untuk semua form
 
 ## Fase 3 — Alur Order (Publik)
 
