@@ -24,7 +24,7 @@
   - `SidebarNav.svelte` (state collapsed/expanded, persist ke localStorage)
   - `MobileFab.svelte` (popup anchor ke FAB, close on outside click/Escape)
   - Item nav admin: Dashboard, Orders, Products, Categories, Settings, Logout
-  - Dark/light toggle terintegrasi di nav (belum)
+  - Dark/light toggle terintegrasi di nav (sudah)
 - [x] Layout `/admin` pakai sidebar tsb sebagai shell
 
 ## Fase 2 — CRUD Katalog
