@@ -1,3 +1,189 @@
+NOTE FASE 2 Part 2 
+
+Lanjut ke `/admin/products`.
+
+Bedanya dari categories: ada relasi ke kategori (dropdown select), dan dua toggle (`trackStock`, `active`). Karena `trackStock` menentukan apakah field `stock` relevan, ada sedikit logic UI tambahan (disable/hide `stock` kalau `trackStock` off).
+
+## 1. Query helper
+
+```ts
+// src/lib/server/db/queries/product.ts
+
+import { db } from '$lib/server/db';
+import { products, categories } from '$lib/server/db/schema';
+import { eq, asc } from 'drizzle-orm';
+import type { ProductInput } from '$lib/schemas/product';
+
+export async function listProductsGroupedByCategory() {
+  return db.query.categories.findMany({
+    orderBy: [asc(categories.sortOrder)],
+    with: {
+      products: {
+        orderBy: [asc(products.sortOrder)]
+      }
+    }
+  });
+}
+
+export async function createProduct(input: ProductInput) {
+  const [row] = await db.insert(products).values(input).returning();
+  return row;
+}
+
+export async function updateProduct(id: string, input: ProductInput) {
+  const [row] = await db.update(products).set(input).where(eq(products.id, id)).returning();
+  return row;
+}
+
+export async function deleteProduct(id: string) {
+  await db.delete(products).where(eq(products.id, id));
+}
+
+export async function reorderProduct(id: string, direction: 'up' | 'down') {
+  const product = await db.query.products.findFirst({ where: eq(products.id, id) });
+  if (!product) return;
+
+  const siblings = await db.query.products.findMany({
+    where: eq(products.categoryId, product.categoryId),
+    orderBy: [asc(products.sortOrder)]
+  });
+
+  const index = siblings.findIndex((p) => p.id === id);
+  const swapIndex = direction === 'up' ? index - 1 : index + 1;
+  if (swapIndex < 0 || swapIndex >= siblings.length) return;
+
+  const current = siblings[index];
+  const swapWith = siblings[swapIndex];
+
+  await db.transaction(async (tx) => {
+    await tx.update(products).set({ sortOrder: swapWith.sortOrder }).where(eq(products.id, current.id));
+    await tx.update(products).set({ sortOrder: current.sortOrder }).where(eq(products.id, swapWith.id));
+  });
+}
+```
+
+Catatan penting: `reorderProduct` swap berdasarkan **saudara dalam kategori yang sama** (`where: eq(products.categoryId, product.categoryId)`), bukan semua produk global — supaya reorder di kategori "Sticker" tidak kebentur `sortOrder` produk di kategori "Keychain".
+
+## 2. `+page.server.ts`
+
+```ts
+// src/routes/admin/products/+page.server.ts
+
+import { fail } from '@sveltejs/kit';
+import { productSchema } from '$lib/schemas/product';
+import {
+  listProductsGroupedByCategory,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  reorderProduct
+} from '$lib/server/db/queries/product';
+import { logger } from '$lib/server/logger';
+import type { Actions, PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async () => {
+  const categoriesWithProducts = await listProductsGroupedByCategory();
+  return { categoriesWithProducts };
+};
+
+function parseProductForm(formData: FormData) {
+  return productSchema.safeParse({
+    categoryId: formData.get('categoryId'),
+    name: formData.get('name'),
+    priceInt: formData.get('priceInt'),
+    trackStock: formData.get('trackStock') === 'on',
+    stock: formData.get('stock'),
+    active: formData.get('active') === 'on',
+    sortOrder: formData.get('sortOrder')
+  });
+}
+
+export const actions: Actions = {
+  create: async ({ request }) => {
+    const formData = await request.formData();
+    const parsed = parseProductForm(formData);
+
+    if (!parsed.success) {
+      return fail(400, { error: parsed.error.issues[0]?.message ?? 'Data tidak valid.' });
+    }
+
+    try {
+      await createProduct(parsed.data);
+      return { success: true };
+    } catch (err) {
+      logger.error('product.create-failed', { error: err });
+      return fail(500, { error: 'Gagal menyimpan produk.' });
+    }
+  },
+
+  update: async ({ request }) => {
+    const formData = await request.formData();
+    const id = formData.get('id');
+
+    if (typeof id !== 'string') {
+      return fail(400, { error: 'ID produk tidak valid.' });
+    }
+
+    const parsed = parseProductForm(formData);
+
+    if (!parsed.success) {
+      return fail(400, { error: parsed.error.issues[0]?.message ?? 'Data tidak valid.' });
+    }
+
+    try {
+      await updateProduct(id, parsed.data);
+      return { success: true };
+    } catch (err) {
+      logger.error('product.update-failed', { error: err, productId: id });
+      return fail(500, { error: 'Gagal memperbarui produk.' });
+    }
+  },
+
+  delete: async ({ request }) => {
+    const formData = await request.formData();
+    const id = formData.get('id');
+
+    if (typeof id !== 'string') {
+      return fail(400, { error: 'ID produk tidak valid.' });
+    }
+
+    try {
+      await deleteProduct(id);
+      return { success: true };
+    } catch (err) {
+      logger.error('product.delete-failed', { error: err, productId: id });
+      return fail(500, { error: 'Gagal menghapus produk.' });
+    }
+  },
+
+  reorder: async ({ request }) => {
+    const formData = await request.formData();
+    const id = formData.get('id');
+    const direction = formData.get('direction');
+
+    if (typeof id !== 'string' || (direction !== 'up' && direction !== 'down')) {
+      return fail(400, { error: 'Data reorder tidak valid.' });
+    }
+
+    try {
+      await reorderProduct(id, direction);
+      return { success: true };
+    } catch (err) {
+      logger.error('product.reorder-failed', { error: err, productId: id });
+      return fail(500, { error: 'Gagal mengubah urutan.' });
+    }
+  }
+};
+```
+
+Catatan penting soal checkbox: HTML checkbox **tidak mengirim value sama sekali kalau tidak dicentang** — makanya dicek `formData.get('trackStock') === 'on'` (nilai default checkbox saat dicentang), bukan cuma `Boolean(formData.get('trackStock'))` yang akan salah kalau ternyata browser kirim `'off'` di beberapa kasus edge.
+
+## 3. `+page.svelte`
+
+Karena strukturnya perlu group-by-kategori dan expand/collapse per kategori (supaya tidak semua produk tampil sekaligus kalau kategori banyak), aku desain dengan accordion sederhana per kategori.
+
+```svelte
+<!-- src/routes/admin/products/+page.svelte -->
 <script lang="ts">
   import { enhance } from '$app/forms';
   import { handleFormResult } from '$lib/utils/handle-form-result';
@@ -7,14 +193,10 @@
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
-  let expandedCategoryId = $state<string | null>(null);
 
-  $effect(() => {
-    if (expandedCategoryId === null && data.categoriesWithProducts.length > 0) {
-      expandedCategoryId = data.categoriesWithProducts[0].id;
-    }
-  });
-
+  let expandedCategoryId = $state<string | null>(
+    data.categoriesWithProducts[0]?.id ?? null
+  );
   let creatingInCategoryId = $state<string | null>(null);
   let editingId = $state<string | null>(null);
   let deletingId = $state<string | null>(null);
@@ -312,7 +494,7 @@
                             <p class="text-sm font-medium">
                               {product.name}
                               {#if !product.active}
-                                <span class="ml-1 rounded bg-neutral-100 px-1.5 py-0.5 text-xs text-white dark:bg-neutral-800">
+                                <span class="ml-1 rounded bg-neutral-100 px-1.5 py-0.5 text-xs text-neutral-500 dark:bg-neutral-800">
                                   Nonaktif
                                 </span>
                               {/if}
@@ -446,3 +628,19 @@
     </div>
   {/if}
 </div>
+```
+
+## Catatan penting soal `editTrackStock` (Record keyed by ID)
+
+Karena ada banyak produk dan tiap satu bisa dalam mode edit terpisah, aku pakai `Record<string, boolean>` untuk state `trackStock` per produk (bukan satu variabel global) — supaya toggle di satu produk tidak "bocor" mempengaruhi tampilan form produk lain yang sedang di-edit bersamaan (meski jarang terjadi, tapi lebih benar secara desain state).
+
+## Yang perlu dites
+
+1. Buat produk baru di kategori yang di-expand, cek toggle "Lacak Stok" muncul/hilangnya field stok
+2. Edit produk existing, ubah toggle trackStock, cek fieldnya muncul sesuai state
+3. Reorder produk dalam satu kategori (pastikan tidak mempengaruhi kategori lain)
+4. Delete produk
+5. Cek `active: false` produk tetap muncul di admin (dengan badge "Nonaktif") tapi nanti harus **tidak** muncul di `/order` publik (ini logic yang perlu dipastikan pas Fase 3)
+
+Coba jalankan, kabari hasilnya. Kalau lancar, kita bisa putuskan mau lanjut ke `/admin/settings` dulu atau langsung ke Fase 3 (order publik) sesuai rencana penyisipan yang dibahas tadi.
+

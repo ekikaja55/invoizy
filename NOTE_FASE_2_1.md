@@ -1,4 +1,4 @@
-NOTE FASE 2
+NOTE FASE 2 Part 1 
 
 Setuju, Fase 1 resmi tuntas — solid fondasinya (auth, guard, shell nav, tema, toast). Sekarang ke Fase 2.
 
