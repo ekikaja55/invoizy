@@ -33,8 +33,8 @@
 - [x] `/admin/categories`: list, create, edit, delete, reorder (pakai helper di atas)
 - [x] `/admin/products`: list per kategori, create, edit (pakai helper di atas)
 - [] `/admin/settings`: form store info + upload QRIS + info pembayaran (pakai helper di atas)
-- [] Seed data awal dari produk lama
-- [] Validasi zod untuk semua form
+- [x] Seed data awal dari produk lama
+- [x] Validasi zod untuk semua form
 
 ## Fase 3 — Alur Order (Publik)
 
