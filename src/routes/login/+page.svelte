@@ -7,7 +7,6 @@
   let email = $state('');
   let password = $state('');
   let loading = $state(false);
-  let error = $state('');
 
   async function handleSubmit(e: SubmitEvent) {
       e.preventDefault();

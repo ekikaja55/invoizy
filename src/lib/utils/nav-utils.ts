@@ -8,5 +8,5 @@ export function navItemClass(isActive: boolean) {
 }
 
 export function navActionClass() {
-  return 'flex items-center gap-2 rounded-lg px-2 py-2 text-sm w-full text-left text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-white/10 dark:hover:text-white transition-colors';
+  return 'flex items-center gap-2 rounded-lg px-2 py-2 text-sm w-full text-left text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-white/10 dark:hover:text-white transition-colors hover:cursor-pointer';
 }

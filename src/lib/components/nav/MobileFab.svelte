@@ -6,8 +6,8 @@
   import { adminNavItems } from '$lib/constants';
   import { toast } from 'svelte-sonner';
   import ThemeToggle from './ThemeToggle.svelte';
-  import { LogOut, Menu, X } from '@lucide/svelte';
-	import { navItemClass } from '$lib/utils/nav-utils';
+  import { Home, LogOut, Menu, X } from '@lucide/svelte';
+	import { navActionClass, navItemClass } from '$lib/utils/nav-utils';
 
   let open = $state(false);
 
@@ -45,7 +45,7 @@
       <nav class="flex flex-col gap-1">
         {#each adminNavItems as item (item.href)}
           {@const isActive = page.url.pathname === item.href}
-          <a href={resolve(item.href)} class={navItemClass(isActive)}>
+          <a href={resolve(item.href)} class={navItemClass(isActive)} onclick={close}>
             <item.icon size={16} />
             <span>{item.label}</span>
           </a>
@@ -57,13 +57,21 @@
 
         <button
           onclick={handleLogout}
-          class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-neutral-600
+          class="flex items-center gap-2 rounded-lg px-2 py-2 text-left text-sm text-neutral-600
                  hover:bg-neutral-100 hover:text-neutral-900
                  dark:text-neutral-300 dark:hover:bg-white/10 dark:hover:text-white"
         >
           <LogOut size={16} />
           <span>Logout</span>
         </button>
+
+        <button onclick={()=>{
+          goto(resolve("/"));
+        }} class={navActionClass()}>
+          <Home size={16} />
+          <span>Home</span>
+        </button>
+
       </div>
     </div>
   {/if}

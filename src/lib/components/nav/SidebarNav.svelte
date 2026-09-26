@@ -6,7 +6,7 @@
   import { goto } from '$app/navigation';
   import { toast } from 'svelte-sonner';
   import ThemeToggle from './ThemeToggle.svelte';
-  import { LogOut, PanelLeftClose, PanelLeftOpen } from '@lucide/svelte';
+  import { Home, LogOut, PanelLeftClose, PanelLeftOpen } from '@lucide/svelte';
 	import { navActionClass, navItemClass } from '$lib/utils/nav-utils';
 
   let collapsed = $state(false);
@@ -52,7 +52,7 @@
     {/if}
   </button>
 
-  <nav class="flex flex-col gap-1">
+<nav class="flex flex-col gap-1">
     {#each adminNavItems as item (item.href)}
       {@const isActive = page.url.pathname === item.href}
       <a href={resolve(item.href)} class={navItemClass(isActive)}>
@@ -67,11 +67,21 @@
   <div class="mt-2 space-y-1 border-t border-neutral-200 pt-2 dark:border-neutral-800">
     <ThemeToggle {collapsed} />
 
+    <button onclick={()=>{
+      goto(resolve("/"));
+    }} class={navActionClass()}>
+      <Home size={16} />
+      {#if !collapsed}
+        <span>Home</span>
+      {/if}
+    </button>
+
     <button onclick={handleLogout} class={navActionClass()}>
       <LogOut size={16} />
       {#if !collapsed}
         <span>Logout</span>
       {/if}
     </button>
+
   </div>
 </aside>

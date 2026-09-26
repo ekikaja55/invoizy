@@ -1,22 +1,32 @@
-
 import { toast } from 'svelte-sonner';
+import { goto } from '$app/navigation';
+import { resolve } from '$app/paths';
 import type { ActionResult } from '@sveltejs/kit';
-import { handleSessionExpired } from './session-guard';
 
-export function handleFormResult(
-  result: ActionResult,
-  messages: { success?: string; failure?: string } = {}
-) {
+interface Messages {
+  success?: string;
+  failure?: string;
+}
+
+export function handleFormResult(result: ActionResult, messages: Messages = {}) {
   if (result.type === 'failure' && result.status === 401) {
-    handleSessionExpired();
+    toast.error('Sesi kamu sudah habis. Silakan login ulang.');
+    setTimeout(() => goto(resolve('/login')), 1500);
     return;
   }
 
   if (result.type === 'success') {
     toast.success(messages.success ?? 'Berhasil disimpan.');
-  } else if (result.type === 'failure') {
-    toast.error(messages.failure ?? 'Gagal menyimpan data.');
-  } else if (result.type === 'error') {
+    return;
+  }
+
+  if (result.type === 'failure') {
+    const serverMessage = typeof result.data?.error === 'string' ? result.data.error : undefined;
+    toast.error(serverMessage ?? messages.failure ?? 'Gagal menyimpan data.');
+    return;
+  }
+
+  if (result.type === 'error') {
     toast.error('Terjadi kesalahan tak terduga.');
   }
 }
