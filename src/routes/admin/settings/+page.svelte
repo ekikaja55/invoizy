@@ -2,37 +2,40 @@
   import { enhance } from '$app/forms';
   import { handleFormResult } from '$lib/utils/handle-form-result';
   import BusyOverlay from '$lib/components/ui/BusyOverlay.svelte';
+  import { resolve } from '$app/paths';
+  import { CreditCard, QrCode } from '@lucide/svelte';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
-
   let isBusy = $state(false);
-  let qrisPreview = $state<string | null>(null);
-
-
-  $effect(() => {
-    if (qrisPreview === null && data.settings?.qrisUrl) {
-      qrisPreview = data.settings.qrisUrl;
-    }
-  });
-
-  function handleQrisChange(e: Event) {
-    const input = e.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (file) {
-      qrisPreview = URL.createObjectURL(file);
-    }
-  }
 </script>
 
 <div class="mx-auto max-w-2xl space-y-6">
   <h1 class="text-xl font-semibold">Settings</h1>
 
+  <div class="flex gap-2">
+    <a
+      href={resolve('/admin/settings/payment-methods')}
+      class="flex items-center gap-2 rounded-lg border border-neutral-300 px-3 py-2 text-sm
+             hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-white/10"
+    >
+      <CreditCard size={16} />
+      Kelola Bank / VA
+    </a>
+    <a
+      href={resolve('/admin/settings/qris')}
+      class="flex items-center gap-2 rounded-lg border border-neutral-300 px-3 py-2 text-sm
+             hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-white/10"
+    >
+      <QrCode size={16} />
+      Kelola QRIS
+    </a>
+  </div>
+
   <BusyOverlay active={isBusy}>
     <form
       method="POST"
       action="?/update"
-      enctype="multipart/form-data"
       use:enhance={() => {
         isBusy = true;
         return async ({ result, update }) => {
@@ -41,168 +44,82 @@
           isBusy = false;
         };
       }}
-      class="space-y-6"
+      class="space-y-4 rounded-xl border border-neutral-200 p-4 dark:border-neutral-800"
     >
-      <section class="space-y-3 rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
-        <h2 class="font-medium">Informasi Toko</h2>
+      <div>
+        <label for="storeName" class="block text-sm font-medium">Nama Toko</label>
+        <input
+          id="storeName"
+          name="storeName"
+          value={data.settings?.storeName ?? ''}
+          required
+          disabled={isBusy}
+          class="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900
+                 disabled:opacity-50
+                 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+        />
+      </div>
 
-        <div>
-          <label for="storeName" class="block text-sm font-medium">Nama Toko</label>
-          <input
-            id="storeName"
-            name="storeName"
-            value={data.settings?.storeName ?? ''}
-            required
-            disabled={isBusy}
-            class="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900
-                   disabled:opacity-50
-                   dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-          />
-        </div>
+      <div>
+        <label for="instagram" class="block text-sm font-medium">Instagram</label>
+        <input
+          id="instagram"
+          name="instagram"
+          value={data.settings?.instagram ?? ''}
+          placeholder="@namatoko"
+          disabled={isBusy}
+          class="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900
+                 placeholder:text-neutral-400 disabled:opacity-50
+                 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder:text-neutral-500"
+        />
+      </div>
 
-        <div>
-          <label for="instagram" class="block text-sm font-medium">Instagram</label>
-          <input
-            id="instagram"
-            name="instagram"
-            value={data.settings?.instagram ?? ''}
-            placeholder="@namatoko"
-            disabled={isBusy}
-            class="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900
-                   placeholder:text-neutral-400 disabled:opacity-50
-                   dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder:text-neutral-500"
-          />
-        </div>
+      <div>
+        <label for="twitter" class="block text-sm font-medium">Twitter</label>
+        <input
+          id="twitter"
+          name="twitter"
+          value={data.settings?.twitter ?? ''}
+          placeholder="@namatoko"
+          disabled={isBusy}
+          class="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900
+                 placeholder:text-neutral-400 disabled:opacity-50
+                 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder:text-neutral-500"
+        />
+      </div>
 
-        <div>
-          <label for="twitter" class="block text-sm font-medium">Twitter</label>
-          <input
-            id="twitter"
-            name="twitter"
-            value={data.settings?.twitter ?? ''}
-            placeholder="@namatoko"
-            disabled={isBusy}
-            class="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900
-                   placeholder:text-neutral-400 disabled:opacity-50
-                   dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder:text-neutral-500"
-          />
-        </div>
+      <div>
+        <label for="emailFromName" class="block text-sm font-medium">Nama Pengirim Email</label>
+        <input
+          id="emailFromName"
+          name="emailFromName"
+          value={data.settings?.emailFromName ?? ''}
+          disabled={isBusy}
+          class="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900
+                 disabled:opacity-50
+                 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+        />
+      </div>
 
-        <div>
-          <label for="emailFromName" class="block text-sm font-medium">Nama Pengirim Email</label>
-          <input
-            id="emailFromName"
-            name="emailFromName"
-            value={data.settings?.emailFromName ?? ''}
-            disabled={isBusy}
-            class="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900
-                   disabled:opacity-50
-                   dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-          />
-        </div>
-      </section>
-
-      <section class="space-y-3 rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
-        <h2 class="font-medium">QRIS</h2>
-
-        {#if qrisPreview}
-          <img src={qrisPreview} alt="QRIS" class="h-40 w-40 rounded-lg border border-neutral-200 object-contain dark:border-neutral-800" />
-        {/if}
-
-        <div>
-          <label for="qrisFile" class="block text-sm font-medium">
-            {qrisPreview ? 'Ganti QRIS' : 'Upload QRIS'}
-          </label>
-          <input
-            id="qrisFile"
-            name="qrisFile"
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            onchange={handleQrisChange}
-            disabled={isBusy}
-            class="mt-1 w-full text-sm disabled:opacity-50"
-          />
-          <p class="mt-1 text-xs text-neutral-500">PNG, JPEG, atau WebP. Maksimal 2MB.</p>
-        </div>
-      </section>
-
-      <section class="space-y-3 rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
-        <h2 class="font-medium">Info Pembayaran Lain</h2>
-
-        <div>
-          <label for="bankName" class="block text-sm font-medium">Nama Bank</label>
-          <input
-            id="bankName"
-            name="bankName"
-            value={data.settings?.bankName ?? ''}
-            placeholder="BCA, Mandiri, dll."
-            disabled={isBusy}
-            class="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900
-                   placeholder:text-neutral-400 disabled:opacity-50
-                   dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder:text-neutral-500"
-          />
-        </div>
-
-        <div>
-          <label for="bankAccountNumber" class="block text-sm font-medium">Nomor Rekening</label>
-          <input
-            id="bankAccountNumber"
-            name="bankAccountNumber"
-            value={data.settings?.bankAccountNumber ?? ''}
-            disabled={isBusy}
-            class="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900
-                   disabled:opacity-50
-                   dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-          />
-        </div>
-
-        <div>
-          <label for="bankAccountHolder" class="block text-sm font-medium">Atas Nama</label>
-          <input
-            id="bankAccountHolder"
-            name="bankAccountHolder"
-            value={data.settings?.bankAccountHolder ?? ''}
-            disabled={isBusy}
-            class="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900
-                   disabled:opacity-50
-                   dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-          />
-        </div>
-
-        <div>
-          <label for="vaInfo" class="block text-sm font-medium">Info Virtual Account (opsional)</label>
-          <input
-            id="vaInfo"
-            name="vaInfo"
-            value={data.settings?.vaInfo ?? ''}
-            placeholder="Contoh: VA BCA 12345-xxxxxxxxxx"
-            disabled={isBusy}
-            class="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900
-                   placeholder:text-neutral-400 disabled:opacity-50
-                   dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder:text-neutral-500"
-          />
-        </div>
-
-        <div>
-          <label for="paymentNote" class="block text-sm font-medium">Catatan Pembayaran</label>
-          <textarea
-            id="paymentNote"
-            name="paymentNote"
-            rows="3"
-            disabled={isBusy}
-            class="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900
-                   disabled:opacity-50
-                   dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-          >{data.settings?.paymentNote ?? ''}</textarea>
-        </div>
-      </section>
+      <div>
+        <label for="paymentNote" class="block text-sm font-medium">Catatan Pembayaran Umum</label>
+        <textarea
+          id="paymentNote"
+          name="paymentNote"
+          rows="3"
+          disabled={isBusy}
+          class="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900
+                 disabled:opacity-50
+                 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+        >{data.settings?.paymentNote ?? ''}</textarea>
+      </div>
 
       <button
         type="submit"
         disabled={isBusy}
         class="rounded-lg bg-neutral-900 px-4 py-2 text-sm text-white disabled:opacity-50 dark:bg-white dark:text-neutral-900"
       >
-        {isBusy ? 'Menyimpan...' : 'Simpan Pengaturan'}
+        {isBusy ? 'Menyimpan...' : 'Simpan'}
       </button>
     </form>
   </BusyOverlay>

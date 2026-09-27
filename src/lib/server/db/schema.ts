@@ -18,7 +18,6 @@
 // diingat / ditulis manual oleh admin, tapi tidak dipakai sebagai kunci akses karena terlalu
 // mudah ditebak(36 ^ 5 kombinasi saja).accessToken yang jadi gerbang ke / invoice / [orderId] ? token =....
 // ------------------------------------------------------------------
-
 import { pgTable, text, integer, boolean, timestamp, pgEnum, uuid } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -35,6 +34,8 @@ export const invoiceStatusEnum = pgEnum('invoice_status', [
 
 export const paymentStatusEnum = pgEnum('payment_status', ['PENDING', 'CONFIRMED', 'CANCELLED']);
 
+export const paymentMethodTypeEnum = pgEnum('payment_method_type', ['bank', 'va', 'other']);
+
 // ─────────────────────────────────────────────
 // STORE SETTINGS (singleton — selalu 1 baris)
 // ─────────────────────────────────────────────
@@ -45,14 +46,41 @@ export const storeSettings = pgTable('store_settings', {
   instagram: text('instagram').notNull().default(''),
   twitter: text('twitter').notNull().default(''),
   emailFromName: text('email_from_name').notNull().default(''),
-
-  qrisUrl: text('qris_url'),
-  bankName: text('bank_name'),
-  bankAccountNumber: text('bank_account_number'),
-  bankAccountHolder: text('bank_account_holder'),
-  vaInfo: text('va_info'),
   paymentNote: text('payment_note'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+});
 
+// ─────────────────────────────────────────────
+// PAYMENT METHODS — banyak metode, tiap metode bebas nama/nomor/pemilik sendiri
+// ─────────────────────────────────────────────
+
+export const paymentMethods = pgTable('payment_methods', {
+  id: uuid('id').primaryKey().defaultRandom(),
+
+  type: paymentMethodTypeEnum('type').notNull(),
+  label: text('label').notNull(), // "BCA", "Mandiri", "OVO", "DANA", dst
+  accountNumber: text('account_number').notNull(), // no rekening / no VA
+  accountHolder: text('account_holder').notNull(), // atas nama
+  note: text('note'), // catatan khusus metode ini, opsional
+
+  active: boolean('active').notNull().default(true),
+  sortOrder: integer('sort_order').notNull().default(0),
+
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export const qrisCodes = pgTable('qris_codes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+
+  label: text('label').notNull(), // "QRIS Statis Toko", "QRIS Shopee", dst — bebas ditulis admin
+  imageUrl: text('image_url').notNull(), // url publik di Supabase Storage bucket "qris"
+  imagePath: text('image_path').notNull(), // path internal di bucket, untuk keperluan hapus/ganti file
+
+  active: boolean('active').notNull().default(true),
+  sortOrder: integer('sort_order').notNull().default(0),
+
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
 });
 

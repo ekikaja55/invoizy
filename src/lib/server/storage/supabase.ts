@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 import { env } from '$env/dynamic/private';
 
@@ -7,7 +8,7 @@ const MAX_QRIS_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
 const ALLOWED_QRIS_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 
 export function validateQrisFile(file: File): string | null {
-  if (file.size === 0) return null; // tidak ada file dipilih, bukan error
+  if (file.size === 0) return 'File QRIS wajib diunggah.';
   if (file.size > MAX_QRIS_SIZE_BYTES) {
     return 'Ukuran file QRIS maksimal 2MB.';
   }
@@ -17,9 +18,9 @@ export function validateQrisFile(file: File): string | null {
   return null;
 }
 
-export async function uploadQrisImage(file: File): Promise<string> {
+export async function uploadQrisImage(file: File): Promise<{ url: string; path: string }> {
   const ext = file.name.split('.').pop() ?? 'png';
-  const path = `qris-${Date.now()}.${ext}`;
+  const path = `qris-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
   const { error } = await supabaseAdmin.storage
     .from('qris')
@@ -30,5 +31,9 @@ export async function uploadQrisImage(file: File): Promise<string> {
   }
 
   const { data } = supabaseAdmin.storage.from('qris').getPublicUrl(path);
-  return data.publicUrl;
+  return { url: data.publicUrl, path };
+}
+
+export async function deleteQrisImage(path: string) {
+  await supabaseAdmin.storage.from('qris').remove([path]);
 }

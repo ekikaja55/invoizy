@@ -1,5 +1,6 @@
 RESET SEBELUM SEED
 truncate table order_items, orders, products, categories, store_settings restart identity cascade;
+rmdir /s /q node_modules\.vite build cache 
 
 ---
 

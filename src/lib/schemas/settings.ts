@@ -5,10 +5,6 @@ export const settingsSchema = z.object({
   instagram: z.string().trim().max(100).optional().or(z.literal('')),
   twitter: z.string().trim().max(100).optional().or(z.literal('')),
   emailFromName: z.string().trim().max(100).optional().or(z.literal('')),
-  bankName: z.string().trim().max(100).optional().or(z.literal('')),
-  bankAccountNumber: z.string().trim().max(50).optional().or(z.literal('')),
-  bankAccountHolder: z.string().trim().max(100).optional().or(z.literal('')),
-  vaInfo: z.string().trim().max(255).optional().or(z.literal('')),
   paymentNote: z.string().trim().max(1000).optional().or(z.literal(''))
 });
 
