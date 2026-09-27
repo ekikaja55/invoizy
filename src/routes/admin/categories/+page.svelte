@@ -91,6 +91,10 @@
                  dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
         />
       </div>
+      <label class="flex items-center gap-2 text-sm">
+        <input type="checkbox" name="isShipping" disabled={isBusy} />
+        Ini kategori ongkir/pengiriman
+      </label>
       <div class="flex gap-2">
         <button
           type="submit"
@@ -158,6 +162,10 @@
                   />
                 </div>
                 <input type="hidden" name="sortOrder" value={category.sortOrder} />
+                <label class="flex items-center gap-2 text-sm">
+                  <input type="checkbox" name="isShipping" checked={category.isShipping} disabled={isBusy} />
+                  Ini kategori ongkir/pengiriman
+                </label>
                 <div class="flex gap-2">
                   <button
                     type="submit"
@@ -179,7 +187,14 @@
             {:else}
               <div class="flex items-center justify-between">
                 <div>
-                  <p class="font-medium">{category.name}</p>
+                  <p class="font-medium">
+                    {category.name}
+                    {#if category.isShipping}
+                      <span class="ml-1 rounded bg-blue-100 px-1.5 py-0.5 text-xs text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                        Ongkir
+                      </span>
+                    {/if}
+                  </p>
                   <p class="text-xs text-neutral-500">
                     {category.products?.length ?? 0} produk
                   </p>
@@ -193,7 +208,7 @@
                       isBusy = true;
                       processingId = category.id;
                       return async ({ result, update }) => {
-                        handleFormResult(result, {});
+                        handleFormResult(result, { success: 'Urutan kategori berhasil diubah.' });
                         await update();
                         isBusy = false;
                         processingId = null;
@@ -217,13 +232,8 @@
                     use:enhance={() => {
                       isBusy = true;
                       processingId = category.id;
-
                       return async ({ result, update }) => {
-                        // handleFormResult(result, {
-                        //   success: 'Urutan kategori berhasil diubah.',
-                        //   failure: 'Gagal mengubah urutan kategori.'
-                        // });
-                        handleFormResult(result, {success:'Urutan kategori berhasil diubah '});
+                        handleFormResult(result, { success: 'Urutan kategori berhasil diubah.' });
                         await update();
                         isBusy = false;
                         processingId = null;

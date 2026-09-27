@@ -1,6 +1,12 @@
 import { fail } from '@sveltejs/kit';
 import { categorySchema } from '$lib/schemas/category';
-import { listCategories, createCategory, updateCategory, deleteCategory, reorderCategory } from '$lib/server/db/queries/category';
+import {
+  listCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  reorderCategory
+} from '$lib/server/db/queries/category';
 import { logger } from '$lib/server/logger';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -14,6 +20,7 @@ export const actions: Actions = {
     const formData = await request.formData();
     const parsed = categorySchema.safeParse({
       name: formData.get('name'),
+      isShipping: formData.get('isShipping') === 'on',
       sortOrder: formData.get('sortOrder')
     });
 
@@ -40,6 +47,7 @@ export const actions: Actions = {
 
     const parsed = categorySchema.safeParse({
       name: formData.get('name'),
+      isShipping: formData.get('isShipping') === 'on',
       sortOrder: formData.get('sortOrder')
     });
 
@@ -72,7 +80,7 @@ export const actions: Actions = {
       return fail(500, { error: 'Gagal menghapus kategori.' });
     }
   },
-  
+
   reorder: async ({ request }) => {
     const formData = await request.formData();
     const id = formData.get('id');
