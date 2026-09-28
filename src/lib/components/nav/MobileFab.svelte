@@ -3,13 +3,25 @@
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import { authClient } from '$lib/auth-client';
-  import { adminNavItems } from '$lib/constants';
+  import { type NavItem } from '$lib/constants';
   import { toast } from 'svelte-sonner';
   import ThemeToggle from './ThemeToggle.svelte';
-  import { Home, LogOut, Menu, X } from '@lucide/svelte';
+  import { Home, LogOut, Menu, X,LayoutDashboard } from '@lucide/svelte';
 	import { navActionClass, navItemClass } from '$lib/utils/nav-utils';
 
+	interface Props {
+    items: NavItem[];
+    isAdmin?: boolean;
+  }
+
+  let { items, isAdmin = false }: Props = $props();
+
   let open = $state(false);
+  let isAdminPage = $state(false);
+
+  $effect(()=>{
+    isAdminPage = page.url.pathname.startsWith('/admin') ? true : false;
+  })
 
   function close() {
     open = false;
@@ -43,7 +55,7 @@
              p-2 backdrop-blur"
     >
       <nav class="flex flex-col gap-1">
-        {#each adminNavItems as item (item.href)}
+        {#each items as item (item.href)}
           {@const isActive = page.url.pathname === item.href}
           <a href={resolve(item.href)} class={navItemClass(isActive)} onclick={close}>
             <item.icon size={16} />
@@ -55,22 +67,34 @@
       <div class="mt-1 border-t border-neutral-200 pt-1 dark:border-neutral-800">
         <ThemeToggle />
 
-        <button
-          onclick={handleLogout}
-          class="flex items-center gap-2 rounded-lg px-2 py-2 text-left text-sm text-neutral-600
-                 hover:bg-neutral-100 hover:text-neutral-900
-                 dark:text-neutral-300 dark:hover:bg-white/10 dark:hover:text-white"
-        >
-          <LogOut size={16} />
-          <span>Logout</span>
-        </button>
+        {#if isAdmin}
+          {#if isAdminPage}
+          <button onclick={()=>{
+            goto(resolve("/"));
+          }} class={navActionClass()}>
+            <Home size={16} />
+            <span>Home</span>
+          </button>
+          {:else}
+          <button onclick={()=>{
+            goto(resolve("/admin"));
+          }} class={navActionClass()}>
+            <LayoutDashboard size={16} />
+            <span>Dashboard</span>
+          </button>
+          {/if}
 
-        <button onclick={()=>{
-          goto(resolve("/"));
-        }} class={navActionClass()}>
-          <Home size={16} />
-          <span>Home</span>
-        </button>
+          <button
+            onclick={handleLogout}
+            class="flex items-center gap-2 rounded-lg px-2 py-2 text-left text-sm text-neutral-600
+                   hover:bg-neutral-100 hover:text-neutral-900
+                   dark:text-neutral-300 dark:hover:bg-white/10 dark:hover:text-white"
+          >
+            <LogOut size={16} />
+            <span>Logout</span>
+          </button>
+        {/if}
+
 
       </div>
     </div>

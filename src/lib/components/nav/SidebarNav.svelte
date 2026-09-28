@@ -1,17 +1,29 @@
 <script lang="ts">
   import { page } from '$app/state';
   import { resolve } from '$app/paths';
-  import { adminNavItems } from '$lib/constants';
+  import { type NavItem } from '$lib/constants';
   import { authClient } from '$lib/auth-client';
   import { goto } from '$app/navigation';
   import { toast } from 'svelte-sonner';
   import ThemeToggle from './ThemeToggle.svelte';
-  import { Home, LogOut, PanelLeftClose, PanelLeftOpen } from '@lucide/svelte';
+  import { Home, LogOut, PanelLeftClose, PanelLeftOpen,LayoutDashboard} from '@lucide/svelte';
 	import { navActionClass, navItemClass } from '$lib/utils/nav-utils';
 
+ interface Props {
+    items: NavItem[];
+    isAdmin?: boolean;
+  }
+
+  let { items, isAdmin = false }: Props = $props();
+
   let collapsed = $state(false);
+  let isAdminPage = $state(false);
 
   $effect(() => {
+    isAdminPage = page.url.pathname.startsWith('/admin') ? true : false;
+
+    // console.log("Cek path saat ini",page.url.pathname);
+    // console.log("Apakah sedang di page admin ?",isAdminPage);
     const saved = localStorage.getItem('sidebar-collapsed');
     if (saved !== null) collapsed = saved === 'true';
   });
@@ -31,7 +43,7 @@
     });
 
     await signOutPromise;
-    goto(resolve('/login'));
+    goto(resolve('/'));
   }
 
 </script>
@@ -53,7 +65,7 @@
   </button>
 
 <nav class="flex flex-col gap-1">
-    {#each adminNavItems as item (item.href)}
+    {#each items as item (item.href)}
       {@const isActive = page.url.pathname === item.href}
       <a href={resolve(item.href)} class={navItemClass(isActive)}>
         <item.icon size={16} />
@@ -67,21 +79,35 @@
   <div class="mt-2 space-y-1 border-t border-neutral-200 pt-2 dark:border-neutral-800">
     <ThemeToggle {collapsed} />
 
-    <button onclick={()=>{
-      goto(resolve("/"));
-    }} class={navActionClass()}>
-      <Home size={16} />
-      {#if !collapsed}
-        <span>Home</span>
-      {/if}
-    </button>
 
-    <button onclick={handleLogout} class={navActionClass()}>
+    {#if isAdmin}
+      {#if isAdminPage}
+      <button onclick={()=>{
+        goto( resolve("/"));
+      }} class={navActionClass()}>
+        <Home size={16} />
+        {#if !collapsed}
+          <span>Home</span>
+        {/if}
+      </button>
+      {:else}
+      <button onclick={()=>{
+        goto( resolve("/admin"));
+      }} class={navActionClass()}>
+        <LayoutDashboard size={16} />
+        {#if !collapsed}
+          <span>Dashboard</span>
+        {/if}
+      </button>
+      {/if}
+
+      <button onclick={handleLogout} class={navActionClass()}>
       <LogOut size={16} />
       {#if !collapsed}
         <span>Logout</span>
       {/if}
     </button>
+    {/if}
 
   </div>
 </aside>
