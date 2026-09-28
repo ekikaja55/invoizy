@@ -38,7 +38,7 @@
 
 ## Fase 3 — Alur Order (Publik)
 
-- [ ] Layout publik minimal (header simpel, bukan sidebar admin)
+- [x] Layout publik minimal (header simpel, bukan sidebar admin)
 - [ ] `/order`: load kategori+produk aktif, tampilkan sebagai grid kartu per kategori
 - [ ] State cart dengan Svelte 5 runes (`cart.svelte.ts`) — qty stepper per produk
 - [ ] Step ongkir sebagai pertanyaan single-select terpisah (bukan produk biasa)
