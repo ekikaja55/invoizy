@@ -1,5 +1,8 @@
 <script>
   import { resolve } from "$app/paths";
+  let {data} = $props();
+  const isLogin = $derived(Boolean(data.user));
+
 </script>
 
 <div class="flex min-h-screen flex-col items-center justify-center p-4 text-center">
@@ -13,12 +16,14 @@
     </p>
 
     <div class="pt-2">
-      <a
-        href={resolve("/login")}
-        class="inline-block rounded-lg bg-zinc-900 px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-zinc-700 active:scale-95 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
-      >
-        Login
-      </a>
+      {#if !isLogin}
+        <a
+          href={resolve("/login")}
+          class="inline-block rounded-lg bg-zinc-900 px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-zinc-700 active:scale-95 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+        >
+          Login
+        </a>
+      {/if}
     </div>
   </div>
 </div>
