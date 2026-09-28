@@ -1,27 +1,29 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import { authClient } from '$lib/auth-client';
   import { type NavItem } from '$lib/constants';
   import { toast } from 'svelte-sonner';
   import ThemeToggle from './ThemeToggle.svelte';
-  import { Home, LogOut, Menu, X,LayoutDashboard } from '@lucide/svelte';
-	import { navActionClass, navItemClass } from '$lib/utils/nav-utils';
+  import { Home, LogOut, Menu, X, LayoutDashboard } from '@lucide/svelte';
+  import { navActionClass, navItemClass } from '$lib/utils/nav-utils';
+  import { navigateTo } from '$lib/utils/navigating';
 
-	interface Props {
+  interface Props {
     items: NavItem[];
     isAdmin?: boolean;
   }
 
-  let { items, isAdmin = false }: Props = $props();
+  // 1. Ambil props utuh agar reaktif
+  let props: Props = $props();
+
+  // 2. Gunakan $derived untuk menyinkronkan state dengan Svelte 5 runes
+  let items = $derived(props.items);
+  let isAdmin = $derived(props.isAdmin ?? false);
+  let currentPath = $derived(page.url.pathname);
+  let isAdminPage = $derived(currentPath.startsWith('/admin'));
 
   let open = $state(false);
-  let isAdminPage = $state(false);
-
-  $effect(()=>{
-    isAdminPage = page.url.pathname.startsWith('/admin') ? true : false;
-  })
 
   function close() {
     open = false;
@@ -32,6 +34,7 @@
   }
 
   async function handleLogout() {
+    close();
     const signOutPromise = authClient.signOut();
 
     toast.promise(signOutPromise, {
@@ -41,22 +44,22 @@
     });
 
     await signOutPromise;
-    goto(resolve('/login'));
+    navigateTo('/');
   }
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div class="md:hidden fixed bottom-4 right-4 z-50">
+<div class="fixed bottom-4 right-4 z-50 md:hidden">
   {#if open}
     <div
-      class="mb-2 w-48 rounded-xl border border-neutral-200 bg-white/95 text-neutral-900 shadow-xl
-             dark:border-neutral-800 dark:bg-neutral-900/95 dark:text-neutral-100
-             p-2 backdrop-blur"
+      class="mb-2 w-48 rounded-xl border border-neutral-200 bg-white/95 p-2 text-neutral-900
+             shadow-xl backdrop-blur dark:border-neutral-800 dark:bg-neutral-900/95
+             dark:text-neutral-100"
     >
       <nav class="flex flex-col gap-1">
         {#each items as item (item.href)}
-          {@const isActive = page.url.pathname === item.href}
+          {@const isActive = currentPath === item.href}
           <a href={resolve(item.href)} class={navItemClass(isActive)} onclick={close}>
             <item.icon size={16} />
             <span>{item.label}</span>
@@ -69,19 +72,27 @@
 
         {#if isAdmin}
           {#if isAdminPage}
-          <button onclick={()=>{
-            goto(resolve("/"));
-          }} class={navActionClass()}>
-            <Home size={16} />
-            <span>Home</span>
-          </button>
+            <button
+              onclick={() => {
+                close();
+                navigateTo('/');
+              }}
+              class={navActionClass()}
+            >
+              <Home size={16} />
+              <span>Home</span>
+            </button>
           {:else}
-          <button onclick={()=>{
-            goto(resolve("/admin"));
-          }} class={navActionClass()}>
-            <LayoutDashboard size={16} />
-            <span>Dashboard</span>
-          </button>
+            <button
+              onclick={() => {
+                close();
+                navigateTo('/admin');
+              }}
+              class={navActionClass()}
+            >
+              <LayoutDashboard size={16} />
+              <span>Dashboard</span>
+            </button>
           {/if}
 
           <button
@@ -94,8 +105,6 @@
             <span>Logout</span>
           </button>
         {/if}
-
-
       </div>
     </div>
   {/if}
@@ -117,8 +126,8 @@
 
 {#if open}
   <button
-    class="md:hidden fixed inset-0 z-40 cursor-default bg-black/20 backdrop-blur-[2px]
-           dark:bg-black/40"
+    class="fixed inset-0 z-40 cursor-default bg-black/20 backdrop-blur-[2px]
+           dark:bg-black/40 md:hidden"
     onclick={close}
     aria-label="Close menu overlay"
   ></button>

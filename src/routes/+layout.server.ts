@@ -1,16 +1,19 @@
+// src/routes/+layout.server.ts
 import { logger } from "$lib/server/logger";
 import type { LayoutServerLoad } from "./$types";
 
 export const load: LayoutServerLoad = async (event) => {
-  logger.info("Masuk layout server root")
+  logger.info("Masuk layout server root");
+  
   if (!event.locals.user) {
-    logger.info("User Null")
+    logger.info("User Null");
     return {
-      data: null,
-    }
+      user: null
+    };
   }
-  logger.info("Ada data user")
+
+  logger.info("Ada data user");
   return {
-    data:event.locals.user
-  }
-}
+    user: event.locals.user
+  };
+};

@@ -5,13 +5,13 @@
   import { publicNavItems } from '$lib/constants';
 
   let { children,data} = $props();
-
+  const isAdmin = $derived(Boolean(data.user));
 
 </script>
 
 <div class="min-h-screen bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
-  <SidebarNav items={publicNavItems} isAdmin={data !== null ? true : false}/>
-  <MobileFab items={publicNavItems} isAdmin={data !== null ? true:false}/>
+  <SidebarNav items={publicNavItems} {isAdmin} />
+  <MobileFab items={publicNavItems} {isAdmin} />
   <NavigatingOverlay />
 
   <main class="mx-auto max-w-3xl px-4 py-8 md:pl-24">
