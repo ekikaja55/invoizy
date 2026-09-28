@@ -12,7 +12,11 @@
     </h1>
 
     <p class="text-base font-semibold leading-relaxed tracking-wide">
-      Masih Testing login, klik tombol di bawah ini (nanti bakal dihapus tombol loginnya)
+      {#if !isLogin}
+        Masih Testing login, klik tombol di bawah ini nanti bakal dihapus tombol loginnya karena dari awal ga sembarangan orang bisa akses login page
+        {:else}
+        Kamu udah login button nya hilang ceritanya....
+      {/if}
     </p>
 
     <div class="pt-2">
