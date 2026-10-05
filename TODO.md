@@ -39,17 +39,18 @@
 ## Fase 3 — Alur Order (Publik)
 
 - [x] Layout publik minimal (header simpel, bukan sidebar admin)
-- [ ] `/order`: load kategori+produk aktif, tampilkan sebagai grid kartu per kategori
-- [ ] State cart dengan Svelte 5 runes (`cart.svelte.ts`) — qty stepper per produk
-- [ ] Step ongkir sebagai pertanyaan single-select terpisah (bukan produk biasa)
-- [ ] Form data diri (handle, email, note) pakai superforms + zod
-- [ ] Server action submit:
+- [x] `/order`: load kategori+produk aktif, tampilkan sebagai grid kartu per kategori
+- [x] State cart dengan Svelte 5 runes (`cart.svelte.ts`) — qty stepper per produk
+- [x] Step ongkir sebagai pertanyaan single-select terpisah (bukan produk biasa)
+- [x] `/order/checkout`: form data diri (handle, email, note) — form actions + zod (superforms ditunda: dependency belum terpasang)
+- [x] Server action submit:
   - Re-validasi semua harga & stok dari DB (jangan percaya angka dari client)
   - Kalau `track_stock` true dan stok kurang → tolak dengan pesan jelas
-  - Transaksi: kurangi stok, insert `orders` + `order_items` (snapshot nama/harga saat itu)
+  - Transaksi: kurangi stok (atomik `WHERE stock >= qty`), insert `orders` + `order_items` (snapshot nama/harga saat itu)
   - Generate `order_id` (5 char, alphabet tanpa O/0/I/1) + `access_token` (random, untuk URL invoice)
-  - Rate limit submit (Upstash) + honeypot field anti-bot
-- [ ] Redirect ke `/order/sukses/[orderId]`
+  - Honeypot field anti-bot
+- [ ] Rate limit submit (Upstash) — ditunda: `@upstash/*` belum terpasang (bagian gate Fase 4)
+- [x] Redirect ke `/order/sukses/[orderId]`
 
 ## Fase 4 — Invoice, PDF, Email
 

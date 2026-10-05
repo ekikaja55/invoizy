@@ -6,7 +6,9 @@ export type AdminRoute =
   | '/admin/orders'
   | '/admin/products'
   | '/admin/categories'
-  | '/admin/settings';
+  | '/admin/settings'
+  | '/admin/settings/payment-methods'
+  | '/admin/settings/qris';
 
 export type PublicRoute = '/' | '/order';
 

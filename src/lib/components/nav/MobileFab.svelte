@@ -5,7 +5,7 @@
   import { type NavItem } from '$lib/constants';
   import { toast } from 'svelte-sonner';
   import ThemeToggle from './ThemeToggle.svelte';
-  import { Home, LogOut, Menu, X, LayoutDashboard } from '@lucide/svelte';
+  import { Home, LogOut, Menu, X, LayoutDashboard,  } from '@lucide/svelte';
   import { navActionClass, navItemClass } from '$lib/utils/nav-utils';
   import { navigateTo } from '$lib/utils/navigating';
 

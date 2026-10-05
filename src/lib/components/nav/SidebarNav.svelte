@@ -3,7 +3,7 @@
   import { resolve } from '$app/paths';
   import { type NavItem } from '$lib/constants';
   import { authClient } from '$lib/auth-client';
-  import { goto } from '$app/navigation';
+  // import { goto } from '$app/navigation';
   import { toast } from 'svelte-sonner';
   import ThemeToggle from './ThemeToggle.svelte';
   import { Home, LogOut, PanelLeftClose, PanelLeftOpen, LayoutDashboard } from '@lucide/svelte';
