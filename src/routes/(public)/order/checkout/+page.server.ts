@@ -1,6 +1,7 @@
 import { fail } from '@sveltejs/kit';
 import { getActiveCatalog, createOrder, OrderError } from '$lib/server/db/queries/order';
 import { checkoutSchema, checkoutItemsSchema, type CheckoutItem } from '$lib/schemas/order';
+import { checkOrderSubmitRateLimit } from '$lib/server/ratelimit';
 import { logger } from '$lib/server/logger';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -14,13 +15,24 @@ export const load: PageServerLoad = async () => {
 };
 
 export const actions: Actions = {
-  default: async ({ request }) => {
+  default: async ({ request, getClientAddress }) => {
     const formData = await request.formData();
 
     // Honeypot anti-bot: field tersembunyi yang cuma diisi bot. Manusia tidak mengisinya.
     const honeypot = formData.get('website');
     if (typeof honeypot === 'string' && honeypot.trim() !== '') {
       return { success: true }; // diam-diam tolak bot
+    }
+
+    // Rate limit per IP — cegah spam submit (honeypot lolos → ini lapis kedua).
+    try {
+      const rl = await checkOrderSubmitRateLimit(getClientAddress());
+      if (!rl.success) {
+        return fail(429, { error: 'Terlalu banyak percobaan. Silakan coba lagi beberapa menit.' });
+      }
+    } catch (err) {
+      // Upstash bermasalah → jangan blokir order, tapi catat.
+      logger.error('order.ratelimit-failed', { error: err });
     }
 
     const parsed = checkoutSchema.safeParse({

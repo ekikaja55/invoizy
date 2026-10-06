@@ -49,7 +49,7 @@
   - Transaksi: kurangi stok (atomik `WHERE stock >= qty`), insert `orders` + `order_items` (snapshot nama/harga saat itu)
   - Generate `order_id` (5 char, alphabet tanpa O/0/I/1) + `access_token` (random, untuk URL invoice)
   - Honeypot field anti-bot
-- [ ] Rate limit submit (Upstash) — ditunda: `@upstash/*` belum terpasang (bagian gate Fase 4)
+- [x] Rate limit submit (Upstash) — sliding window 10 req / 10 menit per IP, fail-open kalau env kosong
 - [x] Redirect ke `/order/sukses/[orderId]`
 
 ## Fase 4 — Invoice, PDF, Email
