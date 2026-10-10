@@ -2,6 +2,7 @@ import { fail } from '@sveltejs/kit';
 import { getActiveCatalog, createOrder, OrderError } from '$lib/server/db/queries/order';
 import { checkoutSchema, checkoutItemsSchema, type CheckoutItem } from '$lib/schemas/order';
 import { checkOrderSubmitRateLimit } from '$lib/server/ratelimit';
+import { processNewInvoice } from '$lib/server/invoice/process';
 import { logger } from '$lib/server/logger';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -28,6 +29,7 @@ export const actions: Actions = {
     try {
       const rl = await checkOrderSubmitRateLimit(getClientAddress());
       if (!rl.success) {
+        logger.warn('order.rate-limited', { remaining: rl.remaining });
         return fail(429, { error: 'Terlalu banyak percobaan. Silakan coba lagi beberapa menit.' });
       }
     } catch (err) {
@@ -53,15 +55,26 @@ export const actions: Actions = {
       return fail(400, { error: 'Keranjang tidak valid. Silakan muat ulang halaman order.' });
     }
 
+    logger.info('order.submit', { items: items.length, hasShipping: !!parsed.data.shippingId });
+
     try {
-      const { orderId } = await createOrder({
+      const { orderId, accessToken } = await createOrder({
         handle: parsed.data.handle,
         email: parsed.data.email,
         note: parsed.data.note ?? '',
         items,
         shippingId: parsed.data.shippingId || null
       });
-      return { success: true, orderId };
+
+      // Trigger invoice sinkron (best practice Fase 4): order tetap sukses
+      // walau PDF/email gagal — status dicatat FAILED untuk retry admin.
+      try {
+        await processNewInvoice(orderId, accessToken);
+      } catch (err) {
+        logger.error('order.invoice-failed', { orderId, error: err });
+      }
+
+      return { success: true, orderId, accessToken };
     } catch (err) {
       if (err instanceof OrderError) {
         return fail(400, { error: err.message });

@@ -37,3 +37,31 @@ export async function uploadQrisImage(file: File): Promise<{ url: string; path: 
 export async function deleteQrisImage(path: string) {
   await supabaseAdmin.storage.from('qris').remove([path]);
 }
+
+export async function uploadInvoicePdf(
+  orderId: string,
+  pdf: Uint8Array
+): Promise<{ url: string; path: string }> {
+  const path = `${orderId}.pdf`;
+
+  const { error } = await supabaseAdmin.storage
+    .from('invoices')
+    .upload(path, Buffer.from(pdf), { upsert: true, contentType: 'application/pdf' });
+
+  if (error) {
+    throw new Error(`Gagal upload PDF invoice: ${error.message}`);
+  }
+
+  const { data } = supabaseAdmin.storage.from('invoices').getPublicUrl(path);
+  return { url: data.publicUrl, path };
+}
+
+export async function downloadInvoicePdf(path: string): Promise<Uint8Array> {
+  const { data, error } = await supabaseAdmin.storage.from('invoices').download(path);
+
+  if (error || !data) {
+    throw new Error(`Gagal unduh PDF invoice: ${error?.message ?? 'file tidak ada'}`);
+  }
+
+  return new Uint8Array(await data.arrayBuffer());
+}

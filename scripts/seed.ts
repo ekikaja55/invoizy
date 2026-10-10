@@ -26,11 +26,6 @@ async function main() {
       instagram: '@mytokogweh',
       twitter: '@mytokogweh',
       emailFromName: 'mytokogweh',
-      qrisUrl: null,
-      bankName: null,
-      bankAccountNumber: null,
-      bankAccountHolder: null,
-      vaInfo: null,
       paymentNote: 'Barang yang sudah dibeli tidak dapat ditukar.'
     })
     .onConflictDoNothing({ target: schema.storeSettings.id });

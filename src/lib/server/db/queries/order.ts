@@ -1,7 +1,8 @@
 import { db } from '$lib/server/db';
-import { categories, products, orders, orderItems } from '$lib/server/db/schema';
+import { categories, products, orders, orderItems, storeSettings, paymentMethods, qrisCodes } from '$lib/server/db/schema';
 import { eq, asc, and, gte, inArray, sql } from 'drizzle-orm';
 import { generateOrderId, generateAccessToken } from '$lib/utils/order-id';
+import { logger } from '$lib/server/logger';
 
 export class OrderError extends Error {}
 
@@ -29,7 +30,9 @@ export async function getActiveCatalog() {
 }
 
 export async function createOrder(input: CreateOrderInput) {
-  return db.transaction(async (tx) => {
+  // track: catat start/success/durasi + error lengkap (termasuk code/detail Postgres).
+  return logger.track('order.create', { items: input.items.length }, () =>
+    db.transaction(async (tx) => {
     const productIds = [
       ...new Set([
         ...input.items.map((i) => i.productId),
@@ -132,10 +135,88 @@ export async function createOrder(input: CreateOrderInput) {
       })
       .returning();
 
+    logger.info('order.inserted', { orderId: order.orderId, total: order.total });
+
     await tx.insert(orderItems).values(
-      lineItems.map((item) => ({ ...item, orderId: order.id }))
+      lineItems.map((item, idx) => ({ ...item, orderId: order.id, sortOrder: idx }))
     );
 
+    logger.info('order.items-inserted', { orderId: order.orderId, count: lineItems.length });
+
     return { orderId: order.orderId, accessToken: order.accessToken };
+    })
+  );
+}
+
+export async function getOrderByToken(orderId: string, accessToken: string) {
+  const order = await db.query.orders.findFirst({
+    where: and(eq(orders.orderId, orderId), eq(orders.accessToken, accessToken)),
+    with: {
+      items: {
+        orderBy: [asc(orderItems.sortOrder)]
+      }
+    }
   });
+
+  if (!order) return null;
+
+  const settings = (await db.query.storeSettings.findFirst({
+    where: eq(storeSettings.id, 1)
+  })) ?? {
+    storeName: 'Invoizy Store',
+    instagram: '',
+    twitter: '',
+    emailFromName: '',
+    paymentNote: ''
+  };
+
+  const methods = await db.query.paymentMethods.findMany({
+    where: eq(paymentMethods.active, true),
+    orderBy: [asc(paymentMethods.sortOrder)]
+  });
+
+  const qris = await db.query.qrisCodes.findMany({
+    where: eq(qrisCodes.active, true),
+    orderBy: [asc(qrisCodes.sortOrder)]
+  });
+
+  return {
+    order,
+    settings,
+    paymentMethods: methods,
+    qrisCodes: qris
+  };
+}
+
+export async function getOrderById(orderId: string) {
+  return db.query.orders.findFirst({
+    where: eq(orders.orderId, orderId),
+    with: {
+      items: {
+        orderBy: [asc(orderItems.sortOrder)]
+      }
+    }
+  });
+}
+
+export async function updateOrderInvoiceResult(
+  orderId: string,
+  data: {
+    invoiceStatus: 'PENDING' | 'GENERATING' | 'SENT' | 'FAILED';
+    invoiceUrl?: string;
+    pdfFilePath?: string;
+    error?: string | null;
+  }
+) {
+  await db
+    .update(orders)
+    .set(data)
+    .where(eq(orders.orderId, orderId));
+}
+
+export async function updateOrderPaymentStatus(
+  orderId: string,
+  paymentStatus: 'PENDING' | 'CONFIRMED' | 'CANCELLED'
+) {
+  await db.update(orders).set({ paymentStatus }).where(eq(orders.orderId, orderId));
 }

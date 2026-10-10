@@ -2,10 +2,18 @@
   import { cart } from '$lib/stores/cart.svelte';
   import { untrack } from 'svelte';
   import { resolve } from '$app/paths';
+  import type { ResolvedPathname } from '$app/types';
   import { CheckCircle2 } from '@lucide/svelte';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
+
+  // Query ditempel manual (token UUID aman-URL); path tetap via resolve().
+  const invoiceHref = $derived(
+    data.token
+      ? (`${resolve('/invoice/[orderId]', { orderId: data.orderId })}?token=${data.token}` as ResolvedPathname)
+      : null
+  );
 
   // Order sukses dibuat → kosongkan keranjang (sekali, saat halaman dimuat).
   $effect(() => {
@@ -23,6 +31,15 @@
   <p class="mt-1 text-sm text-neutral-500">
     Invoice akan dikirim ke email kamu. Simpan ID pesanan untuk memudahkan konfirmasi.
   </p>
+  {#if invoiceHref}
+    <a
+      href={invoiceHref}
+      class="mt-4 rounded-lg border border-neutral-300 px-5 py-2.5 text-sm font-medium
+             hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-white/10"
+    >
+      Lihat Invoice
+    </a>
+  {/if}
   <a
     href={resolve('/order')}
     class="mt-6 rounded-lg bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white

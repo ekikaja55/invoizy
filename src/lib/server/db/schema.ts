@@ -181,6 +181,7 @@ export const orderItems = pgTable('order_items', {
 
   qty: integer('qty').notNull(),
   subtotal: integer('subtotal').notNull(),
+  sortOrder: integer('sort_order').notNull().default(0),
 
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });

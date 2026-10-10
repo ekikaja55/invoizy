@@ -34,6 +34,12 @@ export default defineConfig(
 		}
 	},
 	{
+		// Template HTML email dirender ke string untuk Resend (dibuka di luar app),
+		// bukan navigasi in-app — resolve() tidak berlaku di sana.
+		files: ['src/lib/server/email/templates/**/*.svelte'],
+		rules: { 'svelte/no-navigation-without-resolve': 'off' }
+	},
+	{
 		// Override or add rule settings here, such as:
 		// 'svelte/button-has-type': 'error'
 		rules: {}

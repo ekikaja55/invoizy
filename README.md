@@ -43,22 +43,22 @@ web app SvelteKit standalone.
 
 ## Tech Stack
 
-| Kategori | Teknologi |
-|---|---|
-| Framework | SvelteKit 2 (Svelte 5 / runes) |
-| Hosting | Vercel (`adapter-vercel`) |
-| Database | Supabase Postgres |
-| ORM | Drizzle ORM (`drizzle-kit`, driver `postgres`) |
-| Auth | Better Auth |
-| Storage | Supabase Storage (bucket `qris`, `invoices` — public) |
-| Styling | Tailwind CSS v4 (`@theme` tokens) |
-| Font | Fraunces (display) + Inter (body) |
-| PDF | Puppeteer-core + `@sparticuz/chromium-min` |
-| Email | Resend + `svelte-email-tailwind` |
-| Form & Validasi | `sveltekit-superforms` + `zod` |
-| Rate Limit | Upstash Redis + `@upstash/ratelimit` |
-| Testing | Vitest (unit), Playwright (E2E) |
-| Lint/Format | ESLint, Prettier |
+| Kategori        | Teknologi                                             |
+| --------------- | ----------------------------------------------------- |
+| Framework       | SvelteKit 2 (Svelte 5 / runes)                        |
+| Hosting         | Vercel (`adapter-vercel`)                             |
+| Database        | Supabase Postgres                                     |
+| ORM             | Drizzle ORM (`drizzle-kit`, driver `postgres`)        |
+| Auth            | Better Auth                                           |
+| Storage         | Supabase Storage (bucket `qris`, `invoices` — public) |
+| Styling         | Tailwind CSS v4 (`@theme` tokens)                     |
+| Font            | Fraunces (display) + Inter (body)                     |
+| PDF             | Satori + `@resvg/resvg-js` + `pdf-lib`                    |
+| Email           | Resend + `svelte-email-tailwind`                      |
+| Form & Validasi | SvelteKit form actions + `zod`                        |
+| Rate Limit      | Upstash Redis + `@upstash/ratelimit`                  |
+| Testing         | Vitest (unit), Playwright (E2E)                       |
+| Lint/Format     | ESLint, Prettier                                      |
 
 ## Arsitektur & Alur Data
 
@@ -73,7 +73,7 @@ Buyer                          Admin
                         ├─▶ Insert orders + order_items (snapshot)
                         ├─▶ Generate order_id + access_token
                         │
-                        ├─▶ Render InvoiceDocument → PDF (Puppeteer)
+                        ├─▶ Render InvoiceDocument → PDF (Satori + resvg + pdf-lib)
                         ├─▶ Upload PDF → Supabase Storage (invoices/)
                         ├─▶ Kirim email (Resend) dgn lampiran PDF
                         │
@@ -88,6 +88,11 @@ Buyer                          Admin
 Kenapa PDF di-render server-side (bukan client screenshot)? Supaya hasil
 konsisten di semua device, dan bisa dilampirkan langsung ke email tanpa
 campur tangan buyer.
+
+Pipeline PDF: `InvoiceDocument` (Svelte) → HTML → **Satori** (HTML→SVG,
+dengan font Inter/Fraunces yang di-embed) → **@resvg/resvg-js** (SVG→PNG)
+→ **pdf-lib** (PNG→PDF). Tidak ada Chromium/Puppeteer — ukuran bundle
+function jauh lebih kecil dan cold start lebih cepat di Vercel.
 
 ## Struktur Direktori
 
@@ -120,14 +125,14 @@ src/
 
 ## Skema Database
 
-| Tabel | Keterangan |
-|---|---|
-| `store_settings` | Singleton: nama toko, sosmed, info pembayaran statis (QRIS/rekening/VA), payment note |
-| `categories` | Kategori produk, punya `sort_order` |
-| `products` | Nama, harga (integer rupiah), stok, `track_stock`, `active` |
-| `orders` | Data order + `access_token` untuk akses invoice, status invoice & pembayaran |
-| `order_items` | Snapshot nama & harga per item saat order dibuat (tidak berubah walau produk asli diedit) |
-| Tabel auth (`user`, `session`, dst) | Digenerate otomatis oleh Better Auth, jangan diedit manual |
+| Tabel                               | Keterangan                                                                                |
+| ----------------------------------- | ----------------------------------------------------------------------------------------- |
+| `store_settings`                    | Singleton: nama toko, sosmed, info pembayaran statis (QRIS/rekening/VA), payment note     |
+| `categories`                        | Kategori produk, punya `sort_order`                                                       |
+| `products`                          | Nama, harga (integer rupiah), stok, `track_stock`, `active`                               |
+| `orders`                            | Data order + `access_token` untuk akses invoice, status invoice & pembayaran              |
+| `order_items`                       | Snapshot nama & harga per item saat order dibuat (tidak berubah walau produk asli diedit) |
+| Tabel auth (`user`, `session`, dst) | Digenerate otomatis oleh Better Auth, jangan diedit manual                                |
 
 > **Catatan desain penting:** harga selalu disimpan sebagai **integer rupiah**
 > (bukan float), untuk menghindari error pembulatan.
@@ -160,33 +165,33 @@ Buka `http://localhost:5173`.
 
 ## Environment Variables
 
-| Variabel | Wajib | Keterangan |
-|---|---|---|
-| `DATABASE_URL` | ✅ | Connection string Supabase, **pakai pooling (port 6543, `pgbouncer=true`)** |
-| `BETTER_AUTH_SECRET` | ✅ | String random panjang, generate dengan `openssl rand -hex 32` |
-| `ORIGIN` | ✅ | URL app (local: `http://localhost:5173`, prod: domain Vercel) |
-| `PUBLIC_APP_URL` | ✅ | Sama seperti `ORIGIN`, dipakai di email/link invoice |
-| `RESEND_API_KEY` | ✅ | Dari dashboard Resend |
-| `EMAIL_FROM` | ✅ | Alamat pengirim (harus domain terverifikasi di Resend) |
-| `SUPABASE_URL` | ✅ | Dari project settings Supabase |
-| `SUPABASE_SERVICE_ROLE_KEY` | ✅ | Untuk upload ke Storage dari server |
-| `UPSTASH_REDIS_REST_URL` | opsional | Rate limiting form order |
-| `UPSTASH_REDIS_REST_TOKEN` | opsional | Rate limiting form order |
+| Variabel                    | Wajib    | Keterangan                                                                  |
+| --------------------------- | -------- | --------------------------------------------------------------------------- |
+| `DATABASE_URL`              | ✅       | Connection string Supabase, **pakai pooling (port 6543, `pgbouncer=true`)** |
+| `BETTER_AUTH_SECRET`        | ✅       | String random panjang, generate dengan `openssl rand -hex 32`               |
+| `ORIGIN`                    | ✅       | URL app (local: `http://localhost:5173`, prod: domain Vercel)               |
+| `PUBLIC_APP_URL`            | ✅       | Sama seperti `ORIGIN`, dipakai di email/link invoice                        |
+| `RESEND_API_KEY`            | ✅       | Dari dashboard Resend                                                       |
+| `EMAIL_FROM`                | ✅       | Alamat pengirim (harus domain terverifikasi di Resend)                      |
+| `SUPABASE_URL`              | ✅       | Dari project settings Supabase                                              |
+| `SUPABASE_SERVICE_ROLE_KEY` | ✅       | Untuk upload ke Storage dari server                                         |
+| `UPSTASH_REDIS_REST_URL`    | opsional | Rate limiting form order                                                    |
+| `UPSTASH_REDIS_REST_TOKEN`  | opsional | Rate limiting form order                                                    |
 
 ## Scripts
 
-| Command | Fungsi |
-|---|---|
-| `npm run dev` | Jalankan dev server |
-| `npm run build` | Build production |
-| `npm run preview` | Preview build lokal |
-| `npm run check` | Type check |
-| `npm run lint` / `format` | Lint & format |
-| `npm run test` | Jalankan unit test sekali |
-| `npm run db:push` | Push schema Drizzle ke DB |
-| `npm run db:generate` | Generate migration file |
-| `npm run db:studio` | Buka Drizzle Studio |
-| `npm run auth:schema` | Generate schema Better Auth |
+| Command                   | Fungsi                      |
+| ------------------------- | --------------------------- |
+| `npm run dev`             | Jalankan dev server         |
+| `npm run build`           | Build production            |
+| `npm run preview`         | Preview build lokal         |
+| `npm run check`           | Type check                  |
+| `npm run lint` / `format` | Lint & format               |
+| `npm run test`            | Jalankan unit test sekali   |
+| `npm run db:push`         | Push schema Drizzle ke DB   |
+| `npm run db:generate`     | Generate migration file     |
+| `npm run db:studio`       | Buka Drizzle Studio         |
+| `npm run auth:schema`     | Generate schema Better Auth |
 
 ## Deployment ke Vercel
 
@@ -233,14 +238,17 @@ Buka `http://localhost:5173`.
 ## Troubleshooting
 
 **Email tidak terkirim**
+
 - Cek domain sudah verified di Resend
 - Cek log function di Vercel untuk error dari Resend API
 
 **PDF gagal / timeout**
+
 - Cek route tidak pakai Edge Runtime
 - Cek ukuran bundle Chromium tidak melebihi limit function Vercel
 
 **Cold start lambat saat generate PDF**
+
 - Ini wajar untuk Puppeteer di serverless; jika mengganggu, evaluasi migrasi ke Satori+resvg (lihat catatan arsitektur)
 
 ## Roadmap

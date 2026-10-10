@@ -54,15 +54,17 @@
 
 ## Fase 4 — Invoice, PDF, Email
 
-- [ ] Komponen `InvoiceDocument.svelte` — reusable untuk tampilan web & sumber render PDF
-- [ ] `/invoice/[orderId]`: validasi lewat `access_token` di query/cookie, bukan cuma order_id yang mudah ditebak
-- [ ] `/invoice/[orderId]/pdf`: render via Puppeteer (`puppeteer-core` + `@sparticuz/chromium-min`), runtime Node
-- [ ] Upload PDF ke Supabase Storage bucket `invoices`, simpan path/url di `orders.pdf_file_path`
-- [ ] Setup Resend + `svelte-email-tailwind` template email (subject, body ringkas, lampiran PDF)
-- [ ] Trigger otomatis: setelah order sukses dibuat → generate PDF → kirim email → update `invoice_status`
-- [ ] Idempotency guard: jangan generate/kirim dobel kalau ada retry
-- [ ] Admin action: tombol "Generate ulang PDF" dan "Kirim ulang email" di detail order
-- [ ] Admin bisa update `payment_status` manual (PENDING → CONFIRMED)
+- [x] Komponen `InvoiceDocument.svelte` — reusable untuk tampilan web & sumber render PDF
+  - Catatan: PDF pakai template inline terpisah (`buildInvoicePdfHtml` di `server/pdf/render.ts`) karena Satori mengabaikan class Tailwind; kontrak bersama = `InvoiceData`
+- [x] `/invoice/[orderId]`: validasi lewat `access_token` di query/cookie, bukan cuma order_id yang mudah ditebak
+- [x] `/invoice/[orderId]/pdf`: render via Satori
+- [x] Upload PDF ke Supabase Storage bucket `invoices`, simpan path/url di `orders.pdf_file_path`
+- [x] Setup Resend + `svelte-email-tailwind` template email (subject, body ringkas, lampiran PDF)
+  - Catatan: template hand-inline style (tanpa komponen `svelte-email-tailwind`) — lebih pasti di klien email
+- [x] Trigger otomatis: setelah order sukses dibuat → generate PDF → kirim email → update `invoice_status`
+- [x] Idempotency guard: jangan generate/kirim dobel kalau ada retry
+- [x] Admin action: tombol "Generate ulang PDF" dan "Kirim ulang email" di detail order
+- [x] Admin bisa update `payment_status` manual (PENDING → CONFIRMED)
 
 ## Fase 5 — Dashboard & Order Management
 

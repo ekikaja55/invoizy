@@ -17,11 +17,28 @@ interface LogEntry {
 
 function serializeError(err: unknown) {
   if (err instanceof Error) {
-    return {
+    const out: Record<string, unknown> = {
       name: err.name,
       message: err.message,
       stack: dev ? err.stack : undefined
     };
+    // Driver Postgres (postgres-js/drizzle) menaruh diagnosis di properti
+    // tambahan (code/detail/constraint/hint/cause) — jangan dibuang, kalau
+    // tidak error DB selalu tampil misterius.
+    for (const key of Object.keys(err)) {
+      if (!(key in out)) {
+        try {
+          out[key] = (err as unknown as Record<string, unknown>)[key];
+        } catch {
+          // abaikan getter yang throw
+        }
+      }
+    }
+    const cause = (err as { cause?: unknown }).cause;
+    if (cause !== undefined && !('cause' in out)) {
+      out.cause = cause instanceof Error ? serializeError(cause) : cause;
+    }
+    return out;
   }
   return err;
 }

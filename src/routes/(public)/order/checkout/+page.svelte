@@ -7,6 +7,7 @@
   import { cart } from '$lib/stores/cart.svelte';
   import { handleFormResult } from '$lib/utils/handle-form-result';
   import { formatRupiah } from '$lib/utils/currency';
+  import type { ResolvedPathname } from '$app/types';
   import { ShoppingBag } from '@lucide/svelte';
   import type { PageData } from './$types';
 
@@ -97,7 +98,13 @@
         isBusy = true;
         return async ({ result }) => {
           if (result.type === 'success' && typeof result.data?.orderId === 'string') {
-            goto(resolve(`/order/sukses/${result.data.orderId}`));
+            const token =
+              typeof result.data?.accessToken === 'string' ? `?token=${result.data.accessToken}` : '';
+            // Query ditempel manual (token UUID aman-URL); path tetap via resolve().
+            const dest = `${resolve('/(public)/order/sukses/[orderId]', {
+              orderId: result.data.orderId
+            })}${token}` as ResolvedPathname;
+            goto(dest);
             return;
           }
           handleFormResult(result, { failure: 'Gagal membuat pesanan.' });

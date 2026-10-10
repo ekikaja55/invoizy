@@ -25,5 +25,8 @@ vite.config.ts.timestamp-*
 /notes
 
 # Agent instructions (personal, tidak untuk dibagikan)
-/AGENTS.md
-
+# /AGENTS.md
+# opencode.jsonc
+# AGENTS.md
+# .mcp.json
+# GEMINI.md
