@@ -11,9 +11,23 @@
 		503: 'Layanan sedang tidak tersedia.'
 	};
 
-	// 5xx = kemungkinan DB/server gangguan → tampilkan kontak darurat (statis,
-	// tidak bergantung DB). 404/403 tetap ringan tanpa panel.
+	// Panel kontak tampil di SEMUA error — pesannya disesuaikan:
+	// 404/403 = butuh petunjuk/akses, 5xx = darurat server.
 	const isServerError = $derived(page.status >= 500);
+	const contactTitle = $derived(
+		page.status === 404
+			? 'Tidak ketemu yang dicari?'
+			: page.status === 403
+				? 'Perlu akses?'
+				: 'Butuh bantuan cepat?'
+	);
+	const contactMessage = $derived(
+		page.status === 404
+			? 'Link mungkin salah ketik atau sudah dihapus. Kalau yakin link-nya benar, hubungi kami:'
+			: page.status === 403
+				? 'Halaman ini khusus admin. Kalau kamu seharusnya bisa masuk, hubungi admin:'
+				: 'Server kami sedang gangguan. Order-mu aman — hubungi kami lewat salah satu ini:'
+	);
 	const wa = waLink(EMERGENCY_CONTACT.wa, 'Halo, web nya error. Saya butuh bantuan.');
 	const igHandle = EMERGENCY_CONTACT.instagram.replace(/^@/, '');
 </script>
@@ -28,15 +42,12 @@
 			<p class="mt-2 text-sm opacity-70">{page.error.message}</p>
 		{/if}
 
-		{#if isServerError}
-			<div
-				class="mt-6 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-left text-sm
+		<div
+			class="mt-6 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-left text-sm
                dark:border-amber-800 dark:bg-amber-950"
-			>
-				<p class="font-medium">Butuh bantuan cepat?</p>
-				<p class="mt-1 text-neutral-600 dark:text-neutral-400">
-					Server kami sedang gangguan. Order-mu aman — hubungi kami lewat salah satu ini:
-				</p>
+		>
+			<p class="font-medium">{contactTitle}</p>
+			<p class="mt-1 text-neutral-600 dark:text-neutral-400">{contactMessage}</p>
 				<div class="mt-3 flex flex-wrap gap-2">
 					{#if wa}
 						<a
@@ -67,7 +78,6 @@
 					</a>
 				</div>
 			</div>
-		{/if}
 
 		<div class="mt-6 flex items-center justify-center gap-2">
 			{#if isServerError}
