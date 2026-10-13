@@ -6,7 +6,7 @@ import { downloadInvoicePdf } from '$lib/server/storage/supabase';
 import { logger } from '$lib/server/logger';
 import type { RequestHandler } from './$types';
 
-// Butuh Node runtime (fs font lokal + native resvg) — jangan pindah ke edge.
+// Render pdf-lib murni (font standar PDF, tanpa aset native) — aman di edge/node serverless.
 export const GET: RequestHandler = async ({ params, url }) => {
 	const token = url.searchParams.get('token');
 

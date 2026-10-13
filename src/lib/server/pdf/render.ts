@@ -1,187 +1,218 @@
-import { readFile } from 'node:fs/promises';
-import satori from 'satori';
-import { html as parseHtml } from 'satori-html';
-import { Resvg } from '@resvg/resvg-js';
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
 import { formatRupiah } from '$lib/utils/currency';
+import { logger } from '$lib/server/logger';
 import type { InvoiceData } from '$lib/components/invoice/index';
 
-// Lebar kanvas PDF (px @96dpi ≈ lebar A4). PNG di-render 1.5x agar tajam.
-const PDF_WIDTH = 794;
-const PNG_WIDTH = 1191;
+// Render PDF NATIF pdf-lib: font standar PDF (Helvetica, built-in — tanpa file
+// font/wasm/native apa pun) sehingga aman di serverless/Vercel. Multi-halaman
+// bila item banyak (lebih baik dari contain-fit satu halaman versi Satori).
+const PAGE_W = 595.28; // A4 pt
+const PAGE_H = 841.89;
+const MARGIN = 48;
+const CONTENT_W = PAGE_W - MARGIN * 2;
 
-// Satori (Yoga) wajib display:flex eksplisit di tiap div yang punya >1 anak.
-const COL = 'display:flex;flex-direction:column';
-const ROW = 'display:flex;flex-direction:row';
+const INK = rgb(0.09, 0.09, 0.11);
+const GRAY = rgb(0.45, 0.45, 0.46);
+const FAINT = rgb(0.64, 0.64, 0.66);
+const LINE = rgb(0.88, 0.88, 0.89);
+const WHITE = rgb(1, 1, 1);
+const DARK = rgb(0.09, 0.09, 0.11);
 
-interface PdfFont {
-	name: string;
-	data: ArrayBuffer;
-	weight: 400 | 600 | 700;
-	style: 'normal';
+interface Ctx {
+  pdf: PDFDocument;
+  page: PDFPage;
+  regular: PDFFont;
+  bold: PDFFont;
+  y: number;
 }
 
-let fontsCache: PdfFont[] | null = null;
-
-function toArrayBuffer(buf: Buffer): ArrayBuffer {
-	return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
+function newPage(ctx: Ctx) {
+  ctx.page = ctx.pdf.addPage([PAGE_W, PAGE_H]);
+  ctx.y = PAGE_H - MARGIN;
 }
 
-async function loadFonts(): Promise<PdfFont[]> {
-	if (fontsCache) return fontsCache;
-
-	// Font lokal (dibundel di repo) — tanpa fetch eksternal saat render.
-	const dir = new URL('./fonts/', import.meta.url);
-	const [regular, semiBold, bold] = await Promise.all([
-		readFile(new URL('Inter-Regular.ttf', dir)),
-		readFile(new URL('Inter-SemiBold.ttf', dir)),
-		readFile(new URL('Inter-Bold.ttf', dir))
-	]);
-
-	fontsCache = [
-		{ name: 'Inter', data: toArrayBuffer(regular), weight: 400, style: 'normal' },
-		{ name: 'Inter', data: toArrayBuffer(semiBold), weight: 600, style: 'normal' },
-		{ name: 'Inter', data: toArrayBuffer(bold), weight: 700, style: 'normal' }
-	];
-	return fontsCache;
+function ensure(ctx: Ctx, h: number) {
+  if (ctx.y - h < MARGIN) newPage(ctx);
 }
 
-function esc(value: string): string {
-	return value
-		.replace(/&/g, '&amp;')
-		.replace(/</g, '&lt;')
-		.replace(/>/g, '&gt;')
-		.replace(/"/g, '&quot;');
+function wrap(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
+  const words = text.split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let cur = '';
+  for (const w of words) {
+    const next = cur ? `${cur} ${w}` : w;
+    if (font.widthOfTextAtSize(next, size) <= maxWidth || !cur) {
+      cur = next;
+    } else {
+      lines.push(cur);
+      cur = w;
+    }
+  }
+  if (cur) lines.push(cur);
+  return lines.length > 0 ? lines : [''];
 }
 
-/**
- * Template HTML khusus PDF — SEMUA styling inline.
- * Satori tidak mengeksekusi class Tailwind, jadi template ini disengaja
- * terpisah dari InvoiceDocument.svelte (web). Kontrak bersama = InvoiceData.
- */
-export function buildInvoicePdfHtml(data: InvoiceData): string {
-	const { order, settings, paymentMethods, qrisCodes } = data;
-	const shippingDiff = order.total - order.subtotal;
-	const createdLabel = new Intl.DateTimeFormat('id-ID', {
-		dateStyle: 'medium',
-		timeStyle: 'short'
-	}).format(new Date(order.createdAt));
-
-	const font = "font-family:'Inter',sans-serif";
-
-	const items = order.items
-		.map(
-			(i) => `
-			<div style="${ROW};justify-content:space-between;padding:10px 0;border-bottom:1px solid #eeeeee;">
-				<div style="${COL};">
-					<div style="font-size:14px;font-weight:600;">${esc(i.nameSnapshot)}</div>
-					<div style="font-size:12px;color:#737373;">${esc(i.categorySnapshot)} · ${i.qty} × ${esc(formatRupiah(i.priceSnapshot))}</div>
-				</div>
-				<div style="font-size:14px;font-weight:600;">${esc(formatRupiah(i.subtotal))}</div>
-			</div>`
-		)
-		.join('');
-
-	const methods = paymentMethods
-		.map(
-			(m) => `
-			<div style="${COL};border:1px solid #e5e5e5;border-radius:12px;padding:12px;margin-top:12px;">
-				<div style="font-size:14px;font-weight:600;">${esc(m.label)}</div>
-				<div style="font-size:20px;font-weight:700;margin-top:2px;">${esc(m.accountNumber)}</div>
-				<div style="font-size:12px;color:#737373;">a.n. ${esc(m.accountHolder)}</div>
-				${m.note ? `<div style="font-size:12px;color:#737373;margin-top:4px;">${esc(m.note)}</div>` : ''}
-			</div>`
-		)
-		.join('');
-
-	const qris = qrisCodes
-		.map(
-			(q) => `
-			<div style="${COL};border:1px solid #e5e5e5;border-radius:12px;padding:12px;margin-top:12px;">
-				<div style="font-size:14px;font-weight:600;">${esc(q.label)}</div>
-				<img src="${esc(q.imageUrl)}" width="240" height="240" style="width:240px;height:240px;margin-top:8px;" />
-			</div>`
-		)
-		.join('');
-
-	return `
-		<div style="${COL};width:${PDF_WIDTH}px;padding:48px;background:#ffffff;color:#171717;${font}">
-			<div style="${COL};border-bottom:1px solid #e5e5e5;padding-bottom:16px;">
-				<div style="font-size:14px;color:#737373;">${esc(settings.storeName || 'Invoizy Store')}</div>
-				<div style="font-size:28px;font-weight:700;margin-top:4px;">Invoice ${esc(order.orderId)}</div>
-				<div style="font-size:13px;color:#737373;margin-top:4px;">${esc(createdLabel)}</div>
-				<div style="${ROW};font-size:14px;margin-top:8px;"><span style="font-weight:600;">${esc(order.handle)}</span><span style="color:#737373;"> · ${esc(order.email)}</span></div>
-				${order.note ? `<div style="font-size:13px;color:#737373;margin-top:4px;">Catatan: ${esc(order.note)}</div>` : ''}
-			</div>
-			<div style="${COL};margin-top:16px;">${items}</div>
-			<div style="${COL};margin-top:12px;border-top:1px solid #e5e5e5;padding-top:12px;">
-				<div style="${ROW};justify-content:space-between;font-size:14px;">
-					<span style="color:#737373;">Subtotal</span><span>${esc(formatRupiah(order.subtotal))}</span>
-				</div>
-				${
-					shippingDiff > 0
-						? `<div style="${ROW};justify-content:space-between;font-size:14px;margin-top:4px;">
-							<span style="color:#737373;">Ongkir${data.order.shippingLabel ? ` · ${esc(data.order.shippingLabel)}` : ''}</span><span>${esc(formatRupiah(shippingDiff))}</span>
-						</div>`
-						: ''
-				}
-				<div style="${ROW};justify-content:space-between;font-size:20px;font-weight:700;margin-top:8px;">
-					<span>Total</span><span>${esc(formatRupiah(order.total))}</span>
-				</div>
-			</div>
-			<div style="${COL};margin-top:24px;border-top:1px solid #e5e5e5;padding-top:16px;">
-				<div style="font-size:12px;font-weight:600;letter-spacing:1px;color:#737373;">PEMBAYARAN</div>
-				${methods}${qris}
-				${
-					paymentMethods.length === 0 && qrisCodes.length === 0
-						? '<div style="font-size:14px;color:#737373;margin-top:8px;">Info pembayaran belum diatur toko. Tunggu konfirmasi admin.</div>'
-						: ''
-				}
-				${settings.paymentNote ? `<div style="font-size:13px;color:#737373;margin-top:12px;">${esc(settings.paymentNote)}</div>` : ''}
-				${
-					settings.proofContact
-						? `<div style="${COL};background:#171717;color:#ffffff;border-radius:12px;padding:12px;margin-top:12px;font-size:14px;font-weight:600;">Sudah transfer? Kirim bukti ke ${esc(settings.proofContact)}</div>`
-						: ''
-				}
-			</div>
-			<div style="font-size:11px;color:#a3a3a3;margin-top:24px;">Dibuat otomatis oleh ${esc(settings.storeName || 'Invoizy Store')}</div>
-		</div>`;
+function para(
+  ctx: Ctx,
+  text: string,
+  opts?: { size?: number; bold?: boolean; color?: ReturnType<typeof rgb>; x?: number; maxWidth?: number }
+) {
+  const size = opts?.size ?? 11;
+  const font = opts?.bold ? ctx.bold : ctx.regular;
+  const color = opts?.color ?? INK;
+  const x = opts?.x ?? MARGIN;
+  const maxWidth = opts?.maxWidth ?? CONTENT_W;
+  for (const line of wrap(text, font, size, maxWidth)) {
+    const h = size + 5;
+    ensure(ctx, h);
+    ctx.page.drawText(line, { x, y: ctx.y - size, font, size, color });
+    ctx.y -= h;
+  }
 }
 
-function estimateHeight(data: InvoiceData): number {
-	const h =
-		640 +
-		data.order.items.length * 64 +
-		data.paymentMethods.length * 170 +
-		data.qrisCodes.length * 360;
-	// Estimasi murah hati (upper bound): kelebihan tinggi hanya membuat teks
-	// sedikit mengecil saat fit ke A4, tapi tidak pernah terpotong.
-	return Math.min(2400, Math.max(1000, h));
+function amountOnFirstLine(ctx: Ctx, amount: string, size = 11, bold = false) {
+  const font = bold ? ctx.bold : ctx.regular;
+  const w = font.widthOfTextAtSize(amount, size);
+  ctx.page.drawText(amount, { x: PAGE_W - MARGIN - w, y: ctx.y - size, font, size, color: INK });
 }
 
-/** Pipeline PDF: HTML inline → Satori (SVG) → resvg (PNG) → pdf-lib (PDF A4 satu halaman). */
+function rule(ctx: Ctx) {
+  ensure(ctx, 14);
+  ctx.page.drawRectangle({ x: MARGIN, y: ctx.y - 6, width: CONTENT_W, height: 1, color: LINE });
+  ctx.y -= 14;
+}
+
 export async function renderInvoicePdf(data: InvoiceData): Promise<Uint8Array> {
-	const markup = buildInvoicePdfHtml(data);
-	const fonts = await loadFonts();
-	const height = estimateHeight(data);
+  const { order, settings, paymentMethods, qrisCodes } = data;
+  const shippingDiff = order.total - order.subtotal;
 
-	const svg = await satori(parseHtml(markup), { width: PDF_WIDTH, height, fonts });
-	const png = new Resvg(svg, { fitTo: { mode: 'width', value: PNG_WIDTH } }).render().asPng();
+  const pdf = await PDFDocument.create();
+  const regular = await pdf.embedFont(StandardFonts.Helvetica);
+  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const ctx: Ctx = { pdf, page: pdf.addPage([PAGE_W, PAGE_H]), regular, bold, y: PAGE_H - MARGIN };
 
-	const pdf = await PDFDocument.create();
-	const img = await pdf.embedPng(png);
+  // ── Kop ──
+  para(ctx, settings.storeName || 'Invoizy Store', { size: 12, color: GRAY });
+  para(ctx, `Invoice ${order.orderId}`, { size: 24, bold: true });
+  const createdLabel = new Intl.DateTimeFormat('id-ID', {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  }).format(new Date(order.createdAt));
+  para(ctx, createdLabel, { size: 11, color: GRAY });
+  para(ctx, `${order.handle} · ${order.email}`, { size: 11, bold: true });
+  if (order.note) para(ctx, `Catatan: ${order.note}`, { size: 11, color: GRAY });
+  rule(ctx);
 
-	// A4 portrait dalam point, gambar di-fit (contain) ke tengah halaman.
-	const page = pdf.addPage([595.28, 841.89]);
-	const scale = Math.min(page.getWidth() / img.width, page.getHeight() / img.height);
-	const w = img.width * scale;
-	const h = img.height * scale;
-	page.drawImage(img, {
-		x: (page.getWidth() - w) / 2,
-		y: (page.getHeight() - h) / 2,
-		width: w,
-		height: h
-	});
+  // ── Item (dari snapshot) ──
+  for (const item of order.items) {
+    ensure(ctx, 50);
+    const amount = formatRupiah(item.subtotal);
+    amountOnFirstLine(ctx, amount);
+    para(ctx, item.nameSnapshot, { size: 11, bold: true, maxWidth: CONTENT_W - 120 });
+    // kembalikan y termakan amount? amount digambar di baris nama — sejajarkan:
+    para(ctx, `${item.categorySnapshot} · ${item.qty} × ${formatRupiah(item.priceSnapshot)}`, {
+      size: 10,
+      color: GRAY
+    });
+    ctx.y -= 4;
+  }
+  rule(ctx);
 
-	return pdf.save();
+  // ── Total ──
+  ensure(ctx, 20);
+  amountOnFirstLine(ctx, formatRupiah(order.subtotal));
+  para(ctx, 'Subtotal', { color: GRAY });
+  if (shippingDiff > 0) {
+    ensure(ctx, 20);
+    amountOnFirstLine(ctx, formatRupiah(shippingDiff));
+    para(
+      ctx,
+      `Ongkir${order.shippingLabel ? ` · ${order.shippingLabel}` : ''}`,
+      { color: GRAY, maxWidth: CONTENT_W - 140 }
+    );
+  }
+  ensure(ctx, 26);
+  amountOnFirstLine(ctx, formatRupiah(order.total), 14, true);
+  para(ctx, 'Total', { size: 14, bold: true });
+  rule(ctx);
+
+  // ── Pembayaran ──
+  para(ctx, 'PEMBAYARAN', { size: 10, bold: true, color: GRAY });
+
+  if (paymentMethods.length === 0 && qrisCodes.length === 0) {
+    para(ctx, 'Info pembayaran belum diatur toko. Tunggu konfirmasi admin.', { color: GRAY });
+  }
+
+  for (const m of paymentMethods) {
+    const lines = [m.label, m.accountNumber, `a.n. ${m.accountHolder}`];
+    if (m.note) lines.push(m.note);
+    const h = lines.length * 16 + 20;
+    ensure(ctx, h);
+    const top = ctx.y;
+    ctx.page.drawRectangle({
+      x: MARGIN,
+      y: top - h,
+      width: CONTENT_W,
+      height: h,
+      borderColor: LINE,
+      borderWidth: 1
+    });
+    let ly = top - 8;
+    ctx.page.drawText(m.label, { x: MARGIN + 10, y: ly - 11, font: bold, size: 11, color: INK });
+    ly -= 16;
+    ctx.page.drawText(m.accountNumber, { x: MARGIN + 10, y: ly - 13, font: bold, size: 13, color: INK });
+    ly -= 16;
+    ctx.page.drawText(`a.n. ${m.accountHolder}`, { x: MARGIN + 10, y: ly - 10, font: regular, size: 10, color: GRAY });
+    ly -= 16;
+    if (m.note) {
+      for (const ln of wrap(m.note, regular, 10, CONTENT_W - 20)) {
+        ctx.page.drawText(ln, { x: MARGIN + 10, y: ly - 10, font: regular, size: 10, color: GRAY });
+        ly -= 16;
+      }
+    }
+    ctx.y = top - h - 10;
+  }
+
+  for (const q of qrisCodes) {
+    para(ctx, q.label, { bold: true });
+    try {
+      const res = await fetch(q.imageUrl, { signal: AbortSignal.timeout(8000) });
+      const type = res.headers.get('content-type') ?? '';
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const bytes = new Uint8Array(await res.arrayBuffer());
+      const img = type.includes('jpeg') || type.includes('jpg')
+        ? await pdf.embedJpg(bytes)
+        : await pdf.embedPng(bytes);
+      const max = 180;
+      const scale = Math.min(max / img.width, max / img.height);
+      const w = img.width * scale;
+      const h = img.height * scale;
+      ensure(ctx, h + 8);
+      ctx.page.drawImage(img, { x: MARGIN, y: ctx.y - h, width: w, height: h });
+      ctx.y -= h + 8;
+    } catch (err) {
+      logger.warn('invoice.qris-skipped', { label: q.label, error: err });
+      para(ctx, '(QRIS tidak dapat dimuat)', { size: 10, color: FAINT });
+    }
+  }
+
+  if (settings.proofContact) {
+    ensure(ctx, 30);
+    const lines = wrap(`Sudah transfer? Kirim bukti ke ${settings.proofContact}`, bold, 11, CONTENT_W - 20);
+    const h = lines.length * 16 + 16;
+    ensure(ctx, h);
+    const top = ctx.y;
+    ctx.page.drawRectangle({ x: MARGIN, y: top - h, width: CONTENT_W, height: h, color: DARK });
+    let ly = top - 8;
+    for (const ln of lines) {
+      ctx.page.drawText(ln, { x: MARGIN + 10, y: ly - 11, font: bold, size: 11, color: WHITE });
+      ly -= 16;
+    }
+    ctx.y = top - h - 10;
+  }
+
+  if (settings.paymentNote) para(ctx, settings.paymentNote, { color: GRAY });
+  para(ctx, `Dibuat otomatis oleh ${settings.storeName || 'Invoizy Store'}`, { size: 9, color: FAINT });
+
+  return pdf.save();
 }
