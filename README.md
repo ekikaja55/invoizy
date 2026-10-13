@@ -53,7 +53,7 @@ web app SvelteKit standalone.
 | Storage         | Supabase Storage (bucket `qris`, `invoices` — public) |
 | Styling         | Tailwind CSS v4 (`@theme` tokens)                     |
 | Font            | Fraunces (display) + Inter (body)                     |
-| PDF             | Satori + `@resvg/resvg-js` + `pdf-lib`                    |
+| PDF             | Satori + `@resvg/resvg-js` + `pdf-lib`                |
 | Email           | Resend + `svelte-email-tailwind`                      |
 | Form & Validasi | SvelteKit form actions + `zod`                        |
 | Rate Limit      | Upstash Redis + `@upstash/ratelimit`                  |

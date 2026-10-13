@@ -1,4 +1,3 @@
-
 // -----------------------------------------------------------------
 // Penjelasan keputusan penting
 // 1. priceInt bertipe integer, bukan numeric/decimal. Rupiah tidak punya pecahan sen,
@@ -26,10 +25,10 @@ import { relations } from 'drizzle-orm';
 // ─────────────────────────────────────────────
 
 export const invoiceStatusEnum = pgEnum('invoice_status', [
-  'PENDING',
-  'GENERATING',
-  'SENT',
-  'FAILED'
+	'PENDING',
+	'GENERATING',
+	'SENT',
+	'FAILED'
 ]);
 
 export const paymentStatusEnum = pgEnum('payment_status', ['PENDING', 'CONFIRMED', 'CANCELLED']);
@@ -41,13 +40,15 @@ export const paymentMethodTypeEnum = pgEnum('payment_method_type', ['bank', 'va'
 // ─────────────────────────────────────────────
 
 export const storeSettings = pgTable('store_settings', {
-  id: integer('id').primaryKey().default(1),
-  storeName: text('store_name').notNull().default(''),
-  instagram: text('instagram').notNull().default(''),
-  twitter: text('twitter').notNull().default(''),
-  emailFromName: text('email_from_name').notNull().default(''),
-  paymentNote: text('payment_note'),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+	id: integer('id').primaryKey().default(1),
+	storeName: text('store_name').notNull().default(''),
+	instagram: text('instagram').notNull().default(''),
+	twitter: text('twitter').notNull().default(''),
+	emailFromName: text('email_from_name').notNull().default(''),
+	paymentNote: text('payment_note'),
+	proofContact: text('proof_contact').notNull().default(''),
+	emergencyFlatRate: integer('emergency_flat_rate').notNull().default(0),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
 });
 
 // ─────────────────────────────────────────────
@@ -55,33 +56,33 @@ export const storeSettings = pgTable('store_settings', {
 // ─────────────────────────────────────────────
 
 export const paymentMethods = pgTable('payment_methods', {
-  id: uuid('id').primaryKey().defaultRandom(),
+	id: uuid('id').primaryKey().defaultRandom(),
 
-  type: paymentMethodTypeEnum('type').notNull(),
-  label: text('label').notNull(), // "BCA", "Mandiri", "OVO", "DANA", dst
-  accountNumber: text('account_number').notNull(), // no rekening / no VA
-  accountHolder: text('account_holder').notNull(), // atas nama
-  note: text('note'), // catatan khusus metode ini, opsional
+	type: paymentMethodTypeEnum('type').notNull(),
+	label: text('label').notNull(), // "BCA", "Mandiri", "OVO", "DANA", dst
+	accountNumber: text('account_number').notNull(), // no rekening / no VA
+	accountHolder: text('account_holder').notNull(), // atas nama
+	note: text('note'), // catatan khusus metode ini, opsional
 
-  active: boolean('active').notNull().default(true),
-  sortOrder: integer('sort_order').notNull().default(0),
+	active: boolean('active').notNull().default(true),
+	sortOrder: integer('sort_order').notNull().default(0),
 
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
 });
 
 export const qrisCodes = pgTable('qris_codes', {
-  id: uuid('id').primaryKey().defaultRandom(),
+	id: uuid('id').primaryKey().defaultRandom(),
 
-  label: text('label').notNull(), // "QRIS Statis Toko", "QRIS Shopee", dst — bebas ditulis admin
-  imageUrl: text('image_url').notNull(), // url publik di Supabase Storage bucket "qris"
-  imagePath: text('image_path').notNull(), // path internal di bucket, untuk keperluan hapus/ganti file
+	label: text('label').notNull(), // "QRIS Statis Toko", "QRIS Shopee", dst — bebas ditulis admin
+	imageUrl: text('image_url').notNull(), // url publik di Supabase Storage bucket "qris"
+	imagePath: text('image_path').notNull(), // path internal di bucket, untuk keperluan hapus/ganti file
 
-  active: boolean('active').notNull().default(true),
-  sortOrder: integer('sort_order').notNull().default(0),
+	active: boolean('active').notNull().default(true),
+	sortOrder: integer('sort_order').notNull().default(0),
 
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
 });
 
 // ─────────────────────────────────────────────
@@ -89,15 +90,14 @@ export const qrisCodes = pgTable('qris_codes', {
 // ─────────────────────────────────────────────
 
 export const categories = pgTable('categories', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  name: text('name').notNull(),
-  isShipping: boolean('is_shipping').notNull().default(false),
-  sortOrder: integer('sort_order').notNull().default(0),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+	id: uuid('id').primaryKey().defaultRandom(),
+	name: text('name').notNull(),
+	sortOrder: integer('sort_order').notNull().default(0),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
-  products: many(products)
+	products: many(products)
 }));
 
 // ─────────────────────────────────────────────
@@ -105,30 +105,32 @@ export const categoriesRelations = relations(categories, ({ many }) => ({
 // ─────────────────────────────────────────────
 
 export const products = pgTable('products', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  categoryId: uuid('category_id')
-    .notNull()
-    .references(() => categories.id, { onDelete: 'cascade' }),
+	id: uuid('id').primaryKey().defaultRandom(),
+	categoryId: uuid('category_id')
+		.notNull()
+		.references(() => categories.id, { onDelete: 'cascade' }),
 
-  name: text('name').notNull(),
-  priceInt: integer('price_int').notNull(),
+	name: text('name').notNull(),
+	priceInt: integer('price_int').notNull(),
 
-  trackStock: boolean('track_stock').notNull().default(false),
-  stock: integer('stock').notNull().default(0),
+	trackStock: boolean('track_stock').notNull().default(false),
+	stock: integer('stock').notNull().default(0),
+	weightGrams: integer('weight_grams').notNull().default(0),
+	imageUrls: text('image_urls').array(),
 
-  active: boolean('active').notNull().default(true),
-  sortOrder: integer('sort_order').notNull().default(0),
+	active: boolean('active').notNull().default(true),
+	sortOrder: integer('sort_order').notNull().default(0),
 
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
 });
 
 export const productsRelations = relations(products, ({ one, many }) => ({
-  category: one(categories, {
-    fields: [products.categoryId],
-    references: [categories.id]
-  }),
-  orderItems: many(orderItems)
+	category: one(categories, {
+		fields: [products.categoryId],
+		references: [categories.id]
+	}),
+	orderItems: many(orderItems)
 }));
 
 // ─────────────────────────────────────────────
@@ -136,30 +138,32 @@ export const productsRelations = relations(products, ({ one, many }) => ({
 // ─────────────────────────────────────────────
 
 export const orders = pgTable('orders', {
-  id: uuid('id').primaryKey().defaultRandom(),
+	id: uuid('id').primaryKey().defaultRandom(),
 
-  orderId: text('order_id').notNull().unique(),
-  accessToken: text('access_token').notNull().unique(),
+	orderId: text('order_id').notNull().unique(),
+	accessToken: text('access_token').notNull().unique(),
 
-  handle: text('handle').notNull(),
-  email: text('email').notNull(),
-  note: text('note').notNull().default(''),
+	handle: text('handle').notNull(),
+	email: text('email').notNull(),
+	note: text('note').notNull().default(''),
 
-  subtotal: integer('subtotal').notNull(),
-  total: integer('total').notNull(),
+	subtotal: integer('subtotal').notNull(),
+	total: integer('total').notNull(),
 
-  invoiceStatus: invoiceStatusEnum('invoice_status').notNull().default('PENDING'),
-  paymentStatus: paymentStatusEnum('payment_status').notNull().default('PENDING'),
+	invoiceStatus: invoiceStatusEnum('invoice_status').notNull().default('PENDING'),
+	paymentStatus: paymentStatusEnum('payment_status').notNull().default('PENDING'),
 
-  invoiceUrl: text('invoice_url'),
-  pdfFilePath: text('pdf_file_path'),
-  error: text('error'),
+	invoiceUrl: text('invoice_url'),
+	pdfFilePath: text('pdf_file_path'),
+	error: text('error'),
+	shippingLabel: text('shipping_label'),
 
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
 });
 
 export const ordersRelations = relations(orders, ({ many }) => ({
-  items: many(orderItems)
+	items: many(orderItems)
 }));
 
 // ─────────────────────────────────────────────
@@ -167,34 +171,34 @@ export const ordersRelations = relations(orders, ({ many }) => ({
 // ─────────────────────────────────────────────
 
 export const orderItems = pgTable('order_items', {
-  id: uuid('id').primaryKey().defaultRandom(),
+	id: uuid('id').primaryKey().defaultRandom(),
 
-  orderId: uuid('order_id')
-    .notNull()
-    .references(() => orders.id, { onDelete: 'cascade' }),
+	orderId: uuid('order_id')
+		.notNull()
+		.references(() => orders.id, { onDelete: 'cascade' }),
 
-  productId: uuid('product_id').references(() => products.id, { onDelete: 'set null' }),
+	productId: uuid('product_id').references(() => products.id, { onDelete: 'set null' }),
 
-  categorySnapshot: text('category_snapshot').notNull(),
-  nameSnapshot: text('name_snapshot').notNull(),
-  priceSnapshot: integer('price_snapshot').notNull(),
+	categorySnapshot: text('category_snapshot').notNull(),
+	nameSnapshot: text('name_snapshot').notNull(),
+	priceSnapshot: integer('price_snapshot').notNull(),
 
-  qty: integer('qty').notNull(),
-  subtotal: integer('subtotal').notNull(),
-  sortOrder: integer('sort_order').notNull().default(0),
+	qty: integer('qty').notNull(),
+	subtotal: integer('subtotal').notNull(),
+	sortOrder: integer('sort_order').notNull().default(0),
 
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
 
 export const orderItemsRelations = relations(orderItems, ({ one }) => ({
-  order: one(orders, {
-    fields: [orderItems.orderId],
-    references: [orders.id]
-  }),
-  product: one(products, {
-    fields: [orderItems.productId],
-    references: [products.id]
-  })
+	order: one(orders, {
+		fields: [orderItems.orderId],
+		references: [orders.id]
+	}),
+	product: one(products, {
+		fields: [orderItems.productId],
+		references: [products.id]
+	})
 }));
 
 // ─────────────────────────────────────────────

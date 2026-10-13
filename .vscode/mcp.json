@@ -1,14 +1,9 @@
 {
-  "servers": {
-    "codegraph": {
-      "type": "stdio",
-      "command": "codegraph",
-      "args": [
-        "serve",
-        "--mcp",
-        "--path",
-        "C:\\Users\\user_hebat\\workspace\\invoizy"
-      ]
-    }
-  }
+	"servers": {
+		"codegraph": {
+			"type": "stdio",
+			"command": "codegraph",
+			"args": ["serve", "--mcp", "--path", "C:\\Users\\user_hebat\\workspace\\invoizy"]
+		}
+	}
 }

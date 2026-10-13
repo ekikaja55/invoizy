@@ -10,14 +10,14 @@
 const ORDER_ID_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 export function generateOrderId(length = 5): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(length));
-  let result = '';
-  for (let i = 0; i < length; i++) {
-    result += ORDER_ID_ALPHABET[bytes[i] % ORDER_ID_ALPHABET.length];
-  }
-  return result;
+	const bytes = crypto.getRandomValues(new Uint8Array(length));
+	let result = '';
+	for (let i = 0; i < length; i++) {
+		result += ORDER_ID_ALPHABET[bytes[i] % ORDER_ID_ALPHABET.length];
+	}
+	return result;
 }
 
 export function generateAccessToken(): string {
-  return crypto.randomUUID();
+	return crypto.randomUUID();
 }

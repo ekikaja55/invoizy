@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import { env } from '$env/dynamic/private';
 
@@ -8,60 +7,60 @@ const MAX_QRIS_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
 const ALLOWED_QRIS_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 
 export function validateQrisFile(file: File): string | null {
-  if (file.size === 0) return 'File QRIS wajib diunggah.';
-  if (file.size > MAX_QRIS_SIZE_BYTES) {
-    return 'Ukuran file QRIS maksimal 2MB.';
-  }
-  if (!ALLOWED_QRIS_TYPES.includes(file.type)) {
-    return 'Format file harus PNG, JPEG, atau WebP.';
-  }
-  return null;
+	if (file.size === 0) return 'File QRIS wajib diunggah.';
+	if (file.size > MAX_QRIS_SIZE_BYTES) {
+		return 'Ukuran file QRIS maksimal 2MB.';
+	}
+	if (!ALLOWED_QRIS_TYPES.includes(file.type)) {
+		return 'Format file harus PNG, JPEG, atau WebP.';
+	}
+	return null;
 }
 
 export async function uploadQrisImage(file: File): Promise<{ url: string; path: string }> {
-  const ext = file.name.split('.').pop() ?? 'png';
-  const path = `qris-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+	const ext = file.name.split('.').pop() ?? 'png';
+	const path = `qris-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
-  const { error } = await supabaseAdmin.storage
-    .from('qris')
-    .upload(path, file, { upsert: true, contentType: file.type });
+	const { error } = await supabaseAdmin.storage
+		.from('qris')
+		.upload(path, file, { upsert: true, contentType: file.type });
 
-  if (error) {
-    throw new Error(`Gagal upload QRIS: ${error.message}`);
-  }
+	if (error) {
+		throw new Error(`Gagal upload QRIS: ${error.message}`);
+	}
 
-  const { data } = supabaseAdmin.storage.from('qris').getPublicUrl(path);
-  return { url: data.publicUrl, path };
+	const { data } = supabaseAdmin.storage.from('qris').getPublicUrl(path);
+	return { url: data.publicUrl, path };
 }
 
 export async function deleteQrisImage(path: string) {
-  await supabaseAdmin.storage.from('qris').remove([path]);
+	await supabaseAdmin.storage.from('qris').remove([path]);
 }
 
 export async function uploadInvoicePdf(
-  orderId: string,
-  pdf: Uint8Array
+	orderId: string,
+	pdf: Uint8Array
 ): Promise<{ url: string; path: string }> {
-  const path = `${orderId}.pdf`;
+	const path = `${orderId}.pdf`;
 
-  const { error } = await supabaseAdmin.storage
-    .from('invoices')
-    .upload(path, Buffer.from(pdf), { upsert: true, contentType: 'application/pdf' });
+	const { error } = await supabaseAdmin.storage
+		.from('invoices')
+		.upload(path, Buffer.from(pdf), { upsert: true, contentType: 'application/pdf' });
 
-  if (error) {
-    throw new Error(`Gagal upload PDF invoice: ${error.message}`);
-  }
+	if (error) {
+		throw new Error(`Gagal upload PDF invoice: ${error.message}`);
+	}
 
-  const { data } = supabaseAdmin.storage.from('invoices').getPublicUrl(path);
-  return { url: data.publicUrl, path };
+	const { data } = supabaseAdmin.storage.from('invoices').getPublicUrl(path);
+	return { url: data.publicUrl, path };
 }
 
 export async function downloadInvoicePdf(path: string): Promise<Uint8Array> {
-  const { data, error } = await supabaseAdmin.storage.from('invoices').download(path);
+	const { data, error } = await supabaseAdmin.storage.from('invoices').download(path);
 
-  if (error || !data) {
-    throw new Error(`Gagal unduh PDF invoice: ${error?.message ?? 'file tidak ada'}`);
-  }
+	if (error || !data) {
+		throw new Error(`Gagal unduh PDF invoice: ${error?.message ?? 'file tidak ada'}`);
+	}
 
-  return new Uint8Array(await data.arrayBuffer());
+	return new Uint8Array(await data.arrayBuffer());
 }

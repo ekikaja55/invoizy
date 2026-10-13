@@ -17,7 +17,9 @@ export const load: PageServerLoad = async ({ params, url }) => {
 
 	// Serialisasi eksplisit: Date → ISO agar aman di-serialize ke client
 	// dan bentuknya persis InvoiceData (dipakai web + render PDF nanti).
+	// `from` diteruskan apa adanya sebagai petunjuk UI tombol Kembali (bukan gerbang akses).
 	return {
+		from: url.searchParams.get('from'),
 		order: {
 			orderId: result.order.orderId,
 			handle: result.order.handle,
@@ -25,6 +27,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
 			note: result.order.note,
 			subtotal: result.order.subtotal,
 			total: result.order.total,
+			shippingLabel: result.order.shippingLabel,
 			createdAt: result.order.createdAt.toISOString(),
 			items: result.order.items.map((i) => ({
 				nameSnapshot: i.nameSnapshot,
@@ -39,7 +42,8 @@ export const load: PageServerLoad = async ({ params, url }) => {
 			instagram: result.settings.instagram,
 			twitter: result.settings.twitter,
 			emailFromName: result.settings.emailFromName,
-			paymentNote: result.settings.paymentNote
+			paymentNote: result.settings.paymentNote,
+			proofContact: result.settings.proofContact
 		},
 		paymentMethods: result.paymentMethods.map((m) => ({
 			label: m.label,

@@ -19,12 +19,12 @@ Dilarang melakukan hal berikut sampai user memintanya secara **eksplisit**:
 
 **Yang BUKAN permintaan menulis** (jangan salah tafsir):
 
-| Kalimat user | Artinya |
-|---|---|
-| "gimana kalau…", "bisa nggak…" | diskusi — jangan tulis |
-| "menurutmu?", "boleh kan?" | minta opini — jangan tulis |
+| Kalimat user                    | Artinya                        |
+| ------------------------------- | ------------------------------ |
+| "gimana kalau…", "bisa nggak…"  | diskusi — jangan tulis         |
+| "menurutmu?", "boleh kan?"      | minta opini — jangan tulis     |
 | "setuju", "usulanmu masuk akal" | menyetujui arah — jangan tulis |
-| "baca ini", "review ini" | baca saja — jangan tulis |
+| "baca ini", "review ini"        | baca saja — jangan tulis       |
 
 **Permintaan menulis yang sah:** "tulis", "buat", "ubah", "perbaiki",
 "implementasikan", "kerjakan", "gas", "hapus".
@@ -64,10 +64,10 @@ atau komentar mana pun.
   yang benar-benar sudah selesai.
 - Sebelum meng-import paket pihak ketiga, **verifikasi keberadaannya di
   `package.json`**. Jangan percaya daftar tech stack di README.
-  *(Saat file ini ditulis, `resend`, `puppeteer-core`, `@sparticuz/chromium-min`,
+  _(Saat file ini ditulis, `resend`, `puppeteer-core`, `@sparticuz/chromium-min`,
   `@upstash/*`, dan `sveltekit-superforms` diklaim README tapi belum terpasang,
   dan `src/lib/server/{email,pdf,ratelimit}` masih 0 byte. README sudah terbukti
-  menyesatkan.)*
+  menyesatkan.)_
 - Jika menemukan pertentangan dokumen vs kode: **laporkan pertentangannya**,
   jangan diam-diam memilih salah satu.
 
@@ -82,7 +82,7 @@ yang:
 - **Objektif** — menilai berdasarkan bukti dan trade-off, bukan selera pribadi.
 - **Skeptis** — asumsi adalah hipotesis yang harus diuji, bukan fakta.
 
-Dilarang bersikap *yes-man*. Persetujuan harus punya alasan teknis eksplisit.
+Dilarang bersikap _yes-man_. Persetujuan harus punya alasan teknis eksplisit.
 
 ---
 
@@ -109,11 +109,11 @@ Kuota 2–3 poin **tidak boleh** dipenuhi dengan cacat palsu. Urutannya:
 
 1. Jika ada **≥2 cacat nyata** → tulis semuanya, urut dari yang paling berat.
 2. Jika hanya **1 cacat nyata** → tulis 1, lalu tutup dengan
-   *"selebihnya solid"* dan sebutkan risiko sisa yang belum termitigasi.
+   _"selebihnya solid"_ dan sebutkan risiko sisa yang belum termitigasi.
 3. Jika **0 cacat nyata** → katakan idenya solid dan langsung ke pertanyaan
    lanjutan. Jangan mereka-reka masalah.
 4. Jika ragu apakah sesuatu itu cacat nyata → sebut sebagai
-   *"perlu diverifikasi"*, bukan sebagai cacat.
+   _"perlu diverifikasi"_, bukan sebagai cacat.
 
 **Proporsionalitas:** keputusan arsitektural/UX besar = analisis penuh.
 Perubahan sepele (nama variabel, typo) = kritik ringkas 1–2 baris.
@@ -154,8 +154,8 @@ Kritik yang dipaksakan adalah noise, bukan sinyal.
 
 - **Seluruh respons dalam Bahasa Indonesia** yang jelas dan profesional,
   akurasi teknis tetap dijaga.
-- Istilah teknis boleh tetap Inggris (mis. *race condition*, *idempotency*,
-  *waterfall request*) agar presisi tidak hilang.
+- Istilah teknis boleh tetap Inggris (mis. _race condition_, _idempotency_,
+  _waterfall request_) agar presisi tidak hilang.
 - Kode, komentar kode, nama variabel, commit message: **Inggris**.
 - **Hemat token:** jangan mengulang penjelasan yang sudah disampaikan, jangan
   menyalin ulang isi file panjang ke balasan, jangan meringkas apa yang baru
@@ -175,6 +175,7 @@ Kritik yang dipaksakan adalah noise, bukan sinyal.
 5. **Laporkan apa adanya**, termasuk bagian yang belum terverifikasi.
 
 <!-- CODEGRAPH_START -->
+
 ## CodeGraph
 
 In repositories indexed by CodeGraph (a `.codegraph/` directory exists at the repo root), reach for it BEFORE grep/find or reading files when you need to understand or locate code:

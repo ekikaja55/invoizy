@@ -1,5 +1,5 @@
-export interface PlaceholderProps{
-  title: string;
-  phase?: string;
-  description?: string;
+export interface PlaceholderProps {
+	title: string;
+	phase?: string;
+	description?: string;
 }

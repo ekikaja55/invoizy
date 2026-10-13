@@ -121,7 +121,7 @@ export function buildInvoicePdfHtml(data: InvoiceData): string {
 				${
 					shippingDiff > 0
 						? `<div style="${ROW};justify-content:space-between;font-size:14px;margin-top:4px;">
-							<span style="color:#737373;">Ongkir</span><span>${esc(formatRupiah(shippingDiff))}</span>
+							<span style="color:#737373;">Ongkir${data.order.shippingLabel ? ` · ${esc(data.order.shippingLabel)}` : ''}</span><span>${esc(formatRupiah(shippingDiff))}</span>
 						</div>`
 						: ''
 				}
@@ -138,6 +138,11 @@ export function buildInvoicePdfHtml(data: InvoiceData): string {
 						: ''
 				}
 				${settings.paymentNote ? `<div style="font-size:13px;color:#737373;margin-top:12px;">${esc(settings.paymentNote)}</div>` : ''}
+				${
+					settings.proofContact
+						? `<div style="${COL};background:#171717;color:#ffffff;border-radius:12px;padding:12px;margin-top:12px;font-size:14px;font-weight:600;">Sudah transfer? Kirim bukti ke ${esc(settings.proofContact)}</div>`
+						: ''
+				}
 			</div>
 			<div style="font-size:11px;color:#a3a3a3;margin-top:24px;">Dibuat otomatis oleh ${esc(settings.storeName || 'Invoizy Store')}</div>
 		</div>`;
@@ -161,9 +166,7 @@ export async function renderInvoicePdf(data: InvoiceData): Promise<Uint8Array> {
 	const height = estimateHeight(data);
 
 	const svg = await satori(parseHtml(markup), { width: PDF_WIDTH, height, fonts });
-	const png = new Resvg(svg, { fitTo: { mode: 'width', value: PNG_WIDTH } })
-		.render()
-		.asPng();
+	const png = new Resvg(svg, { fitTo: { mode: 'width', value: PNG_WIDTH } }).render().asPng();
 
 	const pdf = await PDFDocument.create();
 	const img = await pdf.embedPng(png);

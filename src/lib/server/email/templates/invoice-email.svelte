@@ -7,9 +7,10 @@
 		handle: string;
 		total: number;
 		invoiceUrl: string;
+		proofContact: string;
 	}
 
-	let { storeName, orderId, handle, total, invoiceUrl }: Props = $props();
+	let { storeName, orderId, handle, total, invoiceUrl, proofContact }: Props = $props();
 </script>
 
 <!-- Template email transaksional: layout tabel + SEMUA style inline
@@ -28,6 +29,12 @@
 		<p style="font-size:14px;color:#404040;">
 			Detail item &amp; cara bayar ada di halaman invoice. PDF invoice juga terlampir di email ini.
 		</p>
+
+		{#if proofContact}
+			<p style="font-size:14px;color:#404040;">
+				Sudah transfer? Kirim buktinya ke <strong>{proofContact}</strong>.
+			</p>
+		{/if}
 
 		{#if invoiceUrl}
 			<a

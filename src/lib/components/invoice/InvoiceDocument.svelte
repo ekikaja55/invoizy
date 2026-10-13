@@ -27,10 +27,7 @@
 	}
 </script>
 
-<div
-	class="bg-white text-neutral-900"
-	style={isPdf ? 'width:794px;padding:48px;' : undefined}
->
+<div class="bg-white text-neutral-900" style={isPdf ? 'width:794px;padding:48px;' : undefined}>
 	<div class={isPdf ? '' : 'mx-auto max-w-3xl px-4 py-8'}>
 		<!-- Kop -->
 		<div class="border-b border-neutral-200 pb-4">
@@ -68,9 +65,12 @@
 				<span>{formatRupiah(order.subtotal)}</span>
 			</div>
 			{#if shippingDiff > 0}
-				<div class="flex justify-between">
-					<span class="text-neutral-500">Ongkir</span>
-					<span>{formatRupiah(shippingDiff)}</span>
+				<div class="flex justify-between gap-4">
+					<span class="text-neutral-500">
+						Ongkir{#if order.shippingLabel}
+							· {order.shippingLabel}{/if}
+					</span>
+					<span class="shrink-0">{formatRupiah(shippingDiff)}</span>
 				</div>
 			{/if}
 			<div class="flex justify-between text-base font-bold">
@@ -81,7 +81,7 @@
 
 		<!-- Pembayaran -->
 		<div class="mt-6 border-t border-neutral-200 pt-4">
-			<h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">Pembayaran</h2>
+			<h2 class="text-sm font-semibold tracking-wide text-neutral-500 uppercase">Pembayaran</h2>
 
 			{#if paymentMethods.length === 0 && qrisCodes.length === 0}
 				<p class="mt-2 text-sm text-neutral-500">
@@ -131,6 +131,14 @@
 
 			{#if settings.paymentNote}
 				<p class="mt-3 text-sm text-neutral-500">{settings.paymentNote}</p>
+			{/if}
+
+			{#if settings.proofContact}
+				<div
+					class="mt-3 rounded-xl bg-neutral-900 p-3 text-sm text-white dark:bg-white dark:text-neutral-900"
+				>
+					<p class="font-medium">Sudah transfer? Kirim bukti ke {settings.proofContact}</p>
+				</div>
 			{/if}
 		</div>
 	</div>

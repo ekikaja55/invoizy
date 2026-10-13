@@ -9,6 +9,7 @@ export interface InvoiceData {
 		note: string;
 		subtotal: number;
 		total: number;
+		shippingLabel: string | null;
 		createdAt: string | Date;
 		items: {
 			nameSnapshot: string;
@@ -24,6 +25,7 @@ export interface InvoiceData {
 		twitter: string;
 		emailFromName: string;
 		paymentNote: string | null;
+		proofContact: string;
 	};
 	paymentMethods: {
 		label: string;

@@ -68,13 +68,13 @@
 
 ## Fase 5 — Dashboard & Order Management
 
-- [ ] `/admin` dashboard: total order, total nilai, breakdown status invoice & pembayaran (query aggregate)
-- [ ] `/admin/orders`: tabel dengan filter (status, tanggal), search by order_id/email/handle
-- [ ] `/admin/orders/[id]`: detail lengkap — item, snapshot harga, riwayat status, tombol aksi (resend, regenerate, ubah status bayar)
-- [ ] Export CSV order (opsional tapi murah untuk dibuat, taruh di akhir fase ini)
-- [ ] Empty state & loading skeleton di semua list
+- [x] `/admin` dashboard: total order, total nilai, breakdown status invoice & pembayaran (query aggregate)
+- [x] `/admin/orders`: tabel dengan filter (status, tanggal), search by order_id/email/handle
+- [x] `/admin/orders/[id]`: detail lengkap — item, snapshot harga, riwayat status, tombol aksi (resend, regenerate, ubah status bayar)
+- [x] Export CSV order (opsional tapi murah untuk dibuat, taruh di akhir fase ini)
+- [x] Empty state & loading skeleton di semua list
 
-## Fase 6 — Art Styling & Polish (SESUAI PERMINTAAN: DI AKHIR)
+## Fase 6 — Art Styling & Polish
 
 - [ ] Setup `@theme` token: warna dark/light, radius, font
 - [ ] Import Fraunces (display) + Inter (body) via `@fontsource` atau Google Fonts self-host
@@ -88,11 +88,11 @@
 
 ## Fase 7 — Hardening & Testing
 
-- [ ] Unit test: `currency.ts` (formatRupiah/parseRupiah), `order-id.ts`, kalkulasi total
+- [ ] Unit testing
 - [ ] E2E (Playwright): submit order lengkap → cek email terkirim (Resend test mode) → cek PDF ter-generate
 - [ ] Security headers di `hooks.server.ts` (CSP, X-Frame-Options, dst)
 - [ ] Cek semua route sensitif (invoice, admin) benar-benar terlindungi (token/session)
-- [ ] Error monitoring (Sentry free tier) — opsional tapi disarankan
+- [ ] Error monitoring (Sentry free tier)
 - [ ] Review ulang: apakah ada tempat yang masih percaya input client tanpa validasi server
 
 ## Fase 8 — Deploy Final & Handover

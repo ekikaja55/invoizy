@@ -1,86 +1,102 @@
 import { fail } from '@sveltejs/kit';
 import { getActiveCatalog, createOrder, OrderError } from '$lib/server/db/queries/order';
-import { checkoutSchema, checkoutItemsSchema, type CheckoutItem } from '$lib/schemas/order';
+import { getSettings } from '$lib/server/db/queries/settings';
+import {
+	checkoutSchema,
+	checkoutItemsSchema,
+	checkoutShippingSchema,
+	type CheckoutItem,
+	type CheckoutShipping
+} from '$lib/schemas/order';
 import { checkOrderSubmitRateLimit } from '$lib/server/ratelimit';
 import { processNewInvoice } from '$lib/server/invoice/process';
 import { logger } from '$lib/server/logger';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-  const catalog = await getActiveCatalog();
+	const [catalog, settings] = await Promise.all([getActiveCatalog(), getSettings()]);
 
-  const productCategories = catalog.filter((c) => !c.isShipping);
-  const shippingCategory = catalog.find((c) => c.isShipping) ?? null;
-
-  return { productCategories, shippingCategory };
+	return {
+		productCategories: catalog,
+		contact: settings?.proofContact || settings?.instagram || ''
+	};
 };
 
 export const actions: Actions = {
-  default: async ({ request, getClientAddress }) => {
-    const formData = await request.formData();
+	default: async ({ request, getClientAddress }) => {
+		const formData = await request.formData();
 
-    // Honeypot anti-bot: field tersembunyi yang cuma diisi bot. Manusia tidak mengisinya.
-    const honeypot = formData.get('website');
-    if (typeof honeypot === 'string' && honeypot.trim() !== '') {
-      return { success: true }; // diam-diam tolak bot
-    }
+		// Honeypot anti-bot: field tersembunyi yang cuma diisi bot. Manusia tidak mengisinya.
+		const honeypot = formData.get('website');
+		if (typeof honeypot === 'string' && honeypot.trim() !== '') {
+			return { success: true }; // diam-diam tolak bot
+		}
 
-    // Rate limit per IP — cegah spam submit (honeypot lolos → ini lapis kedua).
-    try {
-      const rl = await checkOrderSubmitRateLimit(getClientAddress());
-      if (!rl.success) {
-        logger.warn('order.rate-limited', { remaining: rl.remaining });
-        return fail(429, { error: 'Terlalu banyak percobaan. Silakan coba lagi beberapa menit.' });
-      }
-    } catch (err) {
-      // Upstash bermasalah → jangan blokir order, tapi catat.
-      logger.error('order.ratelimit-failed', { error: err });
-    }
+		// Rate limit per IP — cegah spam submit (honeypot lolos → ini lapis kedua).
+		try {
+			const rl = await checkOrderSubmitRateLimit(getClientAddress());
+			if (!rl.success) {
+				logger.warn('order.rate-limited', { remaining: rl.remaining });
+				return fail(429, { error: 'Terlalu banyak percobaan. Silakan coba lagi beberapa menit.' });
+			}
+		} catch (err) {
+			// Upstash bermasalah → jangan blokir order, tapi catat.
+			logger.error('order.ratelimit-failed', { error: err });
+		}
 
-    const parsed = checkoutSchema.safeParse({
-      handle: formData.get('handle'),
-      email: formData.get('email'),
-      note: formData.get('note'),
-      shippingId: formData.get('shippingId')
-    });
+		const parsed = checkoutSchema.safeParse({
+			handle: formData.get('handle'),
+			email: formData.get('email'),
+			note: formData.get('note')
+		});
 
-    if (!parsed.success) {
-      return fail(400, { error: parsed.error.issues[0]?.message ?? 'Data tidak valid.' });
-    }
+		if (!parsed.success) {
+			return fail(400, { error: parsed.error.issues[0]?.message ?? 'Data tidak valid.' });
+		}
 
-    let items: CheckoutItem[];
-    try {
-      items = checkoutItemsSchema.parse(JSON.parse(String(formData.get('items') ?? '[]')));
-    } catch {
-      return fail(400, { error: 'Keranjang tidak valid. Silakan muat ulang halaman order.' });
-    }
+		let items: CheckoutItem[];
+		try {
+			items = checkoutItemsSchema.parse(JSON.parse(String(formData.get('items') ?? '[]')));
+		} catch {
+			return fail(400, { error: 'Keranjang tidak valid. Silakan muat ulang halaman order.' });
+		}
 
-    logger.info('order.submit', { items: items.length, hasShipping: !!parsed.data.shippingId });
+		let shipping: CheckoutShipping | null = null;
+		const rawShipping = formData.get('shipping');
+		if (typeof rawShipping === 'string' && rawShipping.trim() !== '') {
+			try {
+				shipping = checkoutShippingSchema.parse(JSON.parse(rawShipping));
+			} catch {
+				return fail(400, { error: 'Opsi pengiriman tidak valid. Silakan pilih ulang.' });
+			}
+		}
 
-    try {
-      const { orderId, accessToken } = await createOrder({
-        handle: parsed.data.handle,
-        email: parsed.data.email,
-        note: parsed.data.note ?? '',
-        items,
-        shippingId: parsed.data.shippingId || null
-      });
+		logger.info('order.submit', { items: items.length, hasShipping: shipping !== null });
 
-      // Trigger invoice sinkron (best practice Fase 4): order tetap sukses
-      // walau PDF/email gagal — status dicatat FAILED untuk retry admin.
-      try {
-        await processNewInvoice(orderId, accessToken);
-      } catch (err) {
-        logger.error('order.invoice-failed', { orderId, error: err });
-      }
+		try {
+			const { orderId, accessToken } = await createOrder({
+				handle: parsed.data.handle,
+				email: parsed.data.email,
+				note: parsed.data.note ?? '',
+				items,
+				shipping
+			});
 
-      return { success: true, orderId, accessToken };
-    } catch (err) {
-      if (err instanceof OrderError) {
-        return fail(400, { error: err.message });
-      }
-      logger.error('order.create-failed', { error: err });
-      return fail(500, { error: 'Gagal membuat pesanan. Silakan coba lagi.' });
-    }
-  }
+			// Trigger invoice sinkron (best practice Fase 4): order tetap sukses
+			// walau PDF/email gagal — status dicatat FAILED untuk retry admin.
+			try {
+				await processNewInvoice(orderId, accessToken);
+			} catch (err) {
+				logger.error('order.invoice-failed', { orderId, error: err });
+			}
+
+			return { success: true, orderId, accessToken };
+		} catch (err) {
+			if (err instanceof OrderError) {
+				return fail(400, { error: err.message });
+			}
+			logger.error('order.create-failed', { error: err });
+			return fail(500, { error: 'Gagal membuat pesanan. Silakan coba lagi.' });
+		}
+	}
 };

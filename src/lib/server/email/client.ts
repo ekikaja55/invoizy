@@ -1,6 +1,8 @@
 import { Resend } from 'resend';
+import { createHash } from 'node:crypto';
 import { render } from 'svelte/server';
 import { env } from '$env/dynamic/private';
+import { FILE_PREFIX } from '$lib/constants';
 import { logger } from '$lib/server/logger';
 import InvoiceEmail from './templates/invoice-email.svelte';
 
@@ -11,6 +13,7 @@ export interface SendInvoiceEmailInput {
 	handle: string;
 	total: number;
 	invoiceUrl: string;
+	proofContact: string;
 	pdf: Uint8Array;
 }
 
@@ -31,9 +34,15 @@ export async function sendInvoiceEmail(input: SendInvoiceEmailInput): Promise<vo
 			orderId: input.orderId,
 			handle: input.handle,
 			total: input.total,
-			invoiceUrl: input.invoiceUrl
+			invoiceUrl: input.invoiceUrl,
+			proofContact: input.proofContact
 		}
 	});
+
+	// Idempotency per ISI konten (bukan per order): kirim ulang PDF yang sama
+	// ter-dedupe aman, tapi generate ulang (byte berubah) tetap terkirim.
+	// Tanpa ini, tombol "kirim ulang" setelah regenerate selalu ditolak Resend.
+	const contentHash = createHash('sha256').update(input.pdf).digest('hex').slice(0, 16);
 
 	const { error } = await new Resend(apiKey).emails.send(
 		{
@@ -41,9 +50,11 @@ export async function sendInvoiceEmail(input: SendInvoiceEmailInput): Promise<vo
 			to: [input.to],
 			subject: `Invoice ${input.orderId} — ${input.storeName}`,
 			html: body,
-			attachments: [{ filename: `invoice-${input.orderId}.pdf`, content: Buffer.from(input.pdf) }]
+			attachments: [
+				{ filename: `${FILE_PREFIX}-invoice-${input.orderId}.pdf`, content: Buffer.from(input.pdf) }
+			]
 		},
-		{ idempotencyKey: `invoice/${input.orderId}` }
+		{ idempotencyKey: `invoice/${input.orderId}/${contentHash}` }
 	);
 
 	if (error) {

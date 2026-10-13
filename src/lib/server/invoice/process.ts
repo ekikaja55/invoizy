@@ -22,6 +22,7 @@ export function toInvoiceData(result: OrderByToken): InvoiceData {
 			note: result.order.note,
 			subtotal: result.order.subtotal,
 			total: result.order.total,
+			shippingLabel: result.order.shippingLabel,
 			createdAt: result.order.createdAt.toISOString(),
 			items: result.order.items.map((i) => ({
 				nameSnapshot: i.nameSnapshot,
@@ -36,7 +37,8 @@ export function toInvoiceData(result: OrderByToken): InvoiceData {
 			instagram: result.settings.instagram,
 			twitter: result.settings.twitter,
 			emailFromName: result.settings.emailFromName,
-			paymentNote: result.settings.paymentNote
+			paymentNote: result.settings.paymentNote,
+			proofContact: result.settings.proofContact
 		},
 		paymentMethods: result.paymentMethods.map((m) => ({
 			label: m.label,
@@ -127,6 +129,7 @@ export async function processNewInvoice(
 			handle: data.order.handle,
 			total: data.order.total,
 			invoiceUrl: link,
+			proofContact: data.settings.proofContact,
 			pdf
 		});
 
@@ -189,6 +192,7 @@ export async function resendInvoiceEmail(orderId: string): Promise<void> {
 			handle: data.order.handle,
 			total: data.order.total,
 			invoiceUrl: link,
+			proofContact: data.settings.proofContact,
 			pdf
 		});
 

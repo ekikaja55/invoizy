@@ -5,32 +5,34 @@ import { logger } from '$lib/server/logger';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-  const settings = await getSettings();
-  return { settings };
+	const settings = await getSettings();
+	return { settings };
 };
 
 export const actions: Actions = {
-  update: async ({ request }) => {
-    const formData = await request.formData();
+	update: async ({ request }) => {
+		const formData = await request.formData();
 
-    const parsed = settingsSchema.safeParse({
-      storeName: formData.get('storeName'),
-      instagram: formData.get('instagram'),
-      twitter: formData.get('twitter'),
-      emailFromName: formData.get('emailFromName'),
-      paymentNote: formData.get('paymentNote')
-    });
+		const parsed = settingsSchema.safeParse({
+			storeName: formData.get('storeName'),
+			instagram: formData.get('instagram'),
+			twitter: formData.get('twitter'),
+			emailFromName: formData.get('emailFromName'),
+			paymentNote: formData.get('paymentNote'),
+			proofContact: formData.get('proofContact'),
+			emergencyFlatRate: formData.get('emergencyFlatRate')
+		});
 
-    if (!parsed.success) {
-      return fail(400, { error: parsed.error.issues[0]?.message ?? 'Data tidak valid.' });
-    }
+		if (!parsed.success) {
+			return fail(400, { error: parsed.error.issues[0]?.message ?? 'Data tidak valid.' });
+		}
 
-    try {
-      await updateSettings(parsed.data);
-      return { success: true };
-    } catch (err) {
-      logger.error('settings.update-failed', { error: err });
-      return fail(500, { error: 'Gagal menyimpan pengaturan.' });
-    }
-  }
+		try {
+			await updateSettings(parsed.data);
+			return { success: true };
+		} catch (err) {
+			logger.error('settings.update-failed', { error: err });
+			return fail(500, { error: 'Gagal menyimpan pengaturan.' });
+		}
+	}
 };

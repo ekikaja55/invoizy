@@ -1,134 +1,134 @@
 <script lang="ts">
-  import { resolve } from '$app/paths';
-  import { page } from '$app/state';
-  import { authClient } from '$lib/auth-client';
-  import { type NavItem } from '$lib/constants';
-  import { toast } from 'svelte-sonner';
-  import ThemeToggle from './ThemeToggle.svelte';
-  import { Home, LogOut, Menu, X, LayoutDashboard,  } from '@lucide/svelte';
-  import { navActionClass, navItemClass } from '$lib/utils/nav-utils';
-  import { navigateTo } from '$lib/utils/navigating';
+	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
+	import { authClient } from '$lib/auth-client';
+	import { type NavItem } from '$lib/constants';
+	import { toast } from 'svelte-sonner';
+	import ThemeToggle from './ThemeToggle.svelte';
+	import { Home, LogOut, Menu, X, LayoutDashboard } from '@lucide/svelte';
+	import { navActionClass, navItemClass } from '$lib/utils/nav-utils';
+	import { navigateTo } from '$lib/utils/navigating';
 
-  interface Props {
-    items: NavItem[];
-    isAdmin?: boolean;
-  }
+	interface Props {
+		items: NavItem[];
+		isAdmin?: boolean;
+	}
 
-  // 1. Ambil props utuh agar reaktif
-  let props: Props = $props();
+	// 1. Ambil props utuh agar reaktif
+	let props: Props = $props();
 
-  // 2. Gunakan $derived untuk menyinkronkan state dengan Svelte 5 runes
-  let items = $derived(props.items);
-  let isAdmin = $derived(props.isAdmin ?? false);
-  let currentPath = $derived(page.url.pathname);
-  let isAdminPage = $derived(currentPath.startsWith('/admin'));
+	// 2. Gunakan $derived untuk menyinkronkan state dengan Svelte 5 runes
+	let items = $derived(props.items);
+	let isAdmin = $derived(props.isAdmin ?? false);
+	let currentPath = $derived(page.url.pathname);
+	let isAdminPage = $derived(currentPath.startsWith('/admin'));
 
-  let open = $state(false);
+	let open = $state(false);
 
-  function close() {
-    open = false;
-  }
+	function close() {
+		open = false;
+	}
 
-  function handleKeydown(e: KeyboardEvent) {
-    if (e.key === 'Escape') close();
-  }
+	function handleKeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape') close();
+	}
 
-  async function handleLogout() {
-    close();
-    const signOutPromise = authClient.signOut();
+	async function handleLogout() {
+		close();
+		const signOutPromise = authClient.signOut();
 
-    toast.promise(signOutPromise, {
-      loading: 'Logout, harap tunggu...',
-      success: 'Berhasil logout!',
-      error: 'Gagal logout, coba lagi.'
-    });
+		toast.promise(signOutPromise, {
+			loading: 'Logout, harap tunggu...',
+			success: 'Berhasil logout!',
+			error: 'Gagal logout, coba lagi.'
+		});
 
-    await signOutPromise;
-    navigateTo('/');
-  }
+		await signOutPromise;
+		navigateTo('/');
+	}
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div class="fixed bottom-4 right-4 z-50 md:hidden">
-  {#if open}
-    <div
-      class="mb-2 w-48 rounded-xl border border-neutral-200 bg-white/95 p-2 text-neutral-900
+<div class="fixed right-4 bottom-4 z-50 md:hidden">
+	{#if open}
+		<div
+			class="mb-2 w-48 rounded-xl border border-neutral-200 bg-white/95 p-2 text-neutral-900
              shadow-xl backdrop-blur dark:border-neutral-800 dark:bg-neutral-900/95
              dark:text-neutral-100"
-    >
-      <nav class="flex flex-col gap-1">
-        {#each items as item (item.href)}
-          {@const isActive = currentPath === item.href}
-          <a href={resolve(item.href)} class={navItemClass(isActive)} onclick={close}>
-            <item.icon size={16} />
-            <span>{item.label}</span>
-          </a>
-        {/each}
-      </nav>
+		>
+			<nav class="flex flex-col gap-1">
+				{#each items as item (item.href)}
+					{@const isActive = currentPath === item.href}
+					<a href={resolve(item.href)} class={navItemClass(isActive)} onclick={close}>
+						<item.icon size={16} />
+						<span>{item.label}</span>
+					</a>
+				{/each}
+			</nav>
 
-      <div class="mt-1 border-t border-neutral-200 pt-1 dark:border-neutral-800">
-        <ThemeToggle />
+			<div class="mt-1 border-t border-neutral-200 pt-1 dark:border-neutral-800">
+				<ThemeToggle />
 
-        {#if isAdmin}
-          {#if isAdminPage}
-            <button
-              onclick={() => {
-                close();
-                navigateTo('/');
-              }}
-              class={navActionClass()}
-            >
-              <Home size={16} />
-              <span>Home</span>
-            </button>
-          {:else}
-            <button
-              onclick={() => {
-                close();
-                navigateTo('/admin');
-              }}
-              class={navActionClass()}
-            >
-              <LayoutDashboard size={16} />
-              <span>Dashboard</span>
-            </button>
-          {/if}
+				{#if isAdmin}
+					{#if isAdminPage}
+						<button
+							onclick={() => {
+								close();
+								navigateTo('/');
+							}}
+							class={navActionClass()}
+						>
+							<Home size={16} />
+							<span>Home</span>
+						</button>
+					{:else}
+						<button
+							onclick={() => {
+								close();
+								navigateTo('/admin');
+							}}
+							class={navActionClass()}
+						>
+							<LayoutDashboard size={16} />
+							<span>Dashboard</span>
+						</button>
+					{/if}
 
-          <button
-            onclick={handleLogout}
-            class="flex items-center gap-2 rounded-lg px-2 py-2 text-left text-sm text-neutral-600
+					<button
+						onclick={handleLogout}
+						class="flex items-center gap-2 rounded-lg px-2 py-2 text-left text-sm text-neutral-600
                    hover:bg-neutral-100 hover:text-neutral-900
                    dark:text-neutral-300 dark:hover:bg-white/10 dark:hover:text-white"
-          >
-            <LogOut size={16} />
-            <span>Logout</span>
-          </button>
-        {/if}
-      </div>
-    </div>
-  {/if}
+					>
+						<LogOut size={16} />
+						<span>Logout</span>
+					</button>
+				{/if}
+			</div>
+		</div>
+	{/if}
 
-  <button
-    onclick={() => (open = !open)}
-    class="flex h-12 w-12 items-center justify-center rounded-full
+	<button
+		onclick={() => (open = !open)}
+		class="flex h-12 w-12 items-center justify-center rounded-full
            bg-neutral-900 text-white shadow-xl
            dark:bg-white dark:text-neutral-900"
-    aria-label={open ? 'Close menu' : 'Open menu'}
-  >
-    {#if open}
-      <X size={20} />
-    {:else}
-      <Menu size={20} />
-    {/if}
-  </button>
+		aria-label={open ? 'Close menu' : 'Open menu'}
+	>
+		{#if open}
+			<X size={20} />
+		{:else}
+			<Menu size={20} />
+		{/if}
+	</button>
 </div>
 
 {#if open}
-  <button
-    class="fixed inset-0 z-40 cursor-default bg-black/20 backdrop-blur-[2px]
-           dark:bg-black/40 md:hidden"
-    onclick={close}
-    aria-label="Close menu overlay"
-  ></button>
+	<button
+		class="fixed inset-0 z-40 cursor-default bg-black/20 backdrop-blur-[2px]
+           md:hidden dark:bg-black/40"
+		onclick={close}
+		aria-label="Close menu overlay"
+	></button>
 {/if}

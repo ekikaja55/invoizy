@@ -1,5 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { getOrderByToken, updateOrderInvoiceResult } from '$lib/server/db/queries/order';
+import { FILE_PREFIX } from '$lib/constants';
 import { toInvoiceData, ensureInvoicePdf } from '$lib/server/invoice/process';
 import { downloadInvoicePdf } from '$lib/server/storage/supabase';
 import { logger } from '$lib/server/logger';
@@ -41,7 +42,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
 		return new Response(new Blob([body], { type: 'application/pdf' }), {
 			headers: {
 				'Content-Type': 'application/pdf',
-				'Content-Disposition': `inline; filename="invoice-${params.orderId}.pdf"`,
+				'Content-Disposition': `inline; filename="${FILE_PREFIX}-invoice-${params.orderId}.pdf"`,
 				'Cache-Control': 'private, max-age=60'
 			}
 		});

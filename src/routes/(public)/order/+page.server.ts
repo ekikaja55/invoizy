@@ -2,10 +2,8 @@ import { getActiveCatalog } from '$lib/server/db/queries/order';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-  const catalog = await getActiveCatalog();
+	const catalog = await getActiveCatalog();
 
-  const productCategories = catalog.filter((c) => !c.isShipping);
-  const shippingCategory = catalog.find((c) => c.isShipping) ?? null;
-
-  return { productCategories, shippingCategory };
+	// Syarat: baris kategori ongkir peninggalan sudah dihapus + kolom is_shipping di-drop.
+	return { productCategories: catalog };
 };
