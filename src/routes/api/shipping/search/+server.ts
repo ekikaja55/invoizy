@@ -24,6 +24,9 @@ export const GET: RequestHandler = async ({ url, getClientAddress }) => {
 		return Response.json({ results });
 	} catch (err) {
 		if (err instanceof ShippingError) {
+			logger.error('error search', {
+				error: err.message
+			});
 			return Response.json({ error: err.message }, { status: 400 });
 		}
 		logger.error('shipping.search-failed', { error: err });
