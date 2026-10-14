@@ -101,6 +101,12 @@ export async function createOrder(input: CreateOrderInput) {
 				const recalc = await calculateCourier(s.courier, s.destId, weightGrams);
 				const match = recalc.options.find((o) => o.service === s.service);
 				if (!match || match.cost !== s.cost) {
+					logger.warn('order.shipping-mismatch', {
+						courier: s.courier,
+						service: s.service,
+						clientCost: s.cost,
+						serverCost: match?.cost ?? null
+					});
 					throw new OrderError('Ongkir berubah. Silakan pilih ulang opsi pengiriman.');
 				}
 				const label =
@@ -118,6 +124,7 @@ export async function createOrder(input: CreateOrderInput) {
 				shippingPrice = rate;
 				shipName = 'Ongkir flat darurat';
 				shipLabel = 'Ongkir flat darurat';
+				logger.info('order.shipping-fallback', { rate });
 			}
 
 			// ── Snapshot line item: nama & harga diambil dari DB, BUKAN dari client ──

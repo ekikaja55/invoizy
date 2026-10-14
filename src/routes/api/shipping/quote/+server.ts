@@ -77,6 +77,12 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
 	const settings = await getSettings();
 	const emergencyRate = settings?.emergencyFlatRate ?? 0;
 
+	logger.info('shipping.quote', {
+		destId: parsed.data.destinationId,
+		items: parsed.data.items.length,
+		weightGrams
+	});
+
 	const settled = await Promise.allSettled(
 		SHIPPING_COURIERS.map((c) => calculateCourier(c.code, parsed.data.destinationId, weightGrams))
 	);
@@ -94,14 +100,27 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
 	}
 
 	// Semua kurir gagal → flat darurat (bila aktif) atau tolak dengan jelas.
+	const failed = settled.filter((r) => r.status === 'rejected').length;
+	const cached = options.filter((o) => o.cached).length;
+	logger.info('shipping.quote-done', {
+		destId: parsed.data.destinationId,
+		couriers: options.length,
+		failed,
+		cached
+	});
 	if (options.length === 0) {
 		if (emergencyRate > 0) {
+			logger.warn('shipping.fallback-used', {
+				destId: parsed.data.destinationId,
+				rate: emergencyRate
+			});
 			return Response.json({
 				options: [],
 				weightGrams,
 				fallback: { rate: emergencyRate }
 			});
 		}
+		logger.warn('shipping.all-failed', { destId: parsed.data.destinationId });
 		return Response.json(
 			{ error: 'Layanan cek ongkir gangguan dan flat darurat nonaktif. Coba lagi nanti.' },
 			{ status: 503 }

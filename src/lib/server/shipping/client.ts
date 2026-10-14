@@ -99,6 +99,7 @@ export async function searchDestinations(query: string, limit = 10): Promise<Des
 			);
 		}
 		if (res.status === 429) {
+			logger.warn('shipping.search-quota', { q });
 			throw new ShippingError('Batas cek ongkir habis. Coba lagi nanti.', true, 429);
 		}
 		throw new ShippingError(
@@ -112,6 +113,7 @@ export async function searchDestinations(query: string, limit = 10): Promise<Des
 	if (!parsed.success || parsed.data.meta.status !== 'success' || !parsed.data.data) {
 		throw new ShippingError('Respons layanan ongkir tidak valid.', true);
 	}
+	logger.info('shipping.search', { q, results: parsed.data.data.length });
 	return parsed.data.data;
 }
 
@@ -134,6 +136,8 @@ export async function calculateCourier(
 	const key = `ro:cost:${originId()}:${destId}:${weightGrams}:${courier}`;
 	const hit = await cacheGet<CostOption[]>(key);
 	if (hit) {
+		// Cache hit = 0 req kuota. Rasio hit vs fresh di log = metrik kesehatan kuota.
+		logger.info('shipping.calc-cache-hit', { courier, destId });
 		return { courier, courierLabel: labelOf(courier), options: hit, cached: true };
 	}
 
@@ -157,6 +161,7 @@ export async function calculateCourier(
 
 	if (!res.ok) {
 		if (res.status === 429) {
+			logger.warn('shipping.calc-quota', { courier, destId });
 			throw new ShippingError('Batas cek ongkir habis. Coba lagi nanti.', true, 429);
 		}
 		throw new ShippingError(
@@ -184,6 +189,7 @@ export async function calculateCourier(
 
 	options = [...options].sort((a, b) => a.cost - b.cost);
 	await cacheSet(key, options, COST_TTL_SEC);
+	logger.info('shipping.calc-fresh', { courier, destId, weightGrams, options: options.length });
 	return { courier, courierLabel: labelOf(courier), options, cached: false };
 }
 
