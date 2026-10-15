@@ -14,6 +14,7 @@ export interface SendInvoiceEmailInput {
 	total: number;
 	invoiceUrl: string;
 	proofContact: string;
+	instagram: string;
 	pdf: Uint8Array;
 }
 
@@ -35,7 +36,8 @@ export async function sendInvoiceEmail(input: SendInvoiceEmailInput): Promise<vo
 			handle: input.handle,
 			total: input.total,
 			invoiceUrl: input.invoiceUrl,
-			proofContact: input.proofContact
+			proofContact: input.proofContact,
+			instagram: input.instagram
 		}
 	});
 

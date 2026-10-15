@@ -3,13 +3,28 @@
 	import { resolve } from '$app/paths';
 	import type { ResolvedPathname } from '$app/types';
 	import { formatRupiah } from '$lib/utils/currency';
+	import BusyOverlay from '$lib/components/ui/BusyOverlay.svelte';
 	import { ArrowLeft } from '@lucide/svelte';
 	import { invoiceStatusLabel, paymentStatusLabel } from '$lib/utils/status-label';
 	import { handleFormResult } from '$lib/utils/handle-form-result';
+	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 	let isBusy = $state(false);
+
+	async function copyInvoiceLink() {
+		if (!data.order.invoiceUrl) {
+			toast.error('Link invoice belum tersedia.');
+			return;
+		}
+		try {
+			await navigator.clipboard.writeText(data.order.invoiceUrl);
+			toast.success('Link invoice disalin. Tempel ke WA buyer.');
+		} catch {
+			toast.error('Gagal menyalin link.');
+		}
+	}
 
 	// Query ditempel manual (token UUID aman-URL); path tetap via resolve().
 	const invoiceHref = $derived(
@@ -29,6 +44,7 @@
 	);
 </script>
 
+<BusyOverlay active={isBusy}>
 <div class="space-y-6 pb-16">
 	<div class="flex items-center gap-3">
 		<a
@@ -49,6 +65,14 @@
 		<div class="flex justify-between">
 			<span class="text-neutral-500">Buyer</span>
 			<span class="font-medium">{data.order.handle} · {data.order.email}</span>
+		</div>
+		<div class="flex justify-between gap-4">
+			<span class="shrink-0 text-neutral-500">No. HP</span>
+			<span class="text-right font-medium">{data.order.phone}</span>
+		</div>
+		<div class="flex justify-between gap-4">
+			<span class="shrink-0 text-neutral-500">Alamat</span>
+			<span class="text-right">{data.order.address}</span>
 		</div>
 		{#if data.order.note}
 			<div class="flex justify-between gap-4">
@@ -99,6 +123,17 @@
 		>
 			Buka Invoice
 		</a>
+		{#if data.order.invoiceUrl}
+			<button
+				onclick={copyInvoiceLink}
+				disabled={isBusy}
+				class="rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium
+               hover:bg-neutral-100 disabled:opacity-50
+               dark:border-neutral-700 dark:hover:bg-white/10"
+			>
+				Salin link WA
+			</button>
+		{/if}
 	</div>
 
 	<div class="space-y-3 rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
@@ -155,6 +190,33 @@
 					Kirim ulang email
 				</button>
 			</form>
+
+			<form
+				method="POST"
+				action="?/markSent"
+				use:enhance={() => {
+					isBusy = true;
+					return async ({ result, update }) => {
+						handleFormResult(result, {
+							success: 'Ditandai terkirim.',
+							failure: 'Gagal menandai terkirim.'
+						});
+						if (result.type === 'success') await update();
+						isBusy = false;
+					};
+				}}
+			>
+				<button
+					type="submit"
+					disabled={isBusy}
+					title="Untuk invoice yang sudah dikirim manual via WA"
+					class="rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium
+                 hover:bg-neutral-100 disabled:opacity-50
+                 dark:border-neutral-700 dark:hover:bg-white/10"
+				>
+					Tandai terkirim (WA)
+				</button>
+			</form>
 		</div>
 
 		<form
@@ -178,7 +240,7 @@
 				id="paymentStatus"
 				name="paymentStatus"
 				disabled={isBusy}
-				class="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm
+				class="min-w-0 flex-1 truncate rounded-lg border border-neutral-300 bg-white py-2 pr-8 pl-3 text-sm
                disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-900"
 			>
 				{#each ['PENDING', 'CONFIRMED', 'CANCELLED'] as s (s)}
@@ -199,3 +261,4 @@
 		</form>
 	</div>
 </div>
+</BusyOverlay>

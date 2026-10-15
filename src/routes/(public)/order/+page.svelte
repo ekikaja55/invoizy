@@ -119,7 +119,7 @@
 			class="fixed inset-x-0 bottom-0 z-40 border-t border-neutral-200 bg-white/95 p-4 backdrop-blur
              dark:border-neutral-800 dark:bg-neutral-950/95"
 		>
-			<div class="mx-auto flex max-w-3xl items-center justify-between md:pl-24">
+			<div class="mx-auto flex max-w-3xl items-center justify-between pr-16 md:pl-24 md:pr-0">
 				<div>
 					<p class="text-sm text-neutral-500">{cart.itemCount} item</p>
 					<p class="font-semibold">{formatRupiah(cart.total)}</p>

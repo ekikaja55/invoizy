@@ -25,6 +25,8 @@ export const load: PageServerLoad = async ({ params, url }) => {
 			handle: result.order.handle,
 			email: result.order.email,
 			note: result.order.note,
+			address: result.order.address,
+			phone: result.order.phone,
 			subtotal: result.order.subtotal,
 			total: result.order.total,
 			shippingLabel: result.order.shippingLabel,

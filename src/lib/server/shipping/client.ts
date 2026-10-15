@@ -98,6 +98,12 @@ export async function searchDestinations(query: string, limit = 10): Promise<Des
 				404
 			);
 		}
+		if (res.status === 401) {
+			// Key salah/cabut = salah konfigurasi, BUKAN gangguan.
+			// Non-fallbackable + error level agar ketahuan dalam hitungan menit.
+			logger.error('shipping.search-unauthorized', {});
+			throw new ShippingError('Layanan cek ongkir sedang gangguan, coba lagi sebentar.', false, 401);
+		}
 		if (res.status === 429) {
 			logger.warn('shipping.search-quota', { q });
 			throw new ShippingError('Batas cek ongkir habis. Coba lagi nanti.', true, 429);
@@ -160,6 +166,10 @@ export async function calculateCourier(
 	}
 
 	if (!res.ok) {
+		if (res.status === 401) {
+			logger.error('shipping.calc-unauthorized', { courier });
+			throw new ShippingError('Layanan cek ongkir sedang gangguan, coba lagi sebentar.', false, 401);
+		}
 		if (res.status === 429) {
 			logger.warn('shipping.calc-quota', { courier, destId });
 			throw new ShippingError('Batas cek ongkir habis. Coba lagi nanti.', true, 429);

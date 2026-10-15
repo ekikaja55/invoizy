@@ -100,6 +100,8 @@ export async function renderInvoicePdf(data: InvoiceData): Promise<Uint8Array> {
   }).format(new Date(order.createdAt));
   para(ctx, createdLabel, { size: 11, color: GRAY });
   para(ctx, `${order.handle} · ${order.email}`, { size: 11, bold: true });
+  if (order.phone) para(ctx, order.phone, { size: 11, color: GRAY });
+  if (order.address) para(ctx, order.address, { size: 11, color: GRAY });
   if (order.note) para(ctx, `Catatan: ${order.note}`, { size: 11, color: GRAY });
   rule(ctx);
 
@@ -198,7 +200,9 @@ export async function renderInvoicePdf(data: InvoiceData): Promise<Uint8Array> {
 
   if (settings.proofContact) {
     ensure(ctx, 30);
-    const lines = wrap(`Sudah transfer? Kirim bukti ke ${settings.proofContact}`, bold, 11, CONTENT_W - 20);
+    const rawLines = [`Sudah transfer? Kirim bukti ke ${settings.proofContact}`];
+    if (settings.instagram) rawLines.push(`atau DM ${settings.instagram}`);
+    const lines = rawLines.flatMap((t) => wrap(t, bold, 11, CONTENT_W - 20));
     const h = lines.length * 16 + 16;
     ensure(ctx, h);
     const top = ctx.y;

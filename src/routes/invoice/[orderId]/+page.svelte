@@ -2,6 +2,7 @@
 	import InvoiceDocument from '$lib/components/invoice/InvoiceDocument.svelte';
 	import { resolve } from '$app/paths';
 	import { FILE_PREFIX } from '$lib/constants';
+	import { downloadFile } from '$lib/utils/download';
 	import { toast } from 'svelte-sonner';
 	import { ArrowLeft, Download } from '@lucide/svelte';
 	import type { PageData } from './$types';
@@ -22,19 +23,7 @@
 		try {
 			// Token ikut dari URL yang sedang dibuka — tanpa plumbing tambahan.
 			const pdfUrl = `${window.location.pathname}/pdf${window.location.search}`;
-			const res = await fetch(pdfUrl);
-			const type = res.headers.get('content-type') ?? '';
-			if (!res.ok || !type.includes('pdf')) throw new Error('not-a-pdf');
-
-			const blob = await res.blob();
-			const url = URL.createObjectURL(blob);
-			const a = document.createElement('a');
-			a.href = url;
-			a.download = `${FILE_PREFIX}-invoice-${data.order.orderId}.pdf`;
-			document.body.appendChild(a);
-			a.click();
-			a.remove();
-			URL.revokeObjectURL(url);
+			await downloadFile(pdfUrl, `${FILE_PREFIX}-invoice-${data.order.orderId}.pdf`);
 			toast.success('Invoice terunduh.');
 		} catch {
 			toast.error('Gagal mengunduh otomatis. Dibuka di tab baru.');

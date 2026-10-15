@@ -8,9 +8,10 @@
 		total: number;
 		invoiceUrl: string;
 		proofContact: string;
+		instagram: string;
 	}
 
-	let { storeName, orderId, handle, total, invoiceUrl, proofContact }: Props = $props();
+	let { storeName, orderId, handle, total, invoiceUrl, proofContact, instagram }: Props = $props();
 </script>
 
 <!-- Template email transaksional: layout tabel + SEMUA style inline
@@ -30,9 +31,12 @@
 			Detail item &amp; cara bayar ada di halaman invoice. PDF invoice juga terlampir di email ini.
 		</p>
 
-		{#if proofContact}
+	{#if proofContact}
 			<p style="font-size:14px;color:#404040;">
 				Sudah transfer? Kirim buktinya ke <strong>{proofContact}</strong>.
+				{#if instagram}
+					<br />atau DM {instagram}.
+				{/if}
 			</p>
 		{/if}
 

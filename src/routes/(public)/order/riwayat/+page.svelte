@@ -2,6 +2,8 @@
 	import { resolve } from '$app/paths';
 	import type { ResolvedPathname } from '$app/types';
 	import { formatRupiah } from '$lib/utils/currency';
+	import Modal from '$lib/components/ui/Modal.svelte';
+	import { toast } from 'svelte-sonner';
 
 	interface HistoryEntry {
 		orderId: string;
@@ -12,6 +14,7 @@
 	}
 
 	let entries = $state<HistoryEntry[]>([]);
+	let modalOpen = $state(false);
 
 	$effect(() => {
 		try {
@@ -39,13 +42,15 @@
 		}
 	}
 
-	function clearHistory() {
+	function confirmClearHistory() {
+		modalOpen = false;
 		try {
 			localStorage.removeItem('invoizy:invoices');
 		} catch {
 			// abaikan — toh tujuannya menghapus
 		}
 		entries = [];
+		toast.success('Riwayat perangkat dihapus.');
 	}
 </script>
 
@@ -57,7 +62,7 @@
 		</div>
 		{#if entries.length > 0}
 			<button
-				onclick={clearHistory}
+				onclick={() => (modalOpen = true)}
 				class="shrink-0 rounded-lg border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700
 				       hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950"
 			>
@@ -108,4 +113,14 @@
 			{/each}
 		</ul>
 	{/if}
+
+	<Modal
+		open={modalOpen}
+		title="Hapus riwayat?"
+		message="Semua link invoice di perangkat ini akan hilang dan tidak bisa dikembalikan. Invoice yang sudah terkirim ke email tetap aman."
+		confirmLabel="Ya, hapus"
+		danger
+		onConfirm={confirmClearHistory}
+		onCancel={() => (modalOpen = false)}
+	/>
 </div>

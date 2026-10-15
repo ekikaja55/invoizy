@@ -7,6 +7,8 @@ export interface InvoiceData {
 		handle: string;
 		email: string;
 		note: string;
+		address: string;
+		phone: string;
 		subtotal: number;
 		total: number;
 		shippingLabel: string | null;

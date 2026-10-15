@@ -9,9 +9,15 @@
 	const isLogin = $derived(Boolean(data.user));
 
 	const steps = [
-		{ title: 'Pilih yang kamu suka', desc: 'Pilih barang, atur jumlah sama pengiriman.' },
-		{ title: 'Isi data', desc: 'Handle sosmed, email yang aktif, plus catatan kalau ada request.' },
-		{ title: 'Cek email', desc: 'Invoice PDF langsung dikirim, ada cara bayarnya juga.' },
+		{ title: 'Pilih yang kamu suka', desc: 'Pilih barangnya, atur jumlahnya.' },
+		{
+			title: 'Isi data + alamat',
+			desc: 'Handle sosmed, email aktif, alamat lengkap, dan nomor HP.'
+		},
+		{
+			title: 'Pilih ongkir',
+			desc: 'Cari kecamatamu, bandingkan kurir — total langsung kehitung.'
+		},
 		{
 			title: 'Bayar, kirim bukti',
 			desc: 'Transfer terus kirim buktinya ke kontak yang tertulis. Makasih banyak!'

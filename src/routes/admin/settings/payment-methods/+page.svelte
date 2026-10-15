@@ -26,6 +26,7 @@
 		</a>
 		<h1 class="text-xl font-semibold">Bank / Virtual Account</h1>
 	</div>
+	<p class="-mt-4 text-xs text-neutral-500">Urutkan tampilan dengan tombol panah di tiap baris.</p>
 
 	<button
 		onclick={() => (showCreateForm = !showCreateForm)}
@@ -148,7 +149,8 @@
 		</form>
 	{/if}
 
-	<div class="space-y-2">
+	<BusyOverlay active={isBusy && !processingId}>
+		<div class="space-y-2">
 		{#if !data.methods}
 			<ListSkeleton rows={3} />
 		{:else if data.methods.length === 0}
@@ -413,5 +415,6 @@
 				</BusyOverlay>
 			{/each}
 		{/if}
-	</div>
+		</div>
+	</BusyOverlay>
 </div>

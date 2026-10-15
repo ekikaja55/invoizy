@@ -38,6 +38,12 @@
 				<span class="font-medium">{order.handle}</span>
 				<span class="text-neutral-500"> · {order.email}</span>
 			</p>
+			{#if order.phone}
+				<p class="mt-1 text-sm text-neutral-500">{order.phone}</p>
+			{/if}
+			{#if order.address}
+				<p class="mt-1 text-sm text-neutral-500">{order.address}</p>
+			{/if}
 			{#if order.note}
 				<p class="mt-1 text-sm text-neutral-500">Catatan: {order.note}</p>
 			{/if}
@@ -138,6 +144,9 @@
 					class="mt-3 rounded-xl bg-neutral-900 p-3 text-sm text-white dark:bg-white dark:text-neutral-900"
 				>
 					<p class="font-medium">Sudah transfer? Kirim bukti ke {settings.proofContact}</p>
+					{#if settings.instagram}
+						<p class="mt-1 text-xs opacity-80">atau DM {settings.instagram}</p>
+					{/if}
 				</div>
 			{/if}
 		</div>

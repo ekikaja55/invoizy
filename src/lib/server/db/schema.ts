@@ -146,6 +146,8 @@ export const orders = pgTable('orders', {
 	handle: text('handle').notNull(),
 	email: text('email').notNull(),
 	note: text('note').notNull().default(''),
+	address: text('address').notNull().default(''),
+	phone: text('phone').notNull().default(''),
 
 	subtotal: integer('subtotal').notNull(),
 	total: integer('total').notNull(),

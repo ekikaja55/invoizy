@@ -25,6 +25,9 @@
 		return out;
 	}
 
+	// Bedakan "belum ada order sama sekali" vs "filter tidak cocok".
+	const hasActiveFilter = $derived(Object.values(data.filters).some((v) => v !== ''));
+
 	const pageHref = (p: number): ResolvedPathname => {
 		const qs = new URLSearchParams({ ...activeParams(), page: String(p) }).toString();
 		return `${resolve('/admin/orders')}${qs ? `?${qs}` : ''}` as ResolvedPathname;
@@ -66,10 +69,10 @@
 			       dark:text-neutral-100 dark:placeholder:text-neutral-500"
 		/>
 
-		<div class="grid grid-cols-2 gap-2">
+		<div class="grid grid-cols-1 gap-2">
 			<select
 				name="invoice"
-				class="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm
+				class="w-full truncate rounded-lg border border-neutral-300 bg-white py-2 pr-8 pl-3 text-sm
 				       dark:border-neutral-700 dark:bg-neutral-900"
 			>
 				<option value="">Invoice: semua</option>
@@ -79,7 +82,7 @@
 			</select>
 			<select
 				name="payment"
-				class="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm
+				class="w-full truncate rounded-lg border border-neutral-300 bg-white py-2 pr-8 pl-3 text-sm
 				       dark:border-neutral-700 dark:bg-neutral-900"
 			>
 				<option value="">Bayar: semua</option>
@@ -125,9 +128,15 @@
 	{#if !data.orders}
 		<ListSkeleton rows={3} />
 	{:else if data.orders.length === 0}
-		<p class="py-8 text-center text-sm text-neutral-500">
-			Tidak ada order yang cocok. Ubah filter atau reset.
-		</p>
+		{#if hasActiveFilter}
+			<p class="py-8 text-center text-sm text-neutral-500">
+				Tidak ada order yang cocok. Ubah filter atau reset.
+			</p>
+		{:else}
+			<p class="py-8 text-center text-sm text-neutral-500">
+				Belum ada order masuk. Bagikan link order ke buyer untuk memulai.
+			</p>
+		{/if}
 	{:else}
 		<p class="text-sm text-neutral-500">{data.total} order ditemukan.</p>
 		<div class="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-800">

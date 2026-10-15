@@ -3,6 +3,7 @@ import { getOrderById } from '$lib/server/db/queries/order';
 import {
 	regenerateInvoicePdf,
 	resendInvoiceEmail,
+	markInvoiceSent,
 	setPaymentStatus
 } from '$lib/server/invoice/process';
 import { logger } from '$lib/server/logger';
@@ -22,6 +23,8 @@ export const load: PageServerLoad = async ({ params }) => {
 			handle: order.handle,
 			email: order.email,
 			note: order.note,
+			address: order.address,
+			phone: order.phone,
 			subtotal: order.subtotal,
 			total: order.total,
 			invoiceStatus: order.invoiceStatus,
@@ -63,6 +66,18 @@ export const actions: Actions = {
 			logger.error('admin.invoice-resend-failed', { orderId: params.id, error: err });
 			return fail(500, {
 				error: err instanceof Error ? err.message : 'Gagal mengirim ulang email.'
+			});
+		}
+	},
+
+	markSent: async ({ params }) => {
+		try {
+			await markInvoiceSent(params.id);
+			return { success: true };
+		} catch (err) {
+			logger.error('admin.invoice-marksent-failed', { orderId: params.id, error: err });
+			return fail(500, {
+				error: err instanceof Error ? err.message : 'Gagal menandai terkirim.'
 			});
 		}
 	},

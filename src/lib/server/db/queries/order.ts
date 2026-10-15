@@ -36,6 +36,8 @@ export interface CreateOrderInput {
 	handle: string;
 	email: string;
 	note: string;
+	address: string;
+	phone: string;
 	items: { productId: string; qty: number }[];
 	shipping: ShippingInput;
 }
@@ -93,7 +95,6 @@ export async function createOrder(input: CreateOrderInput) {
 
 			// ── Ongkir: hitung ulang dari API (jangan percaya angka client) ──
 			let shippingPrice = 0;
-			let shipName: string | null = null;
 			let shipLabel: string | null = null;
 
 			if (input.shipping?.kind === 'quote') {
@@ -112,7 +113,6 @@ export async function createOrder(input: CreateOrderInput) {
 				const label =
 					SHIPPING_COURIERS.find((c) => c.code === s.courier)?.label ?? s.courier.toUpperCase();
 				shippingPrice = match.cost;
-				shipName = `${label} ${match.service}`;
 				const etd = match.etd && match.etd !== '-' ? ` • ${match.etd}` : '';
 				shipLabel = `${label} ${match.service} • ${s.destLabel}${etd}`;
 			} else if (input.shipping?.kind === 'fallback') {
@@ -122,7 +122,6 @@ export async function createOrder(input: CreateOrderInput) {
 					throw new OrderError('Layanan ongkir gangguan. Coba lagi nanti.');
 				}
 				shippingPrice = rate;
-				shipName = 'Ongkir flat darurat';
 				shipLabel = 'Ongkir flat darurat';
 				logger.info('order.shipping-fallback', { rate });
 			}
@@ -152,17 +151,6 @@ export async function createOrder(input: CreateOrderInput) {
 
 			const total = subtotal + shippingPrice;
 
-			if (shipName) {
-				lineItems.push({
-					productId: null,
-					categorySnapshot: 'Ongkir',
-					nameSnapshot: shipName,
-					priceSnapshot: shippingPrice,
-					qty: 1,
-					subtotal: shippingPrice
-				});
-			}
-
 			// ── Kurangi stok secara atomik: UPDATE ... WHERE stock >= qty ──
 			// Aman dari race condition (dua order bersamaan tidak bisa oversell), karena
 			// kondisi stok cukup di-assert ulang di dalam WHERE pada saat UPDATE.
@@ -189,6 +177,8 @@ export async function createOrder(input: CreateOrderInput) {
 					handle: input.handle,
 					email: input.email,
 					note: input.note,
+					address: input.address,
+					phone: input.phone,
 					subtotal,
 					total,
 					shippingLabel: shipLabel,

@@ -3,7 +3,13 @@ import { z } from 'zod';
 export const checkoutSchema = z.object({
 	handle: z.string().trim().min(1, 'Handle wajib diisi').max(100),
 	email: z.string().trim().email('Email tidak valid').max(254),
-	note: z.string().trim().max(1000).optional().or(z.literal(''))
+	note: z.string().trim().max(1000).optional().or(z.literal('')),
+	address: z.string().trim().min(10, 'Alamat lengkap wajib diisi').max(500),
+	phone: z
+		.string()
+		.trim()
+		.max(20)
+		.refine((v) => /^(\+?62|0)\d{9,13}$/.test(v.replace(/[\s\-.]/g, '')), 'Nomor HP tidak valid')
 });
 
 // Ongkir dari kalkulasi client — cost & service divalidasi ulang server saat submit.

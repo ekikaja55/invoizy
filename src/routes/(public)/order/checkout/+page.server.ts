@@ -47,7 +47,9 @@ export const actions: Actions = {
 		const parsed = checkoutSchema.safeParse({
 			handle: formData.get('handle'),
 			email: formData.get('email'),
-			note: formData.get('note')
+			note: formData.get('note'),
+			address: formData.get('address'),
+			phone: formData.get('phone')
 		});
 
 		if (!parsed.success) {
@@ -78,6 +80,8 @@ export const actions: Actions = {
 				handle: parsed.data.handle,
 				email: parsed.data.email,
 				note: parsed.data.note ?? '',
+				address: parsed.data.address,
+				phone: parsed.data.phone,
 				items,
 				shipping
 			});

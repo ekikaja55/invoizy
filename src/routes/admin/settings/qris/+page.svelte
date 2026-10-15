@@ -2,9 +2,10 @@
 	import { enhance } from '$app/forms';
 	import { handleFormResult } from '$lib/utils/handle-form-result';
 	import BusyOverlay from '$lib/components/ui/BusyOverlay.svelte';
+	import Modal from '$lib/components/ui/Modal.svelte';
 	import ListSkeleton from '$lib/components/ui/ListSkeleton.svelte';
 	import { resolve } from '$app/paths';
-	import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, X, ArrowLeft } from '@lucide/svelte';
+	import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, X, ArrowLeft, Eye } from '@lucide/svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -12,6 +13,7 @@
 	let showCreateForm = $state(false);
 	let editingId = $state<string | null>(null);
 	let deletingId = $state<string | null>(null);
+	let preview = $state<{ label: string; imageUrl: string } | null>(null);
 	let isBusy = $state(false);
 	let processingId = $state<string | null>(null);
 </script>
@@ -26,6 +28,7 @@
 		</a>
 		<h1 class="text-xl font-semibold">QRIS</h1>
 	</div>
+	<p class="-mt-4 text-xs text-neutral-500">Urutkan tampilan dengan tombol panah di tiap baris.</p>
 
 	<button
 		onclick={() => (showCreateForm = !showCreateForm)}
@@ -102,7 +105,8 @@
 		</form>
 	{/if}
 
-	<div class="space-y-2">
+	<BusyOverlay active={isBusy && !processingId}>
+		<div class="space-y-2">
 		{#if !data.codes}
 			<ListSkeleton rows={3} />
 		{:else if data.codes.length === 0}
@@ -242,6 +246,15 @@
 											</form>
 
 											<button
+												onclick={() => (preview = { label: qris.label, imageUrl: qris.imageUrl })}
+												disabled={isBusy}
+												aria-label="Pratinjau {qris.label}"
+												class="rounded p-1.5 hover:bg-neutral-100 disabled:opacity-30 dark:hover:bg-white/10"
+											>
+												<Eye size={16} />
+											</button>
+
+											<button
 												onclick={() => (editingId = qris.id)}
 												disabled={isBusy}
 												class="rounded p-1.5 hover:bg-neutral-100 disabled:opacity-30 dark:hover:bg-white/10"
@@ -306,5 +319,16 @@
 				</BusyOverlay>
 			{/each}
 		{/if}
-	</div>
+		</div>
+	</BusyOverlay>
+
+	{#if preview}
+		<Modal open title={preview.label} hideActions onCancel={() => (preview = null)}>
+			<img
+				src={preview.imageUrl}
+				alt={preview.label}
+				class="mt-2 max-h-[70vh] w-full rounded-xl object-contain"
+			/>
+		</Modal>
+	{/if}
 </div>

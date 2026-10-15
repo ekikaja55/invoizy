@@ -1,4 +1,5 @@
 import { env as publicEnv } from '$env/dynamic/public';
+import { env as privateEnv } from '$env/dynamic/private';
 import {
 	getOrderById,
 	getOrderByToken,
@@ -20,6 +21,8 @@ export function toInvoiceData(result: OrderByToken): InvoiceData {
 			handle: result.order.handle,
 			email: result.order.email,
 			note: result.order.note,
+			address: result.order.address,
+			phone: result.order.phone,
 			subtotal: result.order.subtotal,
 			total: result.order.total,
 			shippingLabel: result.order.shippingLabel,
@@ -57,6 +60,11 @@ export function toInvoiceData(result: OrderByToken): InvoiceData {
 function invoiceLink(orderId: string, token: string): string {
 	const base = publicEnv.PUBLIC_APP_URL || '';
 	return base ? `${base}/invoice/${orderId}?token=${token}` : '';
+}
+
+/** Email on kecuali EMAIL_ENABLED=false (mode manual WA). Default: on. */
+export function isEmailEnabled(): boolean {
+	return privateEnv.EMAIL_ENABLED !== 'false';
 }
 
 /**
@@ -101,7 +109,7 @@ export async function ensureInvoicePdf(
 export async function processNewInvoice(
 	orderId: string,
 	accessToken: string
-): Promise<{ skipped: boolean }> {
+): Promise<{ skipped: boolean; emailSkipped?: boolean }> {
 	const result = await getOrderByToken(orderId, accessToken);
 
 	if (!result) {
@@ -122,6 +130,13 @@ export async function processNewInvoice(
 		});
 
 		const link = invoiceLink(orderId, accessToken);
+		if (!isEmailEnabled()) {
+			// Mode manual: PDF tetap dibuat (arsip), pengiriman lewat WA oleh admin.
+			// Status kembali PENDING = menunggu dikirim manual (jujur, bukan SENT bohongan).
+			logger.info('invoice.email-skipped', { orderId });
+			await updateOrderInvoiceResult(orderId, { invoiceStatus: 'PENDING', error: null });
+			return { skipped: false, emailSkipped: true };
+		}
 		await sendInvoiceEmail({
 			to: data.order.email,
 			orderId,
@@ -130,6 +145,7 @@ export async function processNewInvoice(
 			total: data.order.total,
 			invoiceUrl: link,
 			proofContact: data.settings.proofContact,
+			instagram: data.settings.instagram,
 			pdf
 		});
 
@@ -176,6 +192,10 @@ export async function resendInvoiceEmail(orderId: string): Promise<void> {
 		throw new Error('Order tidak ditemukan.');
 	}
 
+	if (!isEmailEnabled()) {
+		throw new Error('Pengiriman email nonaktif (EMAIL_ENABLED=false). Kirim manual via WA.');
+	}
+
 	const data = toInvoiceData(result);
 
 	try {
@@ -193,6 +213,7 @@ export async function resendInvoiceEmail(orderId: string): Promise<void> {
 			total: data.order.total,
 			invoiceUrl: link,
 			proofContact: data.settings.proofContact,
+			instagram: data.settings.instagram,
 			pdf
 		});
 
@@ -208,6 +229,15 @@ export async function resendInvoiceEmail(orderId: string): Promise<void> {
 		await updateOrderInvoiceResult(orderId, { invoiceStatus: 'FAILED', error: message });
 		throw err instanceof Error ? err : new Error(message);
 	}
+}
+
+/** Admin: tandai invoice sudah dikirim manual (mis. via WA). */
+export async function markInvoiceSent(orderId: string): Promise<void> {
+	const head = await getOrderById(orderId);
+	if (!head) {
+		throw new Error('Order tidak ditemukan.');
+	}
+	await updateOrderInvoiceResult(orderId, { invoiceStatus: 'SENT', error: null });
 }
 
 const PAYMENT_STATUSES = ['PENDING', 'CONFIRMED', 'CANCELLED'] as const;

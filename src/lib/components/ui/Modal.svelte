@@ -1,19 +1,27 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
+
 	interface Props {
 		open: boolean;
 		title: string;
-		message: string;
+		message?: string;
+		// Body kustom (mis. preview gambar) — bila diisi, menggantikan <p>message</p>.
+		children?: Snippet;
+		// Sembunyikan tombol aksi (untuk dialog non-konfirmasi seperti preview).
+		hideActions?: boolean;
 		confirmLabel?: string;
 		cancelLabel?: string;
 		danger?: boolean;
-		onConfirm: () => void;
+		onConfirm?: () => void;
 		onCancel: () => void;
 	}
 
 	let {
 		open,
 		title,
-		message,
+		message = '',
+		children,
+		hideActions = false,
 		confirmLabel = 'Ya, lanjutkan',
 		cancelLabel = 'Batal',
 		danger = false,
@@ -43,7 +51,12 @@
 			       dark:border-neutral-800 dark:bg-neutral-950"
 		>
 			<h2 class="text-base font-semibold">{title}</h2>
-			<p class="mt-2 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">{message}</p>
+			{#if children}
+				{@render children()}
+			{:else if message}
+				<p class="mt-2 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">{message}</p>
+			{/if}
+			{#if !hideActions}
 			<div class="mt-4 flex justify-end gap-2">
 				<button
 					onclick={onCancel}
@@ -53,7 +66,7 @@
 					{cancelLabel}
 				</button>
 				<button
-					onclick={onConfirm}
+					onclick={() => onConfirm?.()}
 					class={danger
 						? 'rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500'
 						: 'rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-neutral-900'}
@@ -61,6 +74,7 @@
 					{confirmLabel}
 				</button>
 			</div>
+			{/if}
 		</div>
 	</div>
 {/if}

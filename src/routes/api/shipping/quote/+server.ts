@@ -88,15 +88,28 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
 	);
 
 	const options: CourierQuote[] = [];
+	let hardFail = false;
 	for (const r of settled) {
 		if (r.status === 'fulfilled' && r.value.options.length > 0) {
 			options.push(r.value);
 		} else if (r.status === 'rejected') {
+			const nonFallbackable =
+				r.reason instanceof ShippingError && !r.reason.fallbackable;
+			if (nonFallbackable) hardFail = true;
 			logger.warn('shipping.courier-failed', {
 				error: r.reason,
 				fallbackable: r.reason instanceof ShippingError ? r.reason.fallbackable : undefined
 			});
 		}
+	}
+
+	// Salah konfigurasi (mis. key invalid) tidak boleh disamarkan flat darurat.
+	if (options.length === 0 && hardFail) {
+		logger.error('shipping.quote-unauthorized', { destId: parsed.data.destinationId });
+		return Response.json(
+			{ error: 'Layanan cek ongkir gangguan. Coba lagi nanti.' },
+			{ status: 503 }
+		);
 	}
 
 	// Semua kurir gagal → flat darurat (bila aktif) atau tolak dengan jelas.
