@@ -27,15 +27,21 @@
 	}
 </script>
 
+<!-- NEO-BRUTALIST sample searah versi PDF: kertas putih paksa (fidelitas cetak),
+     border hitam tebal, hard shadow. Tanpa dark: — dokumen = artefak cetak. -->
 <div class="bg-white text-neutral-900" style={isPdf ? 'width:794px;padding:48px;' : undefined}>
 	<div class={isPdf ? '' : 'mx-auto max-w-3xl px-4 py-8'}>
-		<!-- Kop -->
-		<div class="border-b border-neutral-200 pb-4">
-			<p class="text-sm text-neutral-500">{settings.storeName || 'Invoizy Store'}</p>
-			<h1 class="mt-1 text-2xl font-bold">Invoice {order.orderId}</h1>
-			<p class="mt-1 text-sm text-neutral-500">{createdLabel}</p>
-			<p class="mt-2 text-sm">
-				<span class="font-medium">{order.handle}</span>
+		<!-- Header band full-bleed -->
+		<div class="-mx-4 border-y-4 border-black bg-yellow-400 px-4 py-6">
+			<p class="text-xs font-bold tracking-widest uppercase">{settings.storeName || 'Invoizy Store'}</p>
+			<h1 class="mt-1 text-3xl font-black tracking-tight">INVOICE {order.orderId}</h1>
+			<p class="mt-1 text-sm font-medium">{createdLabel}</p>
+		</div>
+
+		<!-- Buyer card -->
+		<div class="mt-6 border-2 border-black bg-white p-4 shadow-[4px_4px_0_#000]">
+			<p class="text-sm">
+				<span class="font-bold">{order.handle}</span>
 				<span class="text-neutral-500"> · {order.email}</span>
 			</p>
 			{#if order.phone}
@@ -49,26 +55,32 @@
 			{/if}
 		</div>
 
-		<!-- Item (dari snapshot — tidak berubah walau produk diedit) -->
-		<ul class="mt-4 space-y-2">
+		<!-- Items -->
+		<div class="mt-6 border-2 border-black bg-black px-4 py-2 text-sm font-bold tracking-wide text-white uppercase">
+			<div class="flex items-center justify-between">
+				<span>Item</span>
+				<span>Total</span>
+			</div>
+		</div>
+		<ul class="divide-y-2 divide-black border-2 border-t-0 border-black">
 			{#each order.items as item (item.nameSnapshot + item.qty + item.priceSnapshot)}
-				<li class="flex items-start justify-between gap-4 text-sm">
+				<li class="flex items-start justify-between gap-4 bg-white p-3 text-sm">
 					<div>
-						<p class="font-medium">{item.nameSnapshot}</p>
+						<p class="font-bold">{item.nameSnapshot}</p>
 						<p class="text-xs text-neutral-500">
 							{item.categorySnapshot} · {item.qty} × {formatRupiah(item.priceSnapshot)}
 						</p>
 					</div>
-					<p class="shrink-0 font-medium">{formatRupiah(item.subtotal)}</p>
+					<p class="shrink-0 font-bold">{formatRupiah(item.subtotal)}</p>
 				</li>
 			{/each}
 		</ul>
 
 		<!-- Total -->
-		<div class="mt-4 space-y-1 border-t border-neutral-200 pt-3 text-sm">
+		<div class="mt-4 space-y-1 text-sm">
 			<div class="flex justify-between">
 				<span class="text-neutral-500">Subtotal</span>
-				<span>{formatRupiah(order.subtotal)}</span>
+				<span class="font-bold">{formatRupiah(order.subtotal)}</span>
 			</div>
 			{#if shippingDiff > 0}
 				<div class="flex justify-between gap-4">
@@ -76,21 +88,23 @@
 						Ongkir{#if order.shippingLabel}
 							· {order.shippingLabel}{/if}
 					</span>
-					<span class="shrink-0">{formatRupiah(shippingDiff)}</span>
+					<span class="shrink-0 font-bold">{formatRupiah(shippingDiff)}</span>
 				</div>
 			{/if}
-			<div class="flex justify-between text-base font-bold">
-				<span>Total</span>
+			<div
+				class="mt-2 flex items-center justify-between border-2 border-black bg-black px-3 py-2 text-base font-black text-white"
+			>
+				<span>TOTAL</span>
 				<span>{formatRupiah(order.total)}</span>
 			</div>
 		</div>
 
 		<!-- Pembayaran -->
-		<div class="mt-6 border-t border-neutral-200 pt-4">
-			<h2 class="text-sm font-semibold tracking-wide text-neutral-500 uppercase">Pembayaran</h2>
+		<div class="mt-6">
+			<h2 class="text-sm font-black tracking-widest uppercase">Pembayaran</h2>
 
 			{#if paymentMethods.length === 0 && qrisCodes.length === 0}
-				<p class="mt-2 text-sm text-neutral-500">
+				<p class="mt-2 border-2 border-black bg-white p-3 text-sm">
 					Info pembayaran belum diatur toko. Tunggu konfirmasi admin.
 				</p>
 			{/if}
@@ -98,9 +112,9 @@
 			{#if paymentMethods.length > 0}
 				<ul class="mt-3 space-y-3">
 					{#each paymentMethods as m (m.label + m.accountNumber)}
-						<li class="rounded-xl border border-neutral-200 p-3 text-sm">
-							<p class="font-medium">{m.label}</p>
-							<p class="mt-0.5 font-mono text-base font-semibold">{m.accountNumber}</p>
+						<li class="border-2 border-black bg-white p-3 text-sm shadow-[4px_4px_0_#000]">
+							<p class="font-bold">{m.label}</p>
+							<p class="mt-0.5 font-mono text-lg font-black">{m.accountNumber}</p>
 							<p class="text-xs text-neutral-500">a.n. {m.accountHolder}</p>
 							{#if m.note}
 								<p class="mt-1 text-xs text-neutral-500">{m.note}</p>
@@ -108,7 +122,7 @@
 							{#if !isPdf}
 								<button
 									onclick={() => copyText(m.accountNumber)}
-									class="mt-2 rounded-lg border border-neutral-300 px-3 py-1 text-xs font-medium hover:bg-neutral-100"
+									class="mt-2 border-2 border-black bg-yellow-400 px-3 py-1 text-xs font-bold hover:bg-yellow-300"
 								>
 									Salin nomor
 								</button>
@@ -121,14 +135,14 @@
 			{#if qrisCodes.length > 0}
 				<div class="mt-4 space-y-3">
 					{#each qrisCodes as q (q.label + q.imageUrl)}
-						<figure class="rounded-xl border border-neutral-200 p-3">
-							<figcaption class="text-sm font-medium">{q.label}</figcaption>
+						<figure class="border-2 border-black bg-white p-3 shadow-[4px_4px_0_#000]">
+							<figcaption class="text-sm font-bold">{q.label}</figcaption>
 							<img
 								src={q.imageUrl}
 								alt={q.label}
 								width="240"
 								height="240"
-								class="mt-2 h-auto w-60 rounded-lg border border-neutral-100"
+								class="mt-2 h-auto w-60 border-2 border-black"
 							/>
 						</figure>
 					{/each}
@@ -140,15 +154,17 @@
 			{/if}
 
 			{#if settings.proofContact}
-				<div
-					class="mt-3 rounded-xl bg-neutral-900 p-3 text-sm text-white dark:bg-white dark:text-neutral-900"
-				>
-					<p class="font-medium">Sudah transfer? Kirim bukti ke {settings.proofContact}</p>
+				<div class="mt-3 border-2 border-black bg-black p-3 text-sm text-white">
+					<p class="font-bold">Sudah transfer? Kirim bukti ke {settings.proofContact}</p>
 					{#if settings.instagram}
-						<p class="mt-1 text-xs opacity-80">atau DM {settings.instagram}</p>
+						<p class="mt-1 text-xs text-yellow-400">atau DM {settings.instagram}</p>
 					{/if}
 				</div>
 			{/if}
 		</div>
+
+		<p class="mt-6 text-center text-xs text-neutral-500">
+			Dibuat otomatis oleh {settings.storeName || 'Invoizy Store'}
+		</p>
 	</div>
 </div>
