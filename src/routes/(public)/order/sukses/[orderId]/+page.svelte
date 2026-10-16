@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { cart } from '$lib/stores/cart.svelte';
 	import { untrack } from 'svelte';
+	import { browser } from '$app/environment';
 	import { resolve } from '$app/paths';
 	import type { ResolvedPathname } from '$app/types';
 	import { FILE_PREFIX } from '$lib/constants';
@@ -22,6 +23,18 @@
 	// Order sukses dibuat → kosongkan keranjang (sekali, saat halaman dimuat).
 	$effect(() => {
 		untrack(() => cart.clear());
+	});
+
+	// Pesan WA menyertakan link invoice absolut (di-encode di dalam waLink).
+	// URL absolut hanya ada di browser — SSR pakai teks tanpa link.
+	const waHref = $derived.by(() => {
+		if (!data.contact) return null;
+		let text = `Halo, saya order ${data.orderId}, minta link invoice.`;
+		if (browser && invoiceHref) {
+			const absolute = new URL(invoiceHref, window.location.origin).href;
+			text = `Halo, saya order ${data.orderId}, link invoice saya: ${absolute}`;
+		}
+		return waLink(data.contact, text);
 	});
 
 	let downloading = $state(false);
@@ -66,21 +79,18 @@
 			kamu.
 		</p>
 	{/if}
-	{#if data.contact}
-		{@const wa = waLink(data.contact, `Halo, saya order ${data.orderId}, minta link invoice.`)}
-		{#if wa}
-			<a
-				href={wa}
-				target="_blank"
-				rel="external"
-				class="mt-4 rounded-lg bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white
+	{#if waHref}
+		<a
+			href={waHref}
+			target="_blank"
+			rel="external"
+			class="mt-4 rounded-lg bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white
                hover:bg-neutral-700 dark:bg-white dark:text-neutral-900"
-			>
-				Hubungi Admin via WA
-			</a>
-		{:else}
-			<p class="mt-4 text-sm text-neutral-500">Hubungi admin: {data.contact}</p>
-		{/if}
+		>
+			Hubungi Admin via WA
+		</a>
+	{:else if data.contact}
+		<p class="mt-4 text-sm text-neutral-500">Hubungi admin: {data.contact}</p>
 	{/if}
 	{#if invoiceHref}
 		<a
