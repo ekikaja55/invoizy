@@ -94,6 +94,9 @@
 			return;
 		}
 
+		const parsedQty = Math.floor(Number(qty)) || 1;
+		const finalQty = Math.max(1, Math.min(effectiveStock, parsedQty));
+
 		cart.addItem(
 			{
 				productId: product.id,
@@ -104,11 +107,11 @@
 				name: product.name,
 				price: product.priceInt
 			},
-			qty
+			finalQty
 		);
 
 		const variantLabel = selectedVariant ? ` (${selectedVariant.name})` : '';
-		toast.success(`${qty}x "${product.name}${variantLabel}" ditambahkan ke keranjang.`);
+		toast.success(`${finalQty}x "${product.name}${variantLabel}" ditambahkan ke keranjang.`);
 		qty = 1;
 	}
 </script>
@@ -281,7 +284,18 @@
 				>
 					<Minus size={14} />
 				</button>
-				<span class="w-8 text-center text-sm font-semibold">{qty}</span>
+				<input
+					type="number"
+					min="1"
+					max={effectiveStock > 0 ? effectiveStock : 1}
+					bind:value={qty}
+					onblur={() => {
+						if (!qty || qty < 1) qty = 1;
+						if (effectiveStock > 0 && qty > effectiveStock) qty = effectiveStock;
+					}}
+					disabled={effectiveStock <= 0}
+					class="h-8 w-14 rounded-lg border border-neutral-300 bg-white text-center text-sm font-semibold text-neutral-900 focus:border-neutral-900 focus:outline-none disabled:opacity-50 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:focus:border-white"
+				/>
 				<button
 					type="button"
 					onclick={() => (qty = Math.min(effectiveStock, qty + 1))}

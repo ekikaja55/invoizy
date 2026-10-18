@@ -36,5 +36,25 @@ export const actions: Actions = {
 			logger.error('settings.update-failed', { error: err });
 			return fail(500, { error: 'Gagal menyimpan pengaturan.' });
 		}
+	},
+
+	savePickupCode: async ({ request }) => {
+		const formData = await request.formData();
+		const pickupCode = String(formData.get('pickupCode') ?? '').trim();
+
+		if (pickupCode.length > 50) {
+			return fail(400, { error: 'Kode pickup maksimal 50 karakter.' });
+		}
+
+		try {
+			await updateSettings({
+				pickupCode,
+				pickupCodeEnabled: true
+			});
+			return { success: true, pickupCode, pickupCodeEnabled: true };
+		} catch (err) {
+			logger.error('settings.save-pickup-code-failed', { error: err });
+			return fail(500, { error: 'Gagal menyimpan kode pickup.' });
+		}
 	}
 };

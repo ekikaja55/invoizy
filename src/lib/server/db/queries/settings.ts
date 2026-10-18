@@ -7,7 +7,7 @@ export async function getSettings() {
 	return db.query.storeSettings.findFirst({ where: eq(storeSettings.id, 1) }) ?? null;
 }
 
-export async function updateSettings(input: SettingsInput) {
+export async function updateSettings(input: Partial<SettingsInput>) {
 	const [row] = await db
 		.update(storeSettings)
 		.set({ ...input, updatedAt: new Date() })

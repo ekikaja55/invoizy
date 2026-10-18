@@ -1,13 +1,30 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { invalidateAll } from '$app/navigation';
 	import type { ResolvedPathname } from '$app/types';
 	import { formatRupiah } from '$lib/utils/currency';
 	import { invoiceStatusLabel, paymentStatusLabel } from '$lib/utils/status-label';
 	import ListSkeleton from '$lib/components/ui/ListSkeleton.svelte';
 	import Pagination from '$lib/components/ui/Pagination.svelte';
+	import { RefreshCw } from '@lucide/svelte';
+	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
+	let refreshing = $state(false);
+
+	async function handleRefresh() {
+		if (refreshing) return;
+		refreshing = true;
+		try {
+			await invalidateAll();
+			toast.success('Daftar pesanan diperbarui.');
+		} catch {
+			toast.error('Gagal memperbarui data pesanan.');
+		} finally {
+			refreshing = false;
+		}
+	}
 
 	function dateLabel(iso: string): string {
 		try {
@@ -45,17 +62,39 @@
 <div class="mx-auto max-w-4xl space-y-4">
 	<div class="flex items-center justify-between gap-2">
 		<h1 class="text-xl font-semibold">Orders</h1>
-		<a
-			href={exportHref()}
-			rel="external"
-			class="rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium
-			       hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-white/10"
-		>
-			Export CSV
-		</a>
+		<div class="flex items-center gap-2">
+			<button
+				type="button"
+				onclick={handleRefresh}
+				disabled={refreshing}
+				class="inline-flex items-center gap-2 rounded-lg border border-neutral-300 px-3.5 py-2 text-sm font-medium
+				       hover:bg-neutral-100 disabled:opacity-50 dark:border-neutral-700 dark:hover:bg-white/10"
+				title="Perbarui daftar pesanan"
+			>
+				<RefreshCw size={15} class={refreshing ? 'animate-spin text-neutral-500' : ''} />
+				<span>Refresh</span>
+			</button>
+			<a
+				href={exportHref()}
+				rel="external"
+				class="rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium
+				       hover:bg-neutral-100 disabled:opacity-50 dark:border-neutral-700 dark:hover:bg-white/10 {refreshing
+					? 'pointer-events-none opacity-50'
+					: ''}"
+				aria-disabled={refreshing}
+			>
+				Export CSV
+			</a>
+		</div>
 	</div>
 
-	<form
+	<div
+		class="space-y-4 transition-opacity duration-150 {refreshing
+			? 'pointer-events-none opacity-60 select-none'
+			: ''}"
+		aria-busy={refreshing}
+	>
+		<form
 		method="GET"
 		class="grid gap-2 rounded-xl border border-neutral-200 p-4 sm:grid-cols-2 dark:border-neutral-800"
 	>
@@ -178,4 +217,5 @@
 
 		<Pagination page={data.page} totalPages={data.totalPages} buildHref={pageHref} />
 	{/if}
+	</div>
 </div>

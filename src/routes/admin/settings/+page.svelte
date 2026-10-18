@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { enhance, deserialize } from '$app/forms';
 	import { handleFormResult } from '$lib/utils/handle-form-result';
 	import BusyOverlay from '$lib/components/ui/BusyOverlay.svelte';
 	import { resolve } from '$app/paths';
 	import { CreditCard, QrCode } from '@lucide/svelte';
+	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -11,10 +12,16 @@
 
 	let pickupEnabled = $state(false);
 	let pickupCode = $state('');
+	let savedPickupCode = $state('');
+	let copied = $state(false);
+	let savingPickupCode = $state(false);
+
+	const isPickupCodeDirty = $derived(pickupCode.trim() !== savedPickupCode.trim());
 
 	$effect(() => {
 		pickupEnabled = data.settings?.pickupCodeEnabled ?? false;
 		pickupCode = data.settings?.pickupCode ?? '';
+		savedPickupCode = data.settings?.pickupCode ?? '';
 	});
 
 	function generateCode() {
@@ -24,6 +31,69 @@
 			res += chars.charAt(Math.floor(Math.random() * chars.length));
 		}
 		pickupCode = res;
+	}
+
+	async function handleCopyCode() {
+		const code = pickupCode.trim();
+		if (!code) {
+			toast.error('Tidak ada kode untuk disalin.');
+			return;
+		}
+
+		try {
+			await navigator.clipboard.writeText(code);
+			copied = true;
+			setTimeout(() => {
+				copied = false;
+			}, 2000);
+
+			if (isPickupCodeDirty) {
+				toast.warning('Kode disalin! Jangan lupa simpan kode agar aktif di checkout.');
+			} else {
+				toast.success('Kode rahasia berhasil disalin.');
+			}
+		} catch {
+			toast.error('Gagal mengakses clipboard.');
+		}
+	}
+
+	async function handleSavePickupCodeOnly() {
+		const code = pickupCode.trim();
+		if (!code) {
+			toast.error('Kode pickup tidak boleh kosong.');
+			return;
+		}
+		if (savingPickupCode) return;
+		savingPickupCode = true;
+		try {
+			const fd = new FormData();
+			fd.append('pickupCode', code);
+			fd.append('pickupCodeEnabled', 'true');
+
+			const res = await fetch('?/savePickupCode', {
+				method: 'POST',
+				body: fd
+			});
+			const result = deserialize(await res.text());
+			if (result.type === 'success') {
+				savedPickupCode = code;
+				pickupEnabled = true;
+				if (data.settings) {
+					data.settings.pickupCode = code;
+					data.settings.pickupCodeEnabled = true;
+				}
+				toast.success('Kode pickup berhasil disimpan ke database.');
+			} else if (result.type === 'failure') {
+				const errMsg = (result.data as { error?: string })?.error ?? 'Gagal menyimpan kode.';
+				toast.error(errMsg);
+			} else {
+				toast.error('Gagal menyimpan kode.');
+			}
+		} catch {
+			toast.error('Terjadi kesalahan saat menyimpan kode.');
+		} finally {
+			savingPickupCode = false;
+		}
 	}
 </script>
 
@@ -191,29 +261,58 @@
 						<label for="pickupCode" class="block text-xs font-medium text-neutral-700 dark:text-neutral-300">
 							Kode Rahasia Rekanan / Teman
 						</label>
-						<div class="mt-1 flex gap-2">
+						<div class="mt-1 flex flex-wrap gap-2">
 							<input
 								id="pickupCode"
 								name="pickupCode"
 								bind:value={pickupCode}
 								placeholder="misal: TEMAN2026"
-								disabled={isBusy}
-								class="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-mono uppercase text-neutral-900
+								disabled={isBusy || savingPickupCode}
+								class="min-w-36 flex-1 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-mono uppercase text-neutral-900
                      disabled:opacity-50
                      dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
 							/>
 							<button
 								type="button"
 								onclick={generateCode}
-								disabled={isBusy}
+								disabled={isBusy || savingPickupCode}
 								class="shrink-0 rounded-lg border border-neutral-300 px-3 py-2 text-xs font-medium hover:bg-neutral-100 disabled:opacity-50 dark:border-neutral-700 dark:hover:bg-white/10"
 							>
 								Generate Acak
+							</button>
+							<button
+								type="button"
+								onclick={handleCopyCode}
+								disabled={isBusy || savingPickupCode || !pickupCode.trim()}
+								class="shrink-0 rounded-lg border border-neutral-300 px-3 py-2 text-xs font-medium hover:bg-neutral-100 disabled:opacity-50 dark:border-neutral-700 dark:hover:bg-white/10"
+							>
+								{copied ? 'Tersalin!' : 'Salin'}
 							</button>
 						</div>
 						<p class="mt-1 text-xs text-neutral-500">
 							Bagikan kode ini hanya ke rekan yang ingin mengambil barang di tempat.
 						</p>
+
+						{#if isPickupCodeDirty && pickupCode.trim().length > 0}
+							<div
+								class="mt-2.5 flex flex-col justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900 sm:flex-row sm:items-center dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-200"
+							>
+								<div>
+									<p class="font-bold">Kode baru belum tersimpan di database!</p>
+									<p class="mt-0.5 text-amber-800 dark:text-amber-300">
+										Pembeli belum bisa menggunakan kode ini di checkout sebelum disimpan.
+									</p>
+								</div>
+								<button
+									type="button"
+									onclick={handleSavePickupCodeOnly}
+									disabled={isBusy || savingPickupCode}
+									class="shrink-0 rounded-md bg-amber-800 px-3.5 py-1.5 font-medium text-white transition-colors hover:bg-amber-900 disabled:opacity-50 dark:bg-amber-700 dark:hover:bg-amber-600"
+								>
+									{savingPickupCode ? 'Menyimpan...' : 'Simpan Kode Ini Saja'}
+								</button>
+							</div>
+						{/if}
 					</div>
 				{/if}
 			</div>
