@@ -32,7 +32,9 @@ export const load: PageServerLoad = async ({ params, url }) => {
 			shippingLabel: result.order.shippingLabel,
 			createdAt: result.order.createdAt.toISOString(),
 			items: result.order.items.map((i) => ({
+				id: i.id,
 				nameSnapshot: i.nameSnapshot,
+				variantNameSnapshot: i.variantNameSnapshot,
 				priceSnapshot: i.priceSnapshot,
 				qty: i.qty,
 				subtotal: i.subtotal,

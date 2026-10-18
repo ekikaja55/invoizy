@@ -20,7 +20,9 @@ export const actions: Actions = {
 			emailFromName: formData.get('emailFromName'),
 			paymentNote: formData.get('paymentNote'),
 			proofContact: formData.get('proofContact'),
-			emergencyFlatRate: formData.get('emergencyFlatRate')
+			emergencyFlatRate: formData.get('emergencyFlatRate'),
+			pickupCode: formData.get('pickupCode'),
+			pickupCodeEnabled: formData.get('pickupCodeEnabled') === 'on' || formData.get('pickupCodeEnabled') === 'true'
 		});
 
 		if (!parsed.success) {

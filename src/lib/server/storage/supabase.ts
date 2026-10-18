@@ -37,6 +37,29 @@ export async function deleteQrisImage(path: string) {
 	await supabaseAdmin.storage.from('qris').remove([path]);
 }
 
+export async function uploadProductImage(file: File): Promise<{ url: string; path: string }> {
+	const ext = file.name.split('.').pop() ?? 'webp';
+	const path = `prod-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+	const { error } = await supabaseAdmin.storage
+		.from('products')
+		.upload(path, file, { upsert: true, contentType: file.type || 'image/webp' });
+
+	if (error) {
+		throw new Error(`Gagal upload foto produk: ${error.message}`);
+	}
+
+	const { data } = supabaseAdmin.storage.from('products').getPublicUrl(path);
+	return { url: data.publicUrl, path };
+}
+
+export async function deleteProductImage(pathOrUrl: string) {
+	const path = pathOrUrl.includes('/products/')
+		? (pathOrUrl.split('/products/').pop() ?? pathOrUrl)
+		: pathOrUrl;
+	await supabaseAdmin.storage.from('products').remove([path]);
+}
+
 export async function uploadInvoicePdf(
 	orderId: string,
 	pdf: Uint8Array

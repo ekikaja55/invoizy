@@ -63,10 +63,15 @@
 			</div>
 		</div>
 		<ul class="divide-y-2 divide-black border-2 border-t-0 border-black">
-			{#each order.items as item (item.nameSnapshot + item.qty + item.priceSnapshot)}
+			{#each order.items as item, idx (item.id ?? idx)}
 				<li class="flex items-start justify-between gap-4 bg-white p-3 text-sm">
 					<div>
-						<p class="font-bold">{item.nameSnapshot}</p>
+						<p class="font-bold">
+							{item.nameSnapshot}
+							{#if item.variantNameSnapshot}
+								<span class="font-normal text-neutral-600">({item.variantNameSnapshot})</span>
+							{/if}
+						</p>
 						<p class="text-xs text-neutral-500">
 							{item.categorySnapshot} · {item.qty} × {formatRupiah(item.priceSnapshot)}
 						</p>

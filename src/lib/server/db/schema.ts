@@ -48,6 +48,8 @@ export const storeSettings = pgTable('store_settings', {
 	paymentNote: text('payment_note'),
 	proofContact: text('proof_contact').notNull().default(''),
 	emergencyFlatRate: integer('emergency_flat_rate').notNull().default(0),
+	pickupCode: text('pickup_code'),
+	pickupCodeEnabled: boolean('pickup_code_enabled').notNull().default(false),
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
 });
 
@@ -116,6 +118,7 @@ export const products = pgTable('products', {
 	trackStock: boolean('track_stock').notNull().default(false),
 	stock: integer('stock').notNull().default(0),
 	weightGrams: integer('weight_grams').notNull().default(0),
+	description: text('description'),
 	imageUrls: text('image_urls').array(),
 
 	active: boolean('active').notNull().default(true),
@@ -125,11 +128,31 @@ export const products = pgTable('products', {
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
 });
 
+export const productVariants = pgTable('product_variants', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	productId: uuid('product_id')
+		.notNull()
+		.references(() => products.id, { onDelete: 'cascade' }),
+	name: text('name').notNull(),
+	stock: integer('stock').notNull().default(0),
+	sortOrder: integer('sort_order').notNull().default(0),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export const productVariantsRelations = relations(productVariants, ({ one }) => ({
+	product: one(products, {
+		fields: [productVariants.productId],
+		references: [products.id]
+	})
+}));
+
 export const productsRelations = relations(products, ({ one, many }) => ({
 	category: one(categories, {
 		fields: [products.categoryId],
 		references: [categories.id]
 	}),
+	variants: many(productVariants),
 	orderItems: many(orderItems)
 }));
 
@@ -183,6 +206,7 @@ export const orderItems = pgTable('order_items', {
 
 	categorySnapshot: text('category_snapshot').notNull(),
 	nameSnapshot: text('name_snapshot').notNull(),
+	variantNameSnapshot: text('variant_name_snapshot'),
 	priceSnapshot: integer('price_snapshot').notNull(),
 
 	qty: integer('qty').notNull(),

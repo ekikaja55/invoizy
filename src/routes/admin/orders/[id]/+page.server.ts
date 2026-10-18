@@ -36,6 +36,7 @@ export const load: PageServerLoad = async ({ params }) => {
 			updatedAt: order.updatedAt.toISOString(),
 			items: order.items.map((i) => ({
 				nameSnapshot: i.nameSnapshot,
+				variantNameSnapshot: i.variantNameSnapshot,
 				priceSnapshot: i.priceSnapshot,
 				qty: i.qty,
 				subtotal: i.subtotal,

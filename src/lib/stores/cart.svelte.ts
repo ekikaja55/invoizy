@@ -4,6 +4,8 @@ import { browser } from '$app/environment';
 
 export interface CartProduct {
 	productId: string;
+	variantId?: string | null;
+	variantName?: string | null;
 	categoryId: string;
 	categoryName: string;
 	name: string;
@@ -29,10 +31,22 @@ export interface CartShippingFallback {
 	cost: number;
 }
 
-export type CartShipping = CartShippingQuote | CartShippingFallback;
+// Ambil sendiri di toko (khusus rekanan/teman dengan kode rahasia).
+export interface CartShippingPickup {
+	kind: 'pickup';
+	code: string;
+	cost: 0;
+}
+
+export type CartShipping = CartShippingQuote | CartShippingFallback | CartShippingPickup;
 
 export function shippingLabel(s: CartShipping): string {
+	if (s.kind === 'pickup') return 'Ambil Sendiri (Self-Pickup)';
 	return s.kind === 'quote' ? `${s.courierLabel} ${s.service}` : 'Ongkir flat darurat';
+}
+
+export function getCartItemKey(productId: string, variantId?: string | null): string {
+	return variantId ? `${productId}:${variantId}` : productId;
 }
 
 const STORAGE_KEY = 'invoizy-cart-v1';
@@ -56,6 +70,9 @@ function isValidShipping(v: unknown): v is CartShipping {
 	}
 	if (s.kind === 'fallback') {
 		return typeof s.cost === 'number';
+	}
+	if (s.kind === 'pickup') {
+		return typeof s.code === 'string' && s.cost === 0;
 	}
 	// Bentuk lama (produk ongkir) otomatis digugurkan — migrasi diam-diam.
 	return false;
@@ -90,7 +107,10 @@ function createCart() {
 	}
 
 	function addOrUpdateItem(product: Omit<CartProduct, 'qty'>, qty: number) {
-		const existingIndex = items.findIndex((i) => i.productId === product.productId);
+		const targetKey = getCartItemKey(product.productId, product.variantId);
+		const existingIndex = items.findIndex(
+			(i) => getCartItemKey(i.productId, i.variantId) === targetKey
+		);
 
 		if (qty <= 0) {
 			if (existingIndex !== -1) items.splice(existingIndex, 1);
@@ -103,8 +123,29 @@ function createCart() {
 		persist();
 	}
 
-	function getQty(productId: string): number {
-		return items.find((i) => i.productId === productId)?.qty ?? 0;
+	function addItem(product: Omit<CartProduct, 'qty'>, deltaQty: number) {
+		const targetKey = getCartItemKey(product.productId, product.variantId);
+		const existingIndex = items.findIndex(
+			(i) => getCartItemKey(i.productId, i.variantId) === targetKey
+		);
+
+		if (existingIndex !== -1) {
+			items[existingIndex].qty += deltaQty;
+			if (items[existingIndex].qty <= 0) {
+				items.splice(existingIndex, 1);
+			}
+		} else if (deltaQty > 0) {
+			items.push({ ...product, qty: deltaQty });
+		}
+
+		persist();
+	}
+
+	function getQty(productId: string, variantId?: string | null): number {
+		const targetKey = getCartItemKey(productId, variantId);
+		return (
+			items.find((i) => getCartItemKey(i.productId, i.variantId) === targetKey)?.qty ?? 0
+		);
 	}
 
 	function setShipping(option: CartShipping | null) {
@@ -116,24 +157,47 @@ function createCart() {
 	 * Sinkronkan cart tersimpan dengan katalog terbaru dari server:
 	 * - buang item yang produknya sudah dihapus / nonaktif
 	 * - perbarui nama & harga ke nilai terbaru
-	 * - kurangi qty kalau melebihi stok yang tersedia
-	 * Ongkir tidak direkonsiliasi ke katalog (bukan produk lagi) — cukup validasi bentuk.
+	 * - kurangi qty kalau melebihi stok yang tersedia (baik stok produk maupun varian)
 	 */
 	function reconcile(
-		catalog: Map<string, { name: string; price: number; trackStock: boolean; stock: number }>
+		catalog: Map<
+			string,
+			{
+				name: string;
+				price: number;
+				trackStock: boolean;
+				stock: number;
+				variants?: { id: string; name: string; stock: number }[];
+			}
+		>
 	) {
-		items = items
-			.map((item) => {
-				const fresh = catalog.get(item.productId);
-				if (!fresh) return null;
+		const nextItems: CartProduct[] = [];
+		for (const item of items) {
+			const fresh = catalog.get(item.productId);
+			if (!fresh) continue;
 
-				const maxQty = fresh.trackStock ? fresh.stock : item.qty;
-				const qty = Math.min(item.qty, maxQty);
-				if (qty <= 0) return null;
+			let maxQty = fresh.trackStock ? fresh.stock : item.qty;
+			let currentVariantName = item.variantName ?? null;
 
-				return { ...item, name: fresh.name, price: fresh.price, qty };
-			})
-			.filter((i): i is CartProduct => i !== null);
+			if (item.variantId) {
+				const variant = fresh.variants?.find((v) => v.id === item.variantId);
+				if (!variant) continue;
+				maxQty = variant.stock;
+				currentVariantName = variant.name;
+			}
+
+			const qty = Math.min(item.qty, maxQty);
+			if (qty <= 0) continue;
+
+			nextItems.push({
+				...item,
+				name: fresh.name,
+				price: fresh.price,
+				variantName: currentVariantName,
+				qty
+			});
+		}
+		items = nextItems;
 
 		if (shipping && !isValidShipping(shipping)) {
 			shipping = null;
@@ -177,6 +241,7 @@ function createCart() {
 			return isEmpty;
 		},
 		addOrUpdateItem,
+		addItem,
 		getQty,
 		setShipping,
 		reconcile,

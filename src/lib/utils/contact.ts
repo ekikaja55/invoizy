@@ -11,3 +11,12 @@ export function waLink(
 	const normalized = digits.startsWith('0') ? `62${digits.slice(1)}` : digits;
 	return `https://wa.me/${normalized}?text=${encodeURIComponent(text)}`;
 }
+
+export function igLink(handle: string): string | null {
+	const cleaned = handle.trim();
+	if (!cleaned) return null;
+	if (cleaned.startsWith('http://') || cleaned.startsWith('https://')) return cleaned;
+	const username = cleaned.replace(/^@/, '').trim();
+	if (!username) return null;
+	return `https://instagram.com/${username}`;
+}

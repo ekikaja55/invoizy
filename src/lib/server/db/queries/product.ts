@@ -1,6 +1,7 @@
 import { db } from '$lib/server/db';
-import { products, categories } from '$lib/server/db/schema';
+import { products, categories, productVariants } from '$lib/server/db/schema';
 import { eq, asc } from 'drizzle-orm';
+import { deleteProductImage } from '$lib/server/storage/supabase';
 import type { ProductInput } from '$lib/schemas/product';
 
 export async function listProductsGroupedByCategory() {
@@ -8,23 +9,82 @@ export async function listProductsGroupedByCategory() {
 		orderBy: [asc(categories.sortOrder)],
 		with: {
 			products: {
-				orderBy: [asc(products.sortOrder)]
+				orderBy: [asc(products.sortOrder)],
+				with: {
+					variants: {
+						orderBy: [asc(productVariants.sortOrder), asc(productVariants.createdAt)]
+					}
+				}
+			}
+		}
+	});
+}
+
+export async function getProductById(id: string) {
+	return db.query.products.findFirst({
+		where: eq(products.id, id),
+		with: {
+			category: true,
+			variants: {
+				orderBy: [asc(productVariants.sortOrder), asc(productVariants.createdAt)]
 			}
 		}
 	});
 }
 
 export async function createProduct(input: ProductInput) {
-	const [row] = await db.insert(products).values(input).returning();
-	return row;
+	return db.transaction(async (tx) => {
+		const { variants: variantList, ...productData } = input;
+		const [row] = await tx.insert(products).values(productData).returning();
+
+		if (variantList && variantList.length > 0) {
+			await tx.insert(productVariants).values(
+				variantList.map((v, idx) => ({
+					productId: row.id,
+					name: v.name,
+					stock: v.stock,
+					sortOrder: idx
+				}))
+			);
+		}
+
+		return row;
+	});
 }
 
 export async function updateProduct(id: string, input: ProductInput) {
-	const [row] = await db.update(products).set(input).where(eq(products.id, id)).returning();
-	return row;
+	return db.transaction(async (tx) => {
+		const { variants: variantList, ...productData } = input;
+		const [row] = await tx.update(products).set(productData).where(eq(products.id, id)).returning();
+
+		// Sinkronkan varian: hapus yang lama, masukkan yang baru
+		await tx.delete(productVariants).where(eq(productVariants.productId, id));
+		if (variantList && variantList.length > 0) {
+			await tx.insert(productVariants).values(
+				variantList.map((v, idx) => ({
+					productId: id,
+					name: v.name,
+					stock: v.stock,
+					sortOrder: idx
+				}))
+			);
+		}
+
+		return row;
+	});
 }
 
 export async function deleteProduct(id: string) {
+	const prod = await db.query.products.findFirst({ where: eq(products.id, id) });
+	if (prod?.imageUrls && prod.imageUrls.length > 0) {
+		for (const url of prod.imageUrls) {
+			try {
+				await deleteProductImage(url);
+			} catch {
+				// Abaikan jika file sudah tidak ada di storage
+			}
+		}
+	}
 	await db.delete(products).where(eq(products.id, id));
 }
 

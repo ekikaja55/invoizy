@@ -14,7 +14,9 @@ export interface InvoiceData {
 		shippingLabel: string | null;
 		createdAt: string | Date;
 		items: {
+			id?: string;
 			nameSnapshot: string;
+			variantNameSnapshot?: string | null;
 			priceSnapshot: number;
 			qty: number;
 			subtotal: number;

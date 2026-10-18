@@ -1,3 +1,4 @@
+import { env as privateEnv } from '$env/dynamic/private';
 import { fail } from '@sveltejs/kit';
 import { getActiveCatalog, createOrder, OrderError } from '$lib/server/db/queries/order';
 import { getSettings } from '$lib/server/db/queries/settings';
@@ -18,7 +19,9 @@ export const load: PageServerLoad = async () => {
 
 	return {
 		productCategories: catalog,
-		contact: settings?.proofContact || settings?.instagram || ''
+		contact: settings?.proofContact || settings?.instagram || '',
+		pickupEnabled: settings?.pickupCodeEnabled ?? false,
+		emailEnabled: privateEnv.EMAIL_ENABLED !== 'false'
 	};
 };
 

@@ -1,7 +1,11 @@
 import { z } from 'zod';
 
 export const checkoutSchema = z.object({
-	handle: z.string().trim().min(1, 'Handle wajib diisi').max(100),
+	handle: z
+		.string()
+		.trim()
+		.transform((v) => v.replace(/^@+/, ''))
+		.pipe(z.string().min(3, 'Handle minimal 3 karakter').max(100, 'Handle terlalu panjang')),
 	email: z.string().trim().email('Email tidak valid').max(254),
 	note: z.string().trim().max(1000).optional().or(z.literal('')),
 	address: z.string().trim().min(10, 'Alamat lengkap wajib diisi').max(500),
@@ -27,12 +31,23 @@ const fallbackShippingSchema = z.object({
 	kind: z.literal('fallback')
 });
 
-export const checkoutShippingSchema = z.union([quoteShippingSchema, fallbackShippingSchema]);
+const pickupShippingSchema = z.object({
+	kind: z.literal('pickup'),
+	code: z.string().trim().min(1, 'Kode pickup wajib diisi').max(50)
+});
+
+export const checkoutShippingSchema = z.union([
+	quoteShippingSchema,
+	fallbackShippingSchema,
+	pickupShippingSchema
+]);
 
 export const checkoutItemsSchema = z
 	.array(
 		z.object({
 			productId: z.string().uuid('Produk tidak valid'),
+			variantId: z.string().uuid('Varian tidak valid').optional().nullable(),
+			variantName: z.string().trim().max(100).optional().nullable(),
 			qty: z.number().int().min(1, 'Jumlah minimal 1').max(999, 'Jumlah maksimal 999')
 		})
 	)

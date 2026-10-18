@@ -8,6 +8,23 @@
 
 	let { data }: { data: PageData } = $props();
 	let isBusy = $state(false);
+
+	let pickupEnabled = $state(false);
+	let pickupCode = $state('');
+
+	$effect(() => {
+		pickupEnabled = data.settings?.pickupCodeEnabled ?? false;
+		pickupCode = data.settings?.pickupCode ?? '';
+	});
+
+	function generateCode() {
+		const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+		let res = '';
+		for (let i = 0; i < 6; i++) {
+			res += chars.charAt(Math.floor(Math.random() * chars.length));
+		}
+		pickupCode = res;
+	}
 </script>
 
 <div class="mx-auto max-w-2xl space-y-6">
@@ -149,6 +166,56 @@
 					Dipakai bila layanan cek ongkir gangguan/kena limit. 0 = nonaktif (checkout ditutup saat
 					gangguan).
 				</p>
+			</div>
+
+			<div class="space-y-3 rounded-lg border border-neutral-200 p-3 dark:border-neutral-800">
+				<div class="flex items-center justify-between gap-4">
+					<div>
+						<label for="pickupCodeEnabled" class="text-sm font-medium">Opsi Ambil Sendiri (Self-Pickup)</label>
+						<p class="text-xs text-neutral-500">
+							Jika aktif, pembeli dapat memilih opsi Self-Pickup (ongkir Rp 0) dengan memasukkan kode rahasia.
+						</p>
+					</div>
+					<input
+						type="checkbox"
+						id="pickupCodeEnabled"
+						name="pickupCodeEnabled"
+						bind:checked={pickupEnabled}
+						disabled={isBusy}
+						class="h-4 w-4 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-900 dark:border-neutral-700"
+					/>
+				</div>
+
+				{#if pickupEnabled}
+					<div>
+						<label for="pickupCode" class="block text-xs font-medium text-neutral-700 dark:text-neutral-300">
+							Kode Rahasia Rekanan / Teman
+						</label>
+						<div class="mt-1 flex gap-2">
+							<input
+								id="pickupCode"
+								name="pickupCode"
+								bind:value={pickupCode}
+								placeholder="misal: TEMAN2026"
+								disabled={isBusy}
+								class="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-mono uppercase text-neutral-900
+                     disabled:opacity-50
+                     dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+							/>
+							<button
+								type="button"
+								onclick={generateCode}
+								disabled={isBusy}
+								class="shrink-0 rounded-lg border border-neutral-300 px-3 py-2 text-xs font-medium hover:bg-neutral-100 disabled:opacity-50 dark:border-neutral-700 dark:hover:bg-white/10"
+							>
+								Generate Acak
+							</button>
+						</div>
+						<p class="mt-1 text-xs text-neutral-500">
+							Bagikan kode ini hanya ke rekan yang ingin mengambil barang di tempat.
+						</p>
+					</div>
+				{/if}
 			</div>
 
 			<button

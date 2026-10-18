@@ -28,7 +28,9 @@ export function toInvoiceData(result: OrderByToken): InvoiceData {
 			shippingLabel: result.order.shippingLabel,
 			createdAt: result.order.createdAt.toISOString(),
 			items: result.order.items.map((i) => ({
+				id: i.id,
 				nameSnapshot: i.nameSnapshot,
+				variantNameSnapshot: i.variantNameSnapshot,
 				priceSnapshot: i.priceSnapshot,
 				qty: i.qty,
 				subtotal: i.subtotal,
@@ -110,7 +112,13 @@ export async function processNewInvoice(
 	orderId: string,
 	accessToken: string
 ): Promise<{ skipped: boolean; emailSkipped?: boolean }> {
-	const result = await getOrderByToken(orderId, accessToken);
+	let result = await getOrderByToken(orderId, accessToken);
+
+	// Antisipasi race condition read-after-write pada Supabase transaction pooler (port 6543)
+	if (!result) {
+		await new Promise((resolve) => setTimeout(resolve, 200));
+		result = await getOrderByToken(orderId, accessToken);
+	}
 
 	if (!result) {
 		throw new Error('Order tidak ditemukan.');

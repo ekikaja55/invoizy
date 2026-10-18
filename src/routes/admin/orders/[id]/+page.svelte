@@ -4,14 +4,20 @@
 	import type { ResolvedPathname } from '$app/types';
 	import { formatRupiah } from '$lib/utils/currency';
 	import BusyOverlay from '$lib/components/ui/BusyOverlay.svelte';
-	import { ArrowLeft } from '@lucide/svelte';
+	import Modal from '$lib/components/ui/Modal.svelte';
+	import { ArrowLeft, MessageSquare } from '@lucide/svelte';
 	import { invoiceStatusLabel, paymentStatusLabel } from '$lib/utils/status-label';
 	import { handleFormResult } from '$lib/utils/handle-form-result';
 	import { toast } from 'svelte-sonner';
+	import { waLink } from '$lib/utils/contact';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 	let isBusy = $state(false);
+
+	let waModalOpen = $state(false);
+	let selectedTemplate = $state<'unpaid' | 'paid' | 'ready' | 'basic'>('unpaid');
+	let customMessage = $state('');
 
 	async function copyInvoiceLink() {
 		if (!data.order.invoiceUrl) {
@@ -30,6 +36,34 @@
 	const invoiceHref = $derived(
 		`${resolve('/invoice/[orderId]', { orderId: data.order.orderId })}?token=${data.order.accessToken}&from=admin` as ResolvedPathname
 	);
+
+	const effectiveInvoiceUrl = $derived(
+		data.order.invoiceUrl || (typeof window !== 'undefined' ? `${window.location.origin}${invoiceHref}` : '')
+	);
+
+	const templates = $derived({
+		unpaid: `Halo kak *${data.order.handle}*, terima kasih telah memesan. Berikut tagihan pesanan #${data.order.orderId} sebesar *${formatRupiah(data.order.total)}*.\n\nSilakan cek detail rekening & selesaikan pembayaran melalui tautan invoice berikut:\n${effectiveInvoiceUrl}\n\nTerima kasih!`,
+		paid: `Halo kak *${data.order.handle}*, pembayaran untuk pesanan #${data.order.orderId} sebesar *${formatRupiah(data.order.total)}* telah kami terima dan terkonfirmasi lunas.\n\nPesanan sedang diproses. Detail invoice bisa dicek di:\n${effectiveInvoiceUrl}\n\nTerima kasih!`,
+		ready: `Halo kak *${data.order.handle}*, pesanan #${data.order.orderId} kamu sudah siap diambil di lokasi toko.\n\nMohon sebutkan ID pesanan saat pengambilan:\n${effectiveInvoiceUrl}\n\nSampai jumpa!`,
+		basic: `Halo kak *${data.order.handle}*, terkait pesanan #${data.order.orderId}.\nTautan invoice: ${effectiveInvoiceUrl}`
+	});
+
+	function openWaModal() {
+		if (data.order.paymentStatus === 'CONFIRMED') {
+			selectedTemplate = 'paid';
+		} else {
+			selectedTemplate = 'unpaid';
+		}
+		customMessage = templates[selectedTemplate];
+		waModalOpen = true;
+	}
+
+	function onSelectTemplate(key: 'unpaid' | 'paid' | 'ready' | 'basic') {
+		selectedTemplate = key;
+		customMessage = templates[key];
+	}
+
+	const waHref = $derived(waLink(data.order.phone, customMessage) || '');
 
 	const createdLabel = $derived(
 		new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(
@@ -106,9 +140,19 @@
 	<div class="rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
 		<h2 class="text-sm font-semibold tracking-wide text-neutral-500 uppercase">Item</h2>
 		<ul class="mt-3 space-y-2 text-sm">
-			{#each data.order.items as item (item.nameSnapshot + item.qty + item.priceSnapshot)}
+			{#each data.order.items as item (item.nameSnapshot + (item.variantNameSnapshot ?? '') + item.qty + item.priceSnapshot)}
 				<li class="flex items-center justify-between">
-					<span>{item.nameSnapshot} <span class="text-neutral-500">× {item.qty}</span></span>
+					<div>
+						<span>{item.nameSnapshot}</span>
+						{#if item.variantNameSnapshot}
+							<span
+								class="ml-1.5 rounded bg-neutral-100 px-1.5 py-0.5 text-xs text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300"
+							>
+								{item.variantNameSnapshot}
+							</span>
+						{/if}
+						<span class="text-neutral-500"> × {item.qty}</span>
+					</div>
 					<span>{formatRupiah(item.subtotal)}</span>
 				</li>
 			{/each}
@@ -134,6 +178,15 @@
 				Salin link WA
 			</button>
 		{/if}
+		<button
+			onclick={openWaModal}
+			disabled={isBusy}
+			class="flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-neutral-900 px-4 py-2 text-sm font-medium text-white
+             hover:bg-neutral-800 disabled:opacity-50 dark:border-neutral-700 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
+		>
+			<MessageSquare size={16} />
+			Hubungi Buyer via WA
+		</button>
 	</div>
 
 	<div class="space-y-3 rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
@@ -261,4 +314,87 @@
 		</form>
 	</div>
 </div>
+
+<Modal
+	open={waModalOpen}
+	title="Hubungi Buyer via WhatsApp"
+	hideActions={true}
+	onCancel={() => (waModalOpen = false)}
+>
+	<div class="mt-3 space-y-3">
+		<div>
+			<span class="block text-xs font-semibold uppercase text-neutral-500">Pilih Template Pesan</span>
+			<div class="mt-2 grid grid-cols-2 gap-2 text-xs">
+				<button
+					type="button"
+					onclick={() => onSelectTemplate('unpaid')}
+					class="rounded-lg border p-2 text-left font-medium transition-colors {selectedTemplate === 'unpaid' ? 'border-neutral-900 bg-neutral-100 font-semibold dark:border-white dark:bg-neutral-800' : 'border-neutral-200 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-900'}"
+				>
+					Tagihan Belum Bayar
+				</button>
+				<button
+					type="button"
+					onclick={() => onSelectTemplate('paid')}
+					class="rounded-lg border p-2 text-left font-medium transition-colors {selectedTemplate === 'paid' ? 'border-neutral-900 bg-neutral-100 font-semibold dark:border-white dark:bg-neutral-800' : 'border-neutral-200 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-900'}"
+				>
+					Konfirmasi Lunas
+				</button>
+				<button
+					type="button"
+					onclick={() => onSelectTemplate('ready')}
+					class="rounded-lg border p-2 text-left font-medium transition-colors {selectedTemplate === 'ready' ? 'border-neutral-900 bg-neutral-100 font-semibold dark:border-white dark:bg-neutral-800' : 'border-neutral-200 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-900'}"
+				>
+					Pesanan Siap Diambil
+				</button>
+				<button
+					type="button"
+					onclick={() => onSelectTemplate('basic')}
+					class="rounded-lg border p-2 text-left font-medium transition-colors {selectedTemplate === 'basic' ? 'border-neutral-900 bg-neutral-100 font-semibold dark:border-white dark:bg-neutral-800' : 'border-neutral-200 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-900'}"
+				>
+					Info Ringkas / Dasar
+				</button>
+			</div>
+		</div>
+
+		<div>
+			<label for="waMessageText" class="block text-xs font-semibold uppercase text-neutral-500">
+				Draf Pesan (Bisa diedit)
+			</label>
+			<textarea
+				id="waMessageText"
+				rows="6"
+				bind:value={customMessage}
+				class="mt-1 w-full rounded-lg border border-neutral-300 bg-white p-2.5 text-xs text-neutral-900 placeholder:text-neutral-400 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+			></textarea>
+			<p class="mt-1 text-[11px] text-neutral-500">
+				Teks ini akan otomatis dimuat ke WhatsApp. Anda tetap bisa mengedit atau menambah teks di WhatsApp sebelum mengirim.
+			</p>
+		</div>
+
+		<div class="mt-4 flex justify-end gap-2 border-t border-neutral-200 pt-3 dark:border-neutral-800">
+			<button
+				type="button"
+				onclick={() => (waModalOpen = false)}
+				class="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-white/10"
+			>
+				Batal
+			</button>
+			{#if waHref}
+				<a
+					href={waHref}
+					target="_blank"
+					rel="external noopener noreferrer"
+					onclick={() => (waModalOpen = false)}
+					class="rounded-lg bg-emerald-600 px-3.5 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 dark:bg-emerald-500 dark:text-neutral-950 dark:hover:bg-emerald-400"
+				>
+					Buka WhatsApp
+				</a>
+			{:else}
+				<span class="rounded-lg bg-neutral-200 px-3 py-1.5 text-xs text-neutral-500 dark:bg-neutral-800">
+					Nomor HP tidak valid
+				</span>
+			{/if}
+		</div>
+	</div>
+</Modal>
 </BusyOverlay>

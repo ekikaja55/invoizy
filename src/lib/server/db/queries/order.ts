@@ -6,7 +6,8 @@ import {
 	orderItems,
 	storeSettings,
 	paymentMethods,
-	qrisCodes
+	qrisCodes,
+	productVariants
 } from '$lib/server/db/schema';
 import { eq, asc, and, gte, lte, inArray, sql, count, desc, ilike, or, sum } from 'drizzle-orm';
 import { generateOrderId, generateAccessToken } from '$lib/utils/order-id';
@@ -30,7 +31,16 @@ export interface ShippingFallbackInput {
 	kind: 'fallback';
 }
 
-export type ShippingInput = ShippingQuoteInput | ShippingFallbackInput | null;
+export interface ShippingPickupInput {
+	kind: 'pickup';
+	code: string;
+}
+
+export type ShippingInput =
+	| ShippingQuoteInput
+	| ShippingFallbackInput
+	| ShippingPickupInput
+	| null;
 
 export interface CreateOrderInput {
 	handle: string;
@@ -38,7 +48,12 @@ export interface CreateOrderInput {
 	note: string;
 	address: string;
 	phone: string;
-	items: { productId: string; qty: number }[];
+	items: {
+		productId: string;
+		variantId?: string | null;
+		variantName?: string | null;
+		qty: number;
+	}[];
 	shipping: ShippingInput;
 }
 
@@ -48,7 +63,12 @@ export async function getActiveCatalog() {
 		with: {
 			products: {
 				where: eq(products.active, true),
-				orderBy: [asc(products.sortOrder)]
+				orderBy: [asc(products.sortOrder)],
+				with: {
+					variants: {
+						orderBy: [asc(productVariants.sortOrder), asc(productVariants.createdAt)]
+					}
+				}
 			}
 		}
 	});
@@ -65,11 +85,14 @@ export async function createOrder(input: CreateOrderInput) {
 
 			const rows = await tx.query.products.findMany({
 				where: inArray(products.id, productIds),
-				with: { category: true }
+				with: {
+					category: true,
+					variants: true
+				}
 			});
 			const byId = new Map(rows.map((p) => [p.id, p]));
 
-			// ── Validasi: produk harus ada, aktif, dan (kalau track_stock) stok cukup ──
+			// ── Validasi: produk & varian harus ada, aktif, dan (kalau track_stock) stok cukup ──
 			for (const item of input.items) {
 				const product = byId.get(item.productId);
 				if (!product) {
@@ -78,7 +101,15 @@ export async function createOrder(input: CreateOrderInput) {
 				if (!product.active) {
 					throw new OrderError(`"${product.name}" sudah tidak tersedia.`);
 				}
-				if (product.trackStock && product.stock < item.qty) {
+				if (item.variantId) {
+					const variant = product.variants.find((v) => v.id === item.variantId);
+					if (!variant) {
+						throw new OrderError(`Varian "${item.variantName ?? ''}" untuk "${product.name}" tidak ditemukan.`);
+					}
+					if (variant.stock < item.qty) {
+						throw new OrderError(`Stok varian "${variant.name}" (${product.name}) tidak cukup (tersisa ${variant.stock}).`);
+					}
+				} else if (product.trackStock && product.stock < item.qty) {
 					throw new OrderError(`Stok "${product.name}" tidak cukup (tersisa ${product.stock}).`);
 				}
 			}
@@ -124,6 +155,18 @@ export async function createOrder(input: CreateOrderInput) {
 				shippingPrice = rate;
 				shipLabel = 'Ongkir flat darurat';
 				logger.info('order.shipping-fallback', { rate });
+			} else if (input.shipping?.kind === 'pickup') {
+				const settings = await getSettings();
+				if (
+					!settings?.pickupCodeEnabled ||
+					!settings.pickupCode ||
+					input.shipping.code.trim().toUpperCase() !== settings.pickupCode.trim().toUpperCase()
+				) {
+					throw new OrderError('Kode pickup salah atau opsi ambil di tempat sedang tidak aktif.');
+				}
+				shippingPrice = 0;
+				shipLabel = 'Ambil Sendiri (Self-Pickup)';
+				logger.info('order.shipping-pickup');
 			}
 
 			// ── Snapshot line item: nama & harga diambil dari DB, BUKAN dari client ──
@@ -132,6 +175,7 @@ export async function createOrder(input: CreateOrderInput) {
 				productId: string | null;
 				categorySnapshot: string;
 				nameSnapshot: string;
+				variantNameSnapshot: string | null;
 				priceSnapshot: number;
 				qty: number;
 				subtotal: number;
@@ -143,6 +187,7 @@ export async function createOrder(input: CreateOrderInput) {
 					productId: product.id,
 					categorySnapshot: product.category.name,
 					nameSnapshot: product.name,
+					variantNameSnapshot: item.variantName ?? null,
 					priceSnapshot: product.priceInt,
 					qty: item.qty,
 					subtotal: lineSubtotal
@@ -152,20 +197,29 @@ export async function createOrder(input: CreateOrderInput) {
 			const total = subtotal + shippingPrice;
 
 			// ── Kurangi stok secara atomik: UPDATE ... WHERE stock >= qty ──
-			// Aman dari race condition (dua order bersamaan tidak bisa oversell), karena
-			// kondisi stok cukup di-assert ulang di dalam WHERE pada saat UPDATE.
+			// Aman dari race condition (dua order bersamaan tidak bisa oversell)
 			for (const item of input.items) {
 				const product = byId.get(item.productId)!;
-				if (!product.trackStock) continue;
+				if (item.variantId) {
+					const updated = await tx
+						.update(productVariants)
+						.set({ stock: sql`${productVariants.stock} - ${item.qty}` })
+						.where(and(eq(productVariants.id, item.variantId), gte(productVariants.stock, item.qty)))
+						.returning({ id: productVariants.id });
 
-				const updated = await tx
-					.update(products)
-					.set({ stock: sql`${products.stock} - ${item.qty}` })
-					.where(and(eq(products.id, product.id), gte(products.stock, item.qty)))
-					.returning({ id: products.id });
+					if (updated.length === 0) {
+						throw new OrderError(`Stok varian "${item.variantName ?? ''}" untuk "${product.name}" habis saat diproses.`);
+					}
+				} else if (product.trackStock) {
+					const updated = await tx
+						.update(products)
+						.set({ stock: sql`${products.stock} - ${item.qty}` })
+						.where(and(eq(products.id, product.id), gte(products.stock, item.qty)))
+						.returning({ id: products.id });
 
-				if (updated.length === 0) {
-					throw new OrderError(`Stok "${product.name}" habis saat diproses. Silakan coba lagi.`);
+					if (updated.length === 0) {
+						throw new OrderError(`Stok "${product.name}" habis saat diproses. Silakan coba lagi.`);
+					}
 				}
 			}
 
