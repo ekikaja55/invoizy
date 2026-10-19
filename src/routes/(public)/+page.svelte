@@ -41,13 +41,20 @@
 <div class="mx-auto max-w-2xl space-y-12 overflow-x-clip px-4 py-12 text-center">
 	<!-- Hero Section -->
 	<div class="space-y-4">
-		<!-- Tape Sticker Tagline -->
-		<div
-			class="inline-block -rotate-2 rounded-xs border-2 border-brandy bg-yellow-200 px-4 py-1.5 shadow-[3px_3px_0px_#78290f]"
-		>
-			<span class="font-handwriting text-xl font-bold tracking-wide text-brandy sm:text-2xl">
-				from sketch to life
-			</span>
+		<!-- Event Edition Banner: Pembeda Visual Branch Event Offline -->
+		<div class="flex flex-wrap items-center justify-center gap-2.5">
+			<div
+				class="inline-flex items-center gap-1.5 -rotate-2 rounded-[8px_3px_7px_2px] border-2 border-brandy bg-tangerine px-3.5 py-1.5 font-mono text-xs font-black tracking-wider text-white uppercase shadow-[3px_3px_0px_#78290f]"
+			>
+				<span>★ CHIBICONXI OFFLINE EDITION — 28 OKTOBER ★</span>
+			</div>
+			<div
+				class="inline-block rotate-1 rounded-xs border-2 border-brandy bg-yellow-200 px-3 py-1 shadow-[2px_2px_0px_#78290f]"
+			>
+				<span class="font-handwriting text-lg font-bold tracking-wide text-brandy">
+					from sketch to life
+				</span>
+			</div>
 		</div>
 
 		<!-- Main Headline: Fraunces Serif Lega -->
@@ -58,12 +65,12 @@
 			<span class="text-teal dark:text-tangerine">from {ownerName}</span>
 		</h1>
 
-		<!-- Subtitle: Plus Jakarta Sans Relaxed -->
+		<!-- Subtitle: Edisi Khusus Pameran -->
 		<p
 			class="mx-auto max-w-lg font-sans text-sm leading-relaxed text-brandy/80 sm:text-base dark:text-papaya/70"
 		>
-			Pilih barang koleksimu langsung di bawah ini. Checkout cepat, hitung ongkir otomatis, dan
-			invoice rapi langsung masuk ke emailmu!
+			<strong class="font-bold text-ink dark:text-papaya">Katalog Khusus Pameran Offline:</strong>
+			Pilih barang merchandise impianmu langsung di booth, checkout cepat, dan dapatkan faktur instan di tempat!
 		</p>
 	</div>
 
