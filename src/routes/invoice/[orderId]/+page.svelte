@@ -1,14 +1,10 @@
 <script lang="ts">
 	import InvoiceDocument from '$lib/components/invoice/InvoiceDocument.svelte';
 	import { resolve } from '$app/paths';
-	import { FILE_PREFIX } from '$lib/constants';
-	import { downloadFile } from '$lib/utils/download';
-	import { toast } from 'svelte-sonner';
-	import { ArrowLeft, Download } from '@lucide/svelte';
+	import { ArrowLeft, Printer } from '@lucide/svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
-	let downloading = $state(false);
 
 	// Tombol Kembali sadar konteks: dari admin → detail order, dari buyer → riwayat.
 	// `from` hanya petunjuk UI — gerbang akses tetap access_token.
@@ -18,52 +14,57 @@
 			: resolve('/order/riwayat')
 	);
 
-	async function downloadPdf() {
-		downloading = true;
-		try {
-			// Token ikut dari URL yang sedang dibuka — tanpa plumbing tambahan.
-			const pdfUrl = `${window.location.pathname}/pdf${window.location.search}`;
-			await downloadFile(pdfUrl, `${FILE_PREFIX}-invoice-${data.order.orderId}.pdf`);
-			toast.success('Invoice terunduh.');
-		} catch {
-			toast.error('Gagal mengunduh otomatis. Dibuka di tab baru.');
-			window.open(`${window.location.pathname}/pdf${window.location.search}`, '_blank');
-		} finally {
-			downloading = false;
-		}
+	function handlePrint() {
+		window.print();
 	}
 </script>
 
 <svelte:head>
-	<title>Invoice {data.order.orderId}</title>
+	<title>Invoice #{data.order.orderId} — {data.settings.storeName || 'cho.lazey - CHIBICONXI CATALOGUE'}</title>
 	<meta name="robots" content="noindex, nofollow" />
 </svelte:head>
 
-<div class="min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
-	<div class="mx-auto flex max-w-3xl items-center justify-between px-4 py-4 pt-6">
+<div class="min-h-screen bg-papaya text-ink transition-colors dark:bg-ink dark:text-papaya py-6 px-4 pb-20 print:p-0 print:bg-white print:text-black">
+	<!-- Top Action Navigation Bar -->
+	<div class="no-print mx-auto flex max-w-3xl items-center justify-between gap-3 pb-6 pt-2 print:hidden">
 		<a
 			href={backHref}
-			class="flex items-center gap-2 rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium
-			       hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-white/10"
+			class="inline-flex items-center gap-2 rounded-[8px_14px_6px_12px] border-2 border-brandy bg-white px-4 py-2 text-sm font-bold text-ink shadow-[3px_3px_0px_#78290f] transition-all hover:bg-papaya/40 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[3px_3px_0px_rgba(255,236,209,0.2)]"
 		>
-			<ArrowLeft size={16} />
-			Kembali
+			<ArrowLeft size={16} strokeWidth={2.5} />
+			<span>Kembali</span>
 		</a>
+
 		<button
-			onclick={downloadPdf}
-			disabled={downloading}
-			class="flex items-center gap-2 rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white
-			       disabled:opacity-50 dark:bg-white dark:text-neutral-900"
+			type="button"
+			onclick={handlePrint}
+			class="inline-flex items-center gap-2 rounded-[14px_6px_12px_8px] border-2 border-brandy bg-tangerine px-5 py-2 text-sm font-bold text-white shadow-[3px_3px_0px_#78290f] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#78290f] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
 		>
-			<Download size={16} />
-			{downloading ? 'Mengunduh...' : 'Unduh PDF'}
+			<Printer size={16} strokeWidth={2.5} />
+			<span>Cetak / Simpan PDF</span>
 		</button>
 	</div>
-	<InvoiceDocument
-		order={data.order}
-		settings={data.settings}
-		paymentMethods={data.paymentMethods}
-		qrisCodes={data.qrisCodes}
-		mode="web"
-	/>
+
+	<!-- Main Document Canvas -->
+	<main class="mx-auto max-w-3xl">
+		<InvoiceDocument
+			order={data.order}
+			settings={data.settings}
+			paymentMethods={data.paymentMethods}
+			qrisCodes={data.qrisCodes}
+			mode="web"
+		/>
+	</main>
 </div>
+
+<style>
+	@media print {
+		:global(body) {
+			background-color: #ffffff !important;
+			color: #000000 !important;
+		}
+		.no-print {
+			display: none !important;
+		}
+	}
+</style>

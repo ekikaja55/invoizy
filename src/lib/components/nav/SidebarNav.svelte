@@ -95,28 +95,23 @@
 <svelte:window onclick={handleWindowClick} onkeydown={handleKeydown} />
 
 <aside
-	class="fixed top-1/2 left-4 hidden -translate-y-1/2 flex-col rounded-2xl border
-         border-neutral-200 bg-white/95 p-2 text-neutral-900 shadow-xl shadow-neutral-900/5
-         backdrop-blur transition-all duration-200 md:flex dark:border-neutral-800
-         dark:bg-neutral-900/95 dark:text-neutral-100 dark:shadow-black/40"
+	class="fixed top-1/2 left-4 z-30 hidden -translate-y-1/2 flex-col rounded-[16px_8px_14px_6px] border-2 border-brandy bg-papaya/95 p-2 text-ink shadow-[4px_4px_0px_#78290f] backdrop-blur-xs transition-all duration-200 md:flex dark:border-papaya/30 dark:bg-ink/95 dark:text-papaya dark:shadow-[4px_4px_0px_rgba(255,236,209,0.2)]"
 	class:w-16={collapsed}
 	class:w-56={!collapsed}
 >
 	<button onclick={toggle} class={navActionClass()}>
 		{#if collapsed}
-			<PanelLeftOpen size={16} />
+			<PanelLeftOpen size={16} strokeWidth={2.75} />
 		{:else}
-			<PanelLeftClose size={16} />
+			<PanelLeftClose size={16} strokeWidth={2.75} />
 		{/if}
 	</button>
 
 	<nav class="flex flex-col gap-1">
-		<!-- Menggunakan index atau kombinasi path untuk murni merefresh render ikon -->
 		{#each items as item (item.href)}
 			{@const isActive = currentPath === item.href}
 			<a href={resolve(item.href)} class={navItemClass(isActive)}>
-				<!-- Render komponen ikon dari Lucide -->
-				<item.icon size={16} />
+				<item.icon size={16} strokeWidth={2.5} />
 				{#if !collapsed}
 					<span>{item.label}</span>
 				{/if}
@@ -129,13 +124,13 @@
 					type="button"
 					onclick={toggleContact}
 					class="{navActionClass()} {contactOpen
-						? 'bg-neutral-100 text-neutral-900 dark:bg-white/10 dark:text-white'
+						? 'border-2 border-brandy bg-tangerine text-white shadow-[2px_2px_0px_#78290f]'
 						: ''}"
 					aria-haspopup="true"
 					aria-expanded={contactOpen}
 					title="Hubungi Kami"
 				>
-					<Headset size={16} class="shrink-0" />
+					<Headset size={16} strokeWidth={2.5} class="shrink-0" />
 					{#if !collapsed}
 						<span class="truncate">Hubungi Kami</span>
 					{/if}
@@ -143,13 +138,13 @@
 
 				{#if contactOpen}
 					<div
-						class="absolute left-full top-0 ml-3 z-50 w-56 rounded-2xl border border-neutral-200 bg-white/95 p-2 shadow-xl shadow-neutral-900/10 backdrop-blur dark:border-neutral-800 dark:bg-neutral-900/95 dark:text-neutral-100 dark:shadow-black/50"
+						class="absolute left-full top-0 ml-3 z-50 w-56 rounded-2xl border-2 border-brandy bg-papaya/95 p-2 shadow-[4px_4px_0px_#78290f] backdrop-blur-xs dark:border-papaya/30 dark:bg-ink/95 dark:text-papaya dark:shadow-[4px_4px_0px_rgba(255,236,209,0.25)]"
 					>
-						<div class="border-b border-neutral-100 px-2.5 py-1.5 dark:border-neutral-800">
-							<p class="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+						<div class="border-b-2 border-brandy/15 px-2.5 py-1.5 dark:border-papaya/15">
+							<p class="font-headline text-xs font-bold text-ink dark:text-papaya">
 								Hubungi Kami
 							</p>
-							<p class="text-[11px] text-neutral-500 dark:text-neutral-400">
+							<p class="text-[11px] text-brandy/70 dark:text-papaya/60 font-sans">
 								Pilih saluran kontak langsung
 							</p>
 						</div>
@@ -161,24 +156,24 @@
 									target="_blank"
 									rel="external noopener noreferrer"
 									onclick={() => (contactOpen = false)}
-									class="flex items-center justify-between gap-2.5 rounded-xl px-2.5 py-2 text-sm text-neutral-700 transition-colors hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-white/10"
+									class="flex items-center justify-between gap-2.5 rounded-xl border border-brandy/20 bg-white/70 px-2.5 py-2 text-sm text-ink transition-all hover:bg-papaya hover:border-brandy dark:border-papaya/20 dark:bg-ink/70 dark:text-papaya dark:hover:bg-ink"
 								>
 									<div class="flex items-center gap-2.5">
 										<div
-											class="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
+											class="flex h-7 w-7 items-center justify-center rounded-lg border border-forest/40 bg-forest/15 text-forest"
 										>
-											<MessageCircle size={15} />
+											<MessageCircle size={15} strokeWidth={2.5} />
 										</div>
 										<div class="flex flex-col text-left">
-											<span class="text-xs font-medium text-neutral-900 dark:text-neutral-100"
+											<span class="text-xs font-bold text-ink dark:text-papaya"
 												>WhatsApp</span
 											>
-											<span class="text-[10px] text-neutral-500 dark:text-neutral-400"
+											<span class="text-[10px] text-brandy/70 dark:text-papaya/60"
 												>Chat Admin</span
 											>
 										</div>
 									</div>
-									<ExternalLink size={12} class="text-neutral-400" />
+									<ExternalLink size={12} strokeWidth={2.5} class="text-brandy/60 dark:text-papaya/50" />
 								</a>
 							{/if}
 
@@ -188,24 +183,24 @@
 									target="_blank"
 									rel="external noopener noreferrer"
 									onclick={() => (contactOpen = false)}
-									class="flex items-center justify-between gap-2.5 rounded-xl px-2.5 py-2 text-sm text-neutral-700 transition-colors hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-white/10"
+									class="flex items-center justify-between gap-2.5 rounded-xl border border-brandy/20 bg-white/70 px-2.5 py-2 text-sm text-ink transition-all hover:bg-papaya hover:border-brandy dark:border-papaya/20 dark:bg-ink/70 dark:text-papaya dark:hover:bg-ink"
 								>
 									<div class="flex items-center gap-2.5">
 										<div
-											class="flex h-7 w-7 items-center justify-center rounded-lg bg-pink-500/10 text-pink-600 dark:bg-pink-500/20 dark:text-pink-400"
+											class="flex h-7 w-7 items-center justify-center rounded-lg border border-pink-500/40 bg-pink-500/15 text-pink-600"
 										>
 											<InstagramIcon size={15} />
 										</div>
 										<div class="flex flex-col text-left">
-											<span class="text-xs font-medium text-neutral-900 dark:text-neutral-100"
+											<span class="text-xs font-bold text-ink dark:text-papaya"
 												>Instagram</span
 											>
-											<span class="text-[10px] text-neutral-500 dark:text-neutral-400"
+											<span class="text-[10px] text-brandy/70 dark:text-papaya/60"
 												>Profil & DM</span
 											>
 										</div>
 									</div>
-									<ExternalLink size={12} class="text-neutral-400" />
+									<ExternalLink size={12} strokeWidth={2.5} class="text-brandy/60 dark:text-papaya/50" />
 								</a>
 							{/if}
 						</div>
@@ -215,20 +210,20 @@
 		{/if}
 	</nav>
 
-	<div class="mt-2 space-y-1 border-t border-neutral-200 pt-2 dark:border-neutral-800">
+	<div class="mt-2 space-y-1 border-t-2 border-brandy/20 pt-2 dark:border-papaya/20">
 		<ThemeToggle {collapsed} />
 
 		{#if isAdmin}
 			{#if isAdminPage}
 				<button onclick={() => navigateTo('/')} class={navActionClass()}>
-					<Home size={16} />
+					<Home size={16} strokeWidth={2.5} />
 					{#if !collapsed}
 						<span>Home</span>
 					{/if}
 				</button>
 			{:else}
 				<button onclick={() => navigateTo('/admin')} class={navActionClass()}>
-					<LayoutDashboard size={16} />
+					<LayoutDashboard size={16} strokeWidth={2.5} />
 					{#if !collapsed}
 						<span>Dashboard</span>
 					{/if}
@@ -236,7 +231,7 @@
 			{/if}
 
 			<button onclick={handleLogout} class={navActionClass()}>
-				<LogOut size={16} />
+				<LogOut size={16} strokeWidth={2.5} />
 				{#if !collapsed}
 					<span>Logout</span>
 				{/if}

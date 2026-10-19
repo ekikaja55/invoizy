@@ -1,26 +1,31 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { ShoppingBag, ReceiptText, CheckCircle2 } from '@lucide/svelte';
+	import { ShoppingBag, ReceiptText, CheckCircle2, ArrowRight } from '@lucide/svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
-	const storeName = $derived(data.settings?.storeName || 'Invoizy');
+	const storeName = $derived(data.settings?.storeName || 'cho.lazey - CHIBICONXI CATALOGUE');
+	const ownerName = $derived(data.settings?.instagram || 'cho.lazey - CHIBICONXI CATALOGUE');
+
 	const isLogin = $derived(Boolean(data.user));
 
 	const steps = [
-		{ title: 'Pilih yang kamu suka', desc: 'Pilih barangnya, atur jumlahnya.' },
 		{
-			title: 'Isi data + alamat',
-			desc: 'Handle sosmed, email aktif, alamat lengkap, dan nomor HP.'
+			title: '1. Pilih yang Kamu Suka',
+			desc: 'Pilih produk merchandise atau stiker pack, atur jumlahnya, dan masukkan ke keranjang belanja.'
 		},
 		{
-			title: 'Pilih ongkir',
-			desc: 'Cari kecamatamu, bandingkan kurir — total langsung kehitung.'
+			title: '2. Isi Data & Alamat Kirim',
+			desc: 'Masukkan handle sosmed, email aktif untuk invoice, alamat lengkap, dan nomor kontak WhatsApp.'
 		},
 		{
-			title: 'Bayar, kirim bukti',
-			desc: 'Transfer terus kirim buktinya ke kontak yang tertulis. Makasih banyak!'
+			title: '3. Pilih Ongkir Otomatis',
+			desc: 'Cari kecamatanmu, bandingkan tarif kurir (JNE, SiCepat, dll) — total harga langsung terhitung akurat.'
+		},
+		{
+			title: '4. Bayar & Konfirmasi',
+			desc: 'Lakukan transfer sesuai 3 digit kode unik atau scan QRIS, lalu kirim buktinya. Nota fisik akan disertakan di paket kiriman!'
 		}
 	];
 </script>
@@ -33,73 +38,120 @@
 	/>
 </svelte:head>
 
-<div class="mx-auto max-w-2xl space-y-10 px-4 py-12 text-center">
-	<div class="space-y-3">
-		<p class="text-xs font-semibold tracking-[0.2em] text-neutral-500 uppercase">
-			another chaotic things
-		</p>
-		<h1 class="text-4xl leading-tight font-bold">Another web commis <br />from @Cholazey</h1>
-		<p class="mx-auto max-w-md text-sm leading-relaxed text-neutral-500">
-			Order langsung di bawah ya XD
+<div class="mx-auto max-w-2xl space-y-12 overflow-x-clip px-4 py-12 text-center">
+	<!-- Hero Section -->
+	<div class="space-y-4">
+		<!-- Tape Sticker Tagline -->
+		<div
+			class="inline-block -rotate-2 rounded-xs border-2 border-brandy bg-yellow-200 px-4 py-1.5 shadow-[3px_3px_0px_#78290f]"
+		>
+			<span class="font-handwriting text-xl font-bold tracking-wide text-brandy sm:text-2xl">
+				from sketch to life
+			</span>
+		</div>
+
+		<!-- Main Headline: Fraunces Serif Lega -->
+		<h1
+			class="font-headline text-3xl leading-tight font-extrabold text-ink sm:text-5xl dark:text-papaya"
+		>
+			Another web commis <br />
+			<span class="text-teal dark:text-tangerine">from {ownerName}</span>
+		</h1>
+
+		<!-- Subtitle: Plus Jakarta Sans Relaxed -->
+		<p
+			class="mx-auto max-w-lg font-sans text-sm leading-relaxed text-brandy/80 sm:text-base dark:text-papaya/70"
+		>
+			Pilih barang koleksimu langsung di bawah ini. Checkout cepat, hitung ongkir otomatis, dan
+			invoice rapi langsung masuk ke emailmu!
 		</p>
 	</div>
 
-	<div class="flex flex-col items-center justify-center gap-2 sm:flex-row">
+	<!-- Action Buttons: Tactile Buttons with Stroke-Spidol Icons & Dynamic Tilt -->
+	<div class="flex flex-col items-center justify-center gap-4 sm:flex-row">
 		<a
 			href={resolve('/order')}
-			class="flex w-full items-center justify-center gap-2 rounded-xl bg-neutral-900 px-6 py-3 text-sm font-medium text-white
-             hover:bg-neutral-700 sm:w-auto dark:bg-white dark:text-neutral-900"
+			class="flex w-full -rotate-1 transform-gpu items-center justify-center gap-2.5 rounded-[14px_6px_12px_8px] border-2 border-brandy bg-tangerine px-7 py-3.5 text-base font-bold text-white shadow-[4px_4px_0px_#78290f] transition-all duration-150 backface-hidden hover:-translate-x-0.5 hover:-translate-y-0.5 hover:rotate-0 hover:shadow-[5px_5px_0px_#78290f] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none sm:w-auto"
 		>
-			<ShoppingBag size={16} />
-			Mulai Order
+			<ShoppingBag size={18} strokeWidth={2.75} />
+			<span>Mulai Belanja</span>
+			<ArrowRight size={16} strokeWidth={2.75} class="ml-1" />
 		</a>
+
 		<a
 			href={resolve('/order/riwayat')}
-			class="flex w-full items-center justify-center gap-2 rounded-xl border border-neutral-300 px-6 py-3 text-sm font-medium
-             hover:bg-neutral-100 sm:w-auto dark:border-neutral-700 dark:hover:bg-white/10"
+			class="flex w-full rotate-1 transform-gpu items-center justify-center gap-2.5 rounded-[8px_14px_6px_12px] border-2 border-brandy bg-white px-6 py-3.5 text-base font-bold text-ink shadow-[4px_4px_0px_#78290f] transition-all duration-150 backface-hidden hover:-translate-x-0.5 hover:-translate-y-0.5 hover:rotate-0 hover:bg-papaya/40 active:shadow-none sm:w-auto dark:bg-ink dark:text-papaya"
 		>
-			<ReceiptText size={16} />
-			Riwayat Pesanan
+			<ReceiptText size={18} strokeWidth={2.75} class="text-teal dark:text-tangerine" />
+			<span>Riwayat Pesanan</span>
 		</a>
 	</div>
 
 	{#if isLogin}
-		<div>
-			<a href={resolve('/admin')} class="text-sm underline">Masuk Dashboard →</a>
+		<div class="pt-1">
+			<a
+				href={resolve('/admin')}
+				class="inline-flex items-center gap-1 font-mono text-xs font-bold text-teal underline underline-offset-4 hover:opacity-80 dark:text-tangerine"
+			>
+				Masuk Dashboard Admin Toko →
+			</a>
 		</div>
 	{/if}
 
-	<div class="space-y-3 text-left">
-		<h2 class="text-center text-sm font-semibold tracking-wide text-neutral-500 uppercase">
-			Cara order
-		</h2>
-		<ol class="space-y-2">
+	<!-- Bento Section: Cara Order -->
+	<div class="space-y-6 text-left">
+		<div class="flex items-center justify-center gap-3">
+			<span class="h-0.5 w-8 bg-brandy/30 dark:bg-papaya/30"></span>
+			<h2
+				class="inline-block -rotate-1 rounded-[6px_2px_5px_1px] border-2 border-brandy bg-papaya px-3.5 py-1 font-mono text-xs font-bold tracking-widest text-brandy uppercase shadow-[2px_2px_0px_#78290f] dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[2px_2px_0px_rgba(255,236,209,0.2)]"
+			>
+				Cara Pemesanan Mudah
+			</h2>
+			<span class="h-0.5 w-8 bg-brandy/30 dark:bg-papaya/30"></span>
+		</div>
+
+		<ol class="space-y-5">
 			{#each steps as step, i (step.title)}
+				{@const stepTilt = i % 2 === 0 ? '-rotate-[1.2deg]' : 'rotate-[1.2deg]'}
+				{@const badgeTilt = i % 2 === 0 ? '-rotate-3' : 'rotate-3'}
 				<li
-					class="flex items-start gap-3 rounded-xl border border-neutral-200 p-4 dark:border-neutral-800"
+					class="group relative flex transform-gpu items-start gap-4 rounded-[16px_8px_14px_10px] border-2 border-brandy bg-white p-5 shadow-[4px_4px_0px_#78290f] transition-all duration-200 backface-hidden hover:-translate-y-1 hover:rotate-0 hover:shadow-[6px_6px_0px_#78290f] dark:border-papaya/30 dark:bg-ink/80 dark:shadow-[4px_4px_0px_rgba(255,236,209,0.15)] dark:hover:shadow-[6px_6px_0px_rgba(255,236,209,0.25)] {stepTilt}"
 				>
+					<!-- Washi tape corner accent on first step card -->
+					{#if i === 0}
+						<div
+							class="pointer-events-none absolute -top-2.5 right-6 h-3.5 w-14 -rotate-3 border border-brandy/30 bg-yellow-100/90 shadow-[1px_1px_0px_rgba(120,41,15,0.2)] backdrop-blur-xs dark:bg-papaya/30"
+						></div>
+					{/if}
+
 					<span
-						class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-xs
-                   font-bold text-white dark:bg-white dark:text-neutral-900"
+						class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[6px_3px_5px_2px] border-2 border-brandy bg-tangerine font-mono text-sm font-black text-white shadow-[2px_2px_0px_#78290f] transition-transform duration-150 group-hover:rotate-0 {badgeTilt}"
 					>
 						{i + 1}
 					</span>
-					<div>
-						<p class="flex items-center gap-1.5 text-sm font-semibold">
-							<CheckCircle2 size={14} class="text-green-600 dark:text-green-400" />
+					<div class="space-y-1">
+						<p
+							class="flex items-center gap-1.5 font-headline text-base font-bold text-ink dark:text-papaya"
+						>
+							<CheckCircle2 size={16} strokeWidth={2.75} class="text-forest" />
 							{step.title}
 						</p>
-						<p class="mt-0.5 text-sm text-neutral-500">{step.desc}</p>
+						<p class="font-sans text-sm leading-relaxed text-brandy/80 dark:text-papaya/70">
+							{step.desc}
+						</p>
 					</div>
 				</li>
 			{/each}
 		</ol>
 	</div>
 
+	<!-- Social Footer Note -->
 	{#if data.settings?.instagram || data.settings?.twitter}
-		<p class="text-sm text-neutral-500">
+		<div
+			class="border-t-2 border-brandy/20 pt-6 font-mono text-xs font-bold text-brandy/80 dark:border-papaya/20 dark:text-papaya/70"
+		>
 			{#if data.settings?.instagram}
-				<span>IG: {data.settings.instagram}</span>
+				<span>Instagram: {data.settings.instagram}</span>
 			{/if}
 			{#if data.settings?.instagram && data.settings?.twitter}
 				<span> · </span>
@@ -107,6 +159,6 @@
 			{#if data.settings?.twitter}
 				<span>X: {data.settings.twitter}</span>
 			{/if}
-		</p>
+		</div>
 	{/if}
 </div>

@@ -269,7 +269,7 @@ export async function getOrderByToken(orderId: string, accessToken: string) {
 	const settings = (await db.query.storeSettings.findFirst({
 		where: eq(storeSettings.id, 1)
 	})) ?? {
-		storeName: 'Invoizy Store',
+		storeName: 'cho.lazey - CHIBICONXI CATALOGUE',
 		instagram: '',
 		twitter: '',
 		emailFromName: '',

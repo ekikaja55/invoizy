@@ -13,6 +13,7 @@ export interface InvoiceData {
 		total: number;
 		shippingLabel: string | null;
 		createdAt: string | Date;
+		paymentStatus?: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
 		items: {
 			id?: string;
 			nameSnapshot: string;

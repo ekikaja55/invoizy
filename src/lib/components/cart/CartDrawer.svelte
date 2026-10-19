@@ -69,46 +69,46 @@
 {#if !cart.isEmpty && !isExcludedRoute}
 	<!-- Floating Bottom Cart Bar -->
 	<div
-		class="fixed inset-x-0 bottom-0 z-40 border-t border-neutral-200 bg-white/95 p-3.5 backdrop-blur shadow-lg dark:border-neutral-800 dark:bg-neutral-950/95"
+		class="fixed inset-x-0 bottom-0 z-40 border-t-2 border-brandy bg-papaya/95 p-3.5 backdrop-blur-xs shadow-[0_-4px_12px_rgba(120,41,15,0.15)] dark:border-papaya/30 dark:bg-ink/95"
 	>
 		<div class="mx-auto flex max-w-3xl items-center justify-between pr-16 md:pl-24 md:pr-0">
 			<!-- Klik sisi kiri untuk membuka Drawer Keranjang -->
 			<button
 				type="button"
 				onclick={openDrawer}
-				class="group flex items-center gap-3 text-left transition-opacity hover:opacity-80"
+				class="group flex items-center gap-3 text-left transition-opacity hover:opacity-85"
 				aria-label="Buka keranjang belanja"
 			>
 				<div
-					class="flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-900 text-white transition-transform group-hover:scale-105 dark:bg-white dark:text-neutral-900"
+					class="flex h-11 w-11 items-center justify-center rounded-[8px_3px_7px_2px] border-2 border-brandy bg-tangerine text-white shadow-[2px_2px_0px_#78290f] transition-transform group-hover:scale-105"
 				>
-					<ShoppingBag size={18} />
+					<ShoppingBag size={20} strokeWidth={2.5} />
 				</div>
 				<div>
-					<p class="text-xs font-medium text-neutral-500 dark:text-neutral-400">
+					<p class="font-mono text-xs font-bold text-brandy/80 dark:text-papaya/70">
 						{cart.itemCount} item · <span class="underline underline-offset-2">Cek rincian</span>
 					</p>
-					<p class="text-base font-bold text-neutral-900 dark:text-white leading-tight">
+					<p class="font-mono text-base font-bold text-teal leading-tight dark:text-teal/90">
 						{formatRupiah(cart.total)}
 					</p>
 				</div>
 			</button>
 
 			<!-- Tombol Cek & Tombol Lanjut Checkout -->
-			<div class="flex items-center gap-2">
+			<div class="flex items-center gap-2.5">
 				<button
 					type="button"
 					onclick={openDrawer}
-					class="hidden sm:inline-flex items-center rounded-lg border border-neutral-300 px-3.5 py-2 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800"
+					class="hidden sm:inline-flex items-center rounded-[8px_3px_7px_2px] border-2 border-brandy bg-papaya px-3.5 py-2 font-mono text-xs font-bold text-ink shadow-[2px_2px_0px_#78290f] transition-all hover:bg-brandy/10 active:translate-y-0.5 active:shadow-none dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[2px_2px_0px_rgba(255,236,209,0.2)]"
 				>
 					Cek Keranjang
 				</button>
 				<a
 					href={resolve('/(public)/order/checkout')}
-					class="flex items-center gap-1.5 rounded-lg bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
+					class="flex items-center gap-2 rounded-[8px_3px_7px_2px] border-2 border-brandy bg-tangerine px-4 py-2 font-mono text-xs font-bold text-white shadow-[3px_3px_0px_#78290f] transition-all hover:bg-[#e06d00] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none"
 				>
 					<span>Checkout</span>
-					<ArrowRight size={16} />
+					<ArrowRight size={15} strokeWidth={2.5} />
 				</a>
 			</div>
 		</div>
@@ -123,7 +123,7 @@
 			type="button"
 			aria-label="Tutup keranjang"
 			onclick={closeDrawer}
-			class="fixed inset-0 cursor-default bg-black/50 backdrop-blur-xs transition-opacity"
+			class="fixed inset-0 cursor-default bg-ink/70 backdrop-blur-xs transition-opacity dark:bg-ink/85"
 		></button>
 
 		<!-- Drawer Panel: Bottom sheet di mobile, right-drawer di tablet/desktop -->
@@ -131,17 +131,18 @@
 			role="dialog"
 			aria-modal="true"
 			aria-label="Keranjang Belanja"
-			class="relative flex w-full flex-col bg-white shadow-2xl transition-all dark:bg-neutral-900
-			       max-h-[85vh] rounded-t-2xl sm:max-h-full sm:h-full sm:max-w-md sm:rounded-none sm:rounded-l-2xl sm:border-l sm:border-neutral-200 sm:dark:border-neutral-800"
+			class="relative flex w-full flex-col bg-papaya shadow-2xl transition-all dark:bg-ink
+			       max-h-[85vh] rounded-t-[20px_16px_0px_0px] border-t-2 border-x-2 border-brandy shadow-[0_-8px_0px_#78290f]
+			       sm:max-h-full sm:h-full sm:max-w-md sm:rounded-none sm:rounded-l-[20px_0px_0px_16px] sm:border-l-2 sm:border-t-0 sm:border-r-0 sm:border-b-0 sm:border-brandy sm:shadow-[-8px_0px_0px_#78290f] dark:border-papaya/30 dark:shadow-[-8px_0px_0px_rgba(255,236,209,0.2)]"
 		>
 			<!-- Header -->
 			<div
-				class="flex items-center justify-between border-b border-neutral-200 px-5 py-4 dark:border-neutral-800"
+				class="flex items-center justify-between border-b-2 border-brandy/20 px-5 py-4 dark:border-papaya/20"
 			>
-				<div class="flex items-center gap-2">
-					<h2 class="text-base font-bold text-neutral-900 dark:text-white">Keranjang Belanja</h2>
+				<div class="flex items-center gap-2.5">
+					<h2 class="font-serif text-lg font-bold text-ink dark:text-papaya">Keranjang Belanja</h2>
 					<span
-						class="rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-semibold text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+						class="rounded-[5px_2px_4px_1px] border border-brandy/40 bg-brandy/10 px-2 py-0.5 font-mono text-xs font-bold text-brandy dark:border-papaya/40 dark:bg-papaya/10 dark:text-papaya"
 					>
 						{cart.itemCount}
 					</span>
@@ -152,19 +153,19 @@
 						<button
 							type="button"
 							onclick={() => (confirmClearOpen = true)}
-							class="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
+							class="flex items-center gap-1.5 rounded-[6px_2px_5px_1px] border border-crimson/30 bg-crimson/10 px-2.5 py-1.5 font-mono text-xs font-bold text-crimson transition-colors hover:bg-crimson/20"
 						>
-							<Trash2 size={13} />
+							<Trash2 size={13} strokeWidth={2.5} />
 							<span>Kosongkan</span>
 						</button>
 					{/if}
 					<button
 						type="button"
 						onclick={closeDrawer}
-						class="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-500 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
+						class="flex h-8 w-8 items-center justify-center rounded-[6px_2px_5px_1px] border-2 border-brandy bg-papaya text-ink shadow-[2px_2px_0px_#78290f] transition-all hover:bg-brandy/10 active:translate-y-0.5 active:shadow-none dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[2px_2px_0px_rgba(255,236,209,0.2)]"
 						aria-label="Tutup"
 					>
-						<X size={18} />
+						<X size={16} strokeWidth={2.75} />
 					</button>
 				</div>
 			</div>
@@ -172,69 +173,69 @@
 			<!-- Body: Daftar Item -->
 			<div class="flex-1 overflow-y-auto p-4 space-y-3">
 				{#if cart.isEmpty}
-					<div class="flex flex-col items-center justify-center py-16 text-center text-neutral-500">
-						<ShoppingBag size={40} class="text-neutral-300 dark:text-neutral-700" />
-						<p class="mt-3 text-sm font-semibold">Keranjang belanja kosong</p>
-						<p class="mt-1 text-xs text-neutral-400">Pilih produk di katalog untuk ditambahkan.</p>
+					<div class="flex flex-col items-center justify-center py-16 text-center">
+						<ShoppingBag size={40} strokeWidth={2} class="text-brandy/40 dark:text-papaya/30" />
+						<p class="mt-3 font-serif text-base font-bold text-ink dark:text-papaya">Keranjang belanja kosong</p>
+						<p class="mt-1 font-handwriting text-xl font-semibold text-teal dark:text-papaya/90">Pilih produk di katalog untuk ditambahkan.</p>
 					</div>
 				{:else}
 					{#each cart.items as item (item.variantId ? `${item.productId}:${item.variantId}` : item.productId)}
 						<div
-							class="flex items-start justify-between gap-3 rounded-xl border border-neutral-200 bg-neutral-50/50 p-3.5 transition-colors dark:border-neutral-800 dark:bg-neutral-900/40"
+							class="flex items-start justify-between gap-3 rounded-[12px_5px_10px_4px] border-2 border-brandy bg-white/70 p-3.5 shadow-[3px_3px_0px_#78290f] transition-colors dark:border-papaya/25 dark:bg-ink/80 dark:shadow-[3px_3px_0px_rgba(255,236,209,0.15)]"
 						>
 							<div class="flex-1 min-w-0">
-								<h3 class="text-sm font-semibold text-neutral-900 dark:text-white truncate">
+								<h3 class="font-serif text-sm font-bold text-ink truncate dark:text-papaya">
 									{item.name}
 								</h3>
-								<div class="mt-0.5 flex flex-wrap items-center gap-2 text-xs">
+								<div class="mt-1 flex flex-wrap items-center gap-2">
 									{#if item.variantName}
 										<span
-											class="rounded bg-neutral-200/70 px-1.5 py-0.5 font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+											class="rounded-[4px_2px_4px_2px] border border-forest/30 bg-forest/15 px-1.5 py-0.5 font-mono text-[11px] font-bold text-forest"
 										>
 											{item.variantName}
 										</span>
 									{/if}
-									<span class="text-neutral-500 dark:text-neutral-400">
+									<span class="font-mono text-xs text-brandy/80 dark:text-papaya/70">
 										{formatRupiah(item.price)}
 									</span>
 								</div>
-								<p class="mt-1 text-xs font-semibold text-neutral-900 dark:text-white">
+								<p class="mt-1.5 font-mono text-xs font-bold text-teal dark:text-teal/90">
 									Subtotal: {formatRupiah(item.price * item.qty)}
 								</p>
 							</div>
 
 							<!-- Kontrol Qty & Tombol Hapus -->
-							<div class="flex flex-col items-end gap-2">
+							<div class="flex flex-col items-end gap-2.5">
 								<button
 									type="button"
 									onclick={() => (itemToDelete = item)}
-									class="text-neutral-400 transition-colors hover:text-red-600 dark:hover:text-red-400"
+									class="text-brandy/50 transition-colors hover:text-crimson dark:text-papaya/50 dark:hover:text-crimson"
 									aria-label={`Hapus ${item.name}`}
 								>
-									<Trash2 size={16} />
+									<Trash2 size={15} strokeWidth={2.5} />
 								</button>
 
 								<div
-									class="flex items-center rounded-lg border border-neutral-300 bg-white dark:border-neutral-700 dark:bg-neutral-800"
+									class="flex items-center gap-1"
 								>
 									<button
 										type="button"
 										onclick={() => handleDecrement(item)}
-										class="flex h-7 w-7 items-center justify-center rounded-l-lg hover:bg-neutral-100 dark:hover:bg-neutral-700"
+										class="flex h-7 w-7 items-center justify-center rounded-[4px_2px_3px_1px] border-2 border-brandy bg-papaya text-ink shadow-[1px_1px_0px_#78290f] transition-all hover:bg-brandy/10 active:translate-y-0.5 active:shadow-none dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[1px_1px_0px_rgba(255,236,209,0.2)]"
 										aria-label="Kurangi jumlah"
 									>
-										<Minus size={13} />
+										<Minus size={13} strokeWidth={2.75} />
 									</button>
-									<span class="w-8 text-center text-xs font-bold text-neutral-900 dark:text-white">
+									<span class="w-7 text-center font-mono text-xs font-bold text-ink dark:text-papaya">
 										{item.qty}
 									</span>
 									<button
 										type="button"
 										onclick={() => handleIncrement(item)}
-										class="flex h-7 w-7 items-center justify-center rounded-r-lg hover:bg-neutral-100 dark:hover:bg-neutral-700"
+										class="flex h-7 w-7 items-center justify-center rounded-[4px_2px_3px_1px] border-2 border-brandy bg-papaya text-ink shadow-[1px_1px_0px_#78290f] transition-all hover:bg-brandy/10 active:translate-y-0.5 active:shadow-none dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[1px_1px_0px_rgba(255,236,209,0.2)]"
 										aria-label="Tambah jumlah"
 									>
-										<Plus size={13} />
+										<Plus size={13} strokeWidth={2.75} />
 									</button>
 								</div>
 							</div>
@@ -245,10 +246,10 @@
 
 			<!-- Footer -->
 			{#if !cart.isEmpty}
-				<div class="border-t border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
-					<div class="mb-3 flex items-center justify-between text-sm">
-						<span class="text-neutral-500">Total Belanja</span>
-						<span class="text-base font-bold text-neutral-900 dark:text-white">
+				<div class="border-t-2 border-brandy/20 bg-papaya/80 p-4 dark:border-papaya/20 dark:bg-ink/90">
+					<div class="mb-3.5 flex items-center justify-between text-sm">
+						<span class="font-serif text-sm font-bold text-ink dark:text-papaya">Total Belanja</span>
+						<span class="font-mono text-xl font-bold text-teal dark:text-teal/90">
 							{formatRupiah(cart.total)}
 						</span>
 					</div>
@@ -256,10 +257,10 @@
 					<a
 						href={resolve('/(public)/order/checkout')}
 						onclick={closeDrawer}
-						class="flex w-full items-center justify-center gap-2 rounded-xl bg-neutral-900 py-3 text-sm font-semibold text-white shadow-md transition-all hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
+						class="flex w-full items-center justify-center gap-2 rounded-[10px_5px_9px_4px] border-2 border-brandy bg-tangerine px-4 py-3 font-mono text-sm font-bold text-white shadow-[4px_4px_0px_#78290f] transition-all hover:bg-[#e06d00] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none"
 					>
 						<span>Lanjut ke Checkout</span>
-						<ArrowRight size={16} />
+						<ArrowRight size={16} strokeWidth={2.5} />
 					</a>
 				</div>
 			{/if}

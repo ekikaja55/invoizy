@@ -11,7 +11,19 @@
 	import { handleFormResult } from '$lib/utils/handle-form-result';
 	import { formatRupiah } from '$lib/utils/currency';
 	import type { ResolvedPathname } from '$app/types';
-	import { ShoppingBag, Trash2, Plus, Minus } from '@lucide/svelte';
+	import {
+		ShoppingBag,
+		Trash2,
+		Plus,
+		Minus,
+		Truck,
+		Store,
+		MapPin,
+		Search,
+		AlertCircle,
+		ArrowRight,
+		Check
+	} from '@lucide/svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -314,38 +326,82 @@
 	});
 </script>
 
-<div class="space-y-6 pb-16">
-	<h1 class="text-xl font-semibold">Checkout</h1>
+<div class="space-y-8 pb-24">
+	<!-- Page Header / Scrapbook Title -->
+	<header class="space-y-3">
+		<div
+			class="inline-block -rotate-2 rounded-[6px_2px_5px_1px] border-2 border-brandy bg-papaya px-3.5 py-1.5 font-mono text-xs font-bold tracking-widest text-brandy uppercase shadow-[2px_2px_0px_#78290f] md:text-sm dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[2px_2px_0px_rgba(255,236,209,0.2)]"
+		>
+			CHECKOUT PESANAN
+		</div>
+		<h1
+			class="font-serif text-3xl font-bold tracking-normal text-ink md:text-4xl dark:text-papaya"
+		>
+			Lengkapi Pesanan Anda
+		</h1>
+		<p class="font-handwriting text-2xl font-semibold leading-snug text-teal md:text-3xl dark:text-papaya/90">
+			Periksa kembali rincian belanjaan dan isi data pengiriman dengan benar.
+		</p>
+	</header>
 
 	{#if cart.isEmpty}
-		<div class="flex flex-col items-center justify-center gap-3 py-16 text-center">
-			<ShoppingBag size={40} class="text-neutral-400" />
-			<p class="text-sm text-neutral-500">Keranjang kamu masih kosong.</p>
-			<a
-				href={resolve('/order')}
-				class="rounded-lg bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white
-               hover:bg-neutral-700 dark:bg-white dark:text-neutral-900"
+		<div
+			class="mx-auto max-w-md rounded-[16px_8px_14px_6px] border-2 border-dashed border-brandy/40 bg-papaya/40 p-10 text-center shadow-[4px_4px_0px_#78290f] dark:border-papaya/30 dark:bg-ink/40 dark:shadow-[4px_4px_0px_rgba(255,236,209,0.15)]"
+		>
+			<div
+				class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full border-2 border-brandy bg-tangerine/20 text-brandy dark:border-papaya/40 dark:text-papaya"
 			>
-				Mulai Order
-			</a>
+				<ShoppingBag size={28} strokeWidth={2.5} />
+			</div>
+			<p class="font-serif text-lg font-bold text-ink dark:text-papaya">
+				Keranjang Kamu Masih Kosong
+			</p>
+			<p class="mt-1 text-sm text-brandy/80 dark:text-papaya/70">
+				Belum ada produk yang kamu pilih untuk dipesan.
+			</p>
+			<div class="mt-5">
+				<a
+					href={resolve('/(public)/order')}
+					class="inline-flex items-center gap-2 rounded-[8px_3px_7px_2px] border-2 border-brandy bg-tangerine px-5 py-2.5 font-mono text-sm font-bold text-white shadow-[3px_3px_0px_#78290f] transition-all hover:bg-[#e06d00] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none"
+				>
+					<span>Mulai Belanja</span>
+					<ArrowRight size={15} strokeWidth={2.5} />
+				</a>
+			</div>
 		</div>
 	{:else}
-		<div class="rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
-			<h2 class="text-sm font-semibold tracking-wide text-neutral-500 uppercase">Pengiriman</h2>
+		<!-- Step 1: Pengiriman -->
+		<div
+			class="space-y-4 rounded-[14px_6px_12px_8px] border-2 border-brandy bg-papaya/50 p-5 shadow-[4px_4px_0px_#78290f] dark:border-papaya/30 dark:bg-ink/60 dark:shadow-[4px_4px_0px_rgba(255,236,209,0.2)]"
+		>
+			<div class="flex items-center gap-2">
+				<div
+					class="flex h-8 w-8 items-center justify-center rounded-[6px_2px_5px_1px] border-2 border-brandy bg-tangerine text-white shadow-[2px_2px_0px_#78290f]"
+				>
+					<Truck size={16} strokeWidth={2.5} />
+				</div>
+				<h2 class="font-serif text-lg font-bold text-ink dark:text-papaya">Metode Pengiriman</h2>
+			</div>
 
 			{#if data.pickupEnabled}
-				<div class="mt-3 grid grid-cols-2 gap-2">
+				<div class="grid grid-cols-2 gap-2.5">
 					<button
 						type="button"
 						onclick={() => switchShippingMethod('courier')}
-						class="rounded-lg border p-2.5 text-center text-sm font-medium transition-colors {shippingMethod === 'courier' ? 'border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white dark:text-neutral-900' : 'border-neutral-200 hover:bg-neutral-100 dark:border-neutral-800 dark:hover:bg-neutral-800'}"
+						class="rounded-[8px_3px_7px_2px] border-2 p-3 font-mono text-xs font-bold transition-all duration-150 {shippingMethod ===
+						'courier'
+							? 'border-brandy bg-tangerine text-white shadow-[2px_2px_0px_#78290f] -translate-y-0.5'
+							: 'border-brandy/40 bg-papaya text-ink hover:bg-brandy/10 dark:border-papaya/30 dark:bg-ink dark:text-papaya'}"
 					>
 						Kirim via Kurir
 					</button>
 					<button
 						type="button"
 						onclick={() => switchShippingMethod('pickup')}
-						class="rounded-lg border p-2.5 text-center text-sm font-medium transition-colors {shippingMethod === 'pickup' ? 'border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white dark:text-neutral-900' : 'border-neutral-200 hover:bg-neutral-100 dark:border-neutral-800 dark:hover:bg-neutral-800'}"
+						class="rounded-[8px_3px_7px_2px] border-2 p-3 font-mono text-xs font-bold transition-all duration-150 {shippingMethod ===
+						'pickup'
+							? 'border-brandy bg-tangerine text-white shadow-[2px_2px_0px_#78290f] -translate-y-0.5'
+							: 'border-brandy/40 bg-papaya text-ink hover:bg-brandy/10 dark:border-papaya/30 dark:bg-ink dark:text-papaya'}"
 					>
 						Ambil Sendiri (Rp 0)
 					</button>
@@ -353,18 +409,28 @@
 			{/if}
 
 			{#if shippingMethod === 'pickup' && data.pickupEnabled}
-				<div class="mt-4 space-y-3 rounded-lg border border-neutral-200 bg-neutral-50 p-3.5 dark:border-neutral-800 dark:bg-neutral-900/40">
+				<div
+					class="space-y-3 rounded-[10px_4px_8px_3px] border-2 border-dashed border-forest/50 bg-forest/10 p-4"
+				>
 					<div class="flex items-center justify-between">
-						<span class="text-sm font-semibold">Self-Pickup di Lokasi Toko</span>
-						<span class="rounded bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+						<span class="font-serif text-sm font-bold text-forest"
+							>Self-Pickup di Lokasi Toko</span
+						>
+						<span
+							class="rounded-[4px_2px_4px_2px] border border-forest/40 bg-forest/20 px-2 py-0.5 font-mono text-xs font-bold text-forest"
+						>
 							Gratis (Rp 0)
 						</span>
 					</div>
-					<p class="text-xs text-neutral-600 dark:text-neutral-400">
-						Khusus rekanan/teman yang mengambil pesanan langsung ke lokasi toko. Masukkan kode khusus dari admin.
+					<p class="text-xs leading-relaxed text-ink/80 dark:text-papaya/80">
+						Khusus rekanan/teman yang mengambil pesanan langsung ke lokasi toko. Masukkan kode
+						khusus dari admin.
 					</p>
 					<div>
-						<label for="pickupCodeInput" class="block text-xs font-medium text-neutral-700 dark:text-neutral-300">
+						<label
+							for="pickupCodeInput"
+							class="block font-mono text-xs font-bold text-brandy dark:text-papaya"
+						>
 							Kode Rahasia Rekanan
 						</label>
 						<input
@@ -372,14 +438,14 @@
 							type="text"
 							value={pickupCodeInput}
 							oninput={(e) => handlePickupCodeInput(e.currentTarget.value)}
-							placeholder="Masukkan kode khusus"
+							placeholder="MASUKKAN KODE"
 							disabled={isBusy}
-							class="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-mono uppercase text-neutral-900 placeholder:text-neutral-400 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder:text-neutral-500"
+							class="mt-1 w-full rounded-[6px_3px_5px_2px] border-2 border-brandy bg-white px-3.5 py-2 font-mono text-sm font-bold uppercase text-ink placeholder:text-brandy/40 focus:border-brandy focus:ring-2 focus:ring-tangerine focus:outline-none disabled:opacity-50 dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:placeholder:text-papaya/40"
 						/>
 					</div>
 				</div>
 			{:else}
-				<div class="mt-3 flex gap-2">
+				<div class="flex gap-2">
 					<input
 						type="search"
 						bind:value={destQuery}
@@ -389,58 +455,59 @@
 								doSearch();
 							}
 						}}
-						placeholder="Ketik kecamatan tujuan"
+						placeholder="Ketik nama kecamatan tujuan (mis. Gambir, Sukajadi)"
 						disabled={isBusy}
-						class="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900
-                 placeholder:text-neutral-400 disabled:opacity-50
-                 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder:text-neutral-500"
+						class="w-full rounded-[8px_3px_7px_2px] border-2 border-brandy bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-brandy/40 focus:border-brandy focus:ring-2 focus:ring-tangerine focus:outline-none disabled:opacity-50 dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:placeholder:text-papaya/40"
 					/>
 					<button
+						type="button"
 						onclick={doSearch}
 						disabled={searching || isBusy}
-						class="shrink-0 rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white
-                 disabled:opacity-50 dark:bg-white dark:text-neutral-900"
+						class="shrink-0 rounded-[8px_3px_7px_2px] border-2 border-brandy bg-tangerine px-5 py-2.5 font-mono text-xs font-bold text-white shadow-[2px_2px_0px_#78290f] transition-all hover:bg-[#e06d00] active:translate-y-0.5 active:shadow-none disabled:opacity-50"
 					>
-						{searching ? '...' : 'Cari'}
+						{searching ? 'Mencari...' : 'Cari'}
 					</button>
 				</div>
 
-				<p class="mt-1.5 text-xs text-neutral-500 dark:text-neutral-400">
-					Ketik nama kecamatan atau kota. Jika kecamatan tujuan tidak ditemukan atau tidak ada yang cocok,
+				<p class="text-xs text-brandy/80 dark:text-papaya/70">
+					Ketik nama kecamatan atau kota tujuan Anda.
 					{#if data.contact}
 						{@const waManual = waLink(
 							data.contact,
-							'Halo admin, kecamatan saya belum terdaftar di pilihan ongkir invoizy. Boleh dibantu hitung ongkir manual?'
+							'Halo admin, kecamatan saya belum terdaftar di pilihan ongkir cho.lazey - CHIBICONXI CATALOGUE. Boleh dibantu hitung ongkir manual?'
 						)}
 						{#if waManual}
 							<a
 								href={waManual}
 								target="_blank"
 								rel="external noopener noreferrer"
-								class="font-medium underline hover:text-neutral-900 dark:hover:text-neutral-100"
+								class="font-bold underline hover:text-tangerine"
 							>
-								hubungi admin via WhatsApp
+								Hubungi admin via WhatsApp
 							</a>
 						{:else}
-							hubungi admin
+							Hubungi admin
 						{/if}
 					{:else}
-						hubungi admin
+						Hubungi admin
 					{/if}
-					untuk bantuan ongkir manual.
+					jika tidak menemukan kecamatannya.
 				</p>
 
 				{#if searchError}
-					<p class="mt-2 text-xs text-red-600 dark:text-red-400">{searchError}</p>
+					<p class="font-mono text-xs font-bold text-crimson">{searchError}</p>
 				{/if}
 
 				{#if hasSearched && !searching && destResults.length === 0 && !searchError && !dest}
 					<div
-						class="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200"
+						class="rounded-[10px_4px_8px_3px] border-2 border-brandy/40 bg-tangerine/10 p-3.5 text-xs text-brandy dark:border-papaya/30 dark:bg-tangerine/15 dark:text-papaya"
 					>
-						<p class="font-medium">Kecamatan tidak ditemukan atau tidak ada yang cocok?</p>
-						<p class="mt-1">
-							Pastikan ejaan kecamatan sudah benar atau coba cari berdasarkan nama kota/kabupaten. Jika masih tidak ditemukan, silakan hubungi admin untuk dibantu cek ongkir manual.
+						<p class="font-serif text-sm font-bold text-ink dark:text-papaya">
+							Kecamatan tidak ditemukan atau tidak ada yang cocok?
+						</p>
+						<p class="mt-1 leading-relaxed">
+							Pastikan ejaan kecamatan sudah benar atau coba cari berdasarkan nama kota/kabupaten.
+							Jika masih tidak ditemukan, silakan hubungi admin untuk dibantu cek ongkir manual.
 						</p>
 						{#if data.contact}
 							{@const waNotFound = waLink(
@@ -448,12 +515,12 @@
 								`Halo admin, saya mau checkout tapi kecamatan tujuan "${destQuery}" tidak ditemukan di sistem. Boleh dibantu cek ongkir manual?`
 							)}
 							{#if waNotFound}
-								<div class="mt-2">
+								<div class="mt-2.5">
 									<a
 										href={waNotFound}
 										target="_blank"
 										rel="external noopener noreferrer"
-										class="inline-flex items-center rounded-md bg-amber-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-900 dark:bg-amber-700 dark:hover:bg-amber-600"
+										class="inline-flex items-center gap-1.5 rounded-[6px_2px_5px_1px] border-2 border-brandy bg-tangerine px-3 py-1.5 font-mono text-xs font-bold text-white shadow-[2px_2px_0px_#78290f] hover:bg-[#e06d00]"
 									>
 										Chat Admin via WhatsApp
 									</a>
@@ -463,154 +530,194 @@
 					</div>
 				{/if}
 
-			{#if destResults.length > 0}
-				<ul class="mt-2 space-y-1">
-					{#each destResults as d (d.id)}
-						<li>
-							<button
-								onclick={() => selectDest(d)}
-								disabled={isBusy}
-								class="w-full rounded-lg border border-neutral-200 p-2.5 text-left text-sm
-                       hover:bg-neutral-100 disabled:opacity-50 dark:border-neutral-800 dark:hover:bg-white/10"
-							>
-								{d.label}
-							</button>
-						</li>
-					{/each}
-				</ul>
-			{/if}
+				{#if destResults.length > 0}
+					<ul class="space-y-1.5">
+						{#each destResults as d (d.id)}
+							<li>
+								<button
+									type="button"
+									onclick={() => selectDest(d)}
+									disabled={isBusy}
+									class="group flex w-full items-center justify-between rounded-[8px_3px_7px_2px] border-2 border-brandy/40 bg-white/80 p-3 text-left font-sans text-xs font-bold text-ink shadow-[2px_2px_0px_#78290f] transition-all hover:border-brandy hover:bg-brandy/10 active:translate-y-0.5 active:shadow-none disabled:opacity-50 dark:border-papaya/30 dark:bg-ink dark:text-papaya dark:hover:border-papaya dark:hover:bg-papaya/15 dark:hover:text-papaya"
+								>
+									<span>{d.label}</span>
+									<span class="font-mono text-[11px] text-teal transition-colors group-hover:text-tangerine dark:text-teal/90">Pilih & Cek Ongkir →</span>
+								</button>
+							</li>
+						{/each}
+					</ul>
+				{/if}
 
-			{#if dest}
-				<div
-					class="mt-2 flex items-center justify-between gap-2 rounded-lg bg-neutral-100 p-2.5 text-sm dark:bg-white/10"
-				>
-					<span>Tujuan: <span class="font-medium">{dest.label}</span></span>
-					<button
-						onclick={clearDest}
-						disabled={isBusy}
-						class="shrink-0 text-xs underline disabled:opacity-50"
+				{#if dest}
+					<div
+						class="flex items-center justify-between gap-2 rounded-[8px_3px_7px_2px] border-2 border-brandy bg-papaya p-3 shadow-[2px_2px_0px_#78290f] dark:border-papaya/40 dark:bg-ink dark:shadow-[2px_2px_0px_rgba(255,236,209,0.2)]"
 					>
-						Ganti
-					</button>
-				</div>
-			{/if}
-
-			{#if dest}
-				{#if quoting}
-					<p class="mt-2 text-xs text-neutral-500">Menghitung ongkir...</p>
-				{:else if quoteError}
-					<div class="mt-2 rounded-lg border border-red-200 p-2.5 text-sm dark:border-red-900">
-						<p class="text-red-600 dark:text-red-400">{quoteError}</p>
+						<div class="flex items-center gap-2">
+							<MapPin size={16} strokeWidth={2.5} class="text-tangerine shrink-0" />
+							<span class="text-xs text-ink dark:text-papaya"
+								>Tujuan: <strong class="font-bold">{dest.label}</strong></span
+							>
+						</div>
 						<button
-							onclick={fetchQuote}
+							type="button"
+							onclick={clearDest}
 							disabled={isBusy}
-							class="mt-1 text-xs underline disabled:opacity-50"
+							class="rounded-[4px_2px_3px_1px] border border-brandy/30 bg-white px-2 py-0.5 font-mono text-[11px] font-bold text-brandy hover:bg-brandy/10 disabled:opacity-50 dark:border-papaya/30 dark:bg-ink dark:text-papaya"
 						>
-							Coba lagi
+							Ganti
 						</button>
 					</div>
-				{:else}
-					{#each quoteGroups as group (group.courier)}
-						<div class="mt-2 space-y-1">
-							<p class="text-xs font-semibold text-neutral-500">{group.courierLabel}</p>
-							{#each group.options as opt (opt.service)}
-								<label
-									class="flex cursor-pointer items-center justify-between rounded-lg border border-neutral-200 p-2.5
-                         dark:border-neutral-800"
-								>
-									<div class="flex items-center gap-2">
-										<input
-											type="radio"
-											name="shipping"
-											checked={isSelected(group, opt)}
-											onchange={() => selectService(group, opt)}
-											disabled={isBusy}
-										/>
-										<span class="text-sm">{opt.service}{etdLabel(opt.etd)}</span>
-									</div>
-									<span class="text-sm text-neutral-500">{formatRupiah(opt.cost)}</span>
-								</label>
-							{/each}
+				{/if}
+
+				{#if dest}
+					{#if quoting}
+						<div
+							class="flex items-center gap-2 rounded-[8px_3px_7px_2px] border border-dashed border-brandy/40 bg-papaya/40 p-3 text-xs text-brandy dark:border-papaya/30 dark:bg-ink/40 dark:text-papaya"
+						>
+							<div class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-tangerine border-t-transparent"></div>
+							<span>Menghitung ongkir ke {dest.label}...</span>
 						</div>
-					{/each}
-
-					{#if fallbackRate !== null}
-						<label
-							class="mt-2 flex cursor-pointer items-center justify-between rounded-lg border border-amber-300 bg-amber-50 p-2.5
-                     dark:border-amber-800 dark:bg-amber-950"
+					{:else if quoteError}
+						<div
+							class="rounded-[8px_3px_7px_2px] border-2 border-crimson/40 bg-crimson/10 p-3 text-xs text-crimson"
 						>
-							<div class="flex items-center gap-2">
-								<input
-									type="radio"
-									name="shipping"
-									checked={cart.shipping?.kind === 'fallback'}
-									onchange={() => cart.setShipping({ kind: 'fallback', cost: fallbackRate ?? 0 })}
-									disabled={isBusy}
-								/>
-								<span class="text-sm"
-									>Flat darurat <span class="text-xs text-neutral-500">(cek ongkir gangguan)</span
-									></span
-								>
+							<p class="font-mono font-bold">{quoteError}</p>
+							<button
+								type="button"
+								onclick={fetchQuote}
+								disabled={isBusy}
+								class="mt-1 font-mono font-bold underline disabled:opacity-50"
+							>
+								Coba lagi
+							</button>
+						</div>
+					{:else}
+						{#each quoteGroups as group (group.courier)}
+							<div class="space-y-1.5 pt-1">
+								<p class="font-mono text-xs font-bold text-brandy/80 dark:text-papaya/70">
+									{group.courierLabel}
+								</p>
+								<div class="grid gap-2 sm:grid-cols-2">
+									{#each group.options as opt (opt.service)}
+										{@const active = isSelected(group, opt)}
+										<label
+											class="flex cursor-pointer items-center justify-between rounded-[8px_3px_7px_2px] border-2 p-3 transition-all duration-150 {active
+												? 'border-brandy bg-tangerine/15 shadow-[2px_2px_0px_#78290f] dark:border-papaya dark:bg-tangerine/20'
+												: 'border-brandy/30 bg-white/70 hover:border-brandy hover:bg-papaya/40 dark:border-papaya/25 dark:bg-ink/70'}"
+										>
+											<div class="flex items-center gap-2.5">
+												<input
+													type="radio"
+													name="shipping"
+													checked={active}
+													onchange={() => selectService(group, opt)}
+													disabled={isBusy}
+													class="accent-tangerine"
+												/>
+												<div>
+													<span class="font-serif text-xs font-bold text-ink dark:text-papaya"
+														>{opt.service}</span
+													>
+													{#if opt.etd && opt.etd !== '-'}
+														<span class="block font-mono text-[10px] text-brandy/70 dark:text-papaya/60"
+															>{opt.etd}</span
+														>
+													{/if}
+												</div>
+											</div>
+											<span class="font-mono text-xs font-bold text-teal dark:text-teal/90"
+												>{formatRupiah(opt.cost)}</span
+											>
+										</label>
+									{/each}
+								</div>
 							</div>
-							<span class="text-sm text-neutral-500">{formatRupiah(fallbackRate)}</span>
-						</label>
-					{/if}
+						{/each}
 
-					{#if needsQuote}
-						<button
-							onclick={fetchQuote}
-							disabled={isBusy}
-							class="mt-2 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium
-                     hover:bg-neutral-100 disabled:opacity-50 dark:border-neutral-700 dark:hover:bg-white/10"
-						>
-							{quotedKey === null ? 'Cek Ongkir' : 'Cek Ulang Ongkir (keranjang berubah)'}
-						</button>
+						{#if fallbackRate !== null}
+							<label
+								class="flex cursor-pointer items-center justify-between rounded-[8px_3px_7px_2px] border-2 border-brandy bg-brandy/10 p-3 shadow-[2px_2px_0px_#78290f] dark:border-papaya/40 dark:bg-papaya/10"
+							>
+								<div class="flex items-center gap-2.5">
+									<input
+										type="radio"
+										name="shipping"
+										checked={cart.shipping?.kind === 'fallback'}
+										onchange={() =>
+											cart.setShipping({ kind: 'fallback', cost: fallbackRate ?? 0 })}
+										disabled={isBusy}
+										class="accent-tangerine"
+									/>
+									<div>
+										<span class="font-serif text-xs font-bold text-ink dark:text-papaya"
+											>Flat Darurat</span
+										>
+										<span class="block font-mono text-[10px] text-brandy/70 dark:text-papaya/60"
+											>Cek ongkir otomatis gangguan</span
+										>
+									</div>
+								</div>
+								<span class="font-mono text-xs font-bold text-teal dark:text-teal/90"
+									>{formatRupiah(fallbackRate)}</span
+								>
+							</label>
+						{/if}
+
+						{#if needsQuote}
+							<button
+								type="button"
+								onclick={fetchQuote}
+								disabled={isBusy}
+								class="w-full rounded-[8px_3px_7px_2px] border-2 border-brandy bg-papaya py-2 font-mono text-xs font-bold text-ink shadow-[2px_2px_0px_#78290f] transition-all hover:bg-brandy/10 active:translate-y-0.5 active:shadow-none disabled:opacity-50 dark:border-papaya/40 dark:bg-ink dark:text-papaya"
+							>
+								{quotedKey === null
+									? 'Cek Ongkir'
+									: 'Cek Ulang Ongkir (keranjang telah berubah)'}
+							</button>
+						{/if}
 					{/if}
 				{/if}
-			{/if}
 
-			{#if showEscalation}
-				<div
-					class="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm dark:border-amber-800 dark:bg-amber-950"
-				>
-					<p class="font-medium">Masih kendala?</p>
-					<p class="mt-1 text-neutral-600 dark:text-neutral-400">
-						Cek ongkir otomatisnya lagi gangguan. Hubungi admin atau lanjut pakai ongkir flat
-						darurat.
-					</p>
-					<div class="mt-2 flex flex-wrap gap-2">
-						{#if data.contact}
-							{@const wa = waLink(data.contact)}
-							{#if wa}
-								<a
-									href={wa}
-									target="_blank"
-									rel="external"
-									class="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium
-                         hover:bg-neutral-100 dark:border-neutral-700 dark:bg-transparent dark:hover:bg-white/10"
-								>
-									Chat Admin via WA
-								</a>
-							{:else}
-								<span
-									class="rounded-lg border border-neutral-300 px-4 py-2 text-sm text-neutral-600
-                         dark:border-neutral-700 dark:text-neutral-400"
-								>
-									Hubungi admin: {data.contact}
-								</span>
+				{#if showEscalation}
+					<div
+						class="rounded-[10px_4px_8px_3px] border-2 border-brandy bg-tangerine/15 p-4 shadow-[3px_3px_0px_#78290f] dark:border-papaya/30 dark:bg-ink"
+					>
+						<p class="font-serif text-sm font-bold text-ink dark:text-papaya">Masih Kendala?</p>
+						<p class="mt-1 text-xs leading-relaxed text-ink/80 dark:text-papaya/80">
+							Cek ongkir otomatis sedang mengalami gangguan jaringan. Anda dapat menghubungi admin
+							atau melanjutkan dengan tarif flat darurat.
+						</p>
+						<div class="mt-3 flex flex-wrap gap-2">
+							{#if data.contact}
+								{@const wa = waLink(data.contact)}
+								{#if wa}
+									<a
+										href={wa}
+										target="_blank"
+										rel="external noopener noreferrer"
+										class="rounded-[6px_2px_5px_1px] border-2 border-brandy bg-white px-3.5 py-1.5 font-mono text-xs font-bold text-ink shadow-[2px_2px_0px_#78290f] hover:bg-papaya dark:border-papaya/40 dark:bg-ink dark:text-papaya"
+									>
+										Chat Admin via WA
+									</a>
+								{:else}
+									<span
+										class="rounded-[6px_2px_5px_1px] border-2 border-brandy bg-white px-3 py-1.5 font-mono text-xs text-ink dark:border-papaya/40 dark:bg-ink dark:text-papaya"
+									>
+										Hubungi admin: {data.contact}
+									</span>
+								{/if}
 							{/if}
-						{/if}
-						<button
-							onclick={openEmergency}
-							disabled={isBusy}
-							class="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white
-                     disabled:opacity-50 dark:bg-white dark:text-neutral-900"
-						>
-							Pakai ongkir flat darurat
-						</button>
+							<button
+								type="button"
+								onclick={openEmergency}
+								disabled={isBusy}
+								class="rounded-[6px_2px_5px_1px] border-2 border-brandy bg-tangerine px-3.5 py-1.5 font-mono text-xs font-bold text-white shadow-[2px_2px_0px_#78290f] hover:bg-[#e06d00] disabled:opacity-50"
+							>
+								Pakai Ongkir Flat Darurat
+							</button>
+						</div>
 					</div>
-				</div>
-			{/if}
+				{/if}
 
 				<Modal
 					open={modalOpen}
@@ -623,78 +730,90 @@
 			{/if}
 		</div>
 
-		<div class="rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
+		<!-- Step 2: Ringkasan Belanja -->
+		<div
+			class="space-y-4 rounded-[14px_6px_12px_8px] border-2 border-brandy bg-papaya/50 p-5 shadow-[4px_4px_0px_#78290f] dark:border-papaya/30 dark:bg-ink/60 dark:shadow-[4px_4px_0px_rgba(255,236,209,0.2)]"
+		>
 			<div class="flex items-center justify-between">
-				<h2 class="text-sm font-semibold tracking-wide text-neutral-500 uppercase">Ringkasan</h2>
+				<div class="flex items-center gap-2">
+					<div
+						class="flex h-8 w-8 items-center justify-center rounded-[6px_2px_5px_1px] border-2 border-brandy bg-tangerine text-white shadow-[2px_2px_0px_#78290f]"
+					>
+						<ShoppingBag size={16} strokeWidth={2.5} />
+					</div>
+					<h2 class="font-serif text-lg font-bold text-ink dark:text-papaya">Ringkasan Belanja</h2>
+				</div>
 				<button
 					type="button"
 					onclick={() => (confirmClearOpen = true)}
 					disabled={isBusy}
-					class="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950/40"
+					class="flex items-center gap-1.5 rounded-[6px_2px_5px_1px] border border-crimson/30 bg-crimson/10 px-2.5 py-1 font-mono text-xs font-bold text-crimson transition-colors hover:bg-crimson/20 disabled:opacity-50"
 				>
-					<Trash2 size={13} />
+					<Trash2 size={13} strokeWidth={2.5} />
 					<span>Kosongkan</span>
 				</button>
 			</div>
 
-			<ul class="mt-3 space-y-2.5">
+			<ul class="space-y-2.5">
 				{#each cart.items as item (item.variantId ? `${item.productId}:${item.variantId}` : item.productId)}
 					<li
-						class="flex items-start justify-between gap-3 rounded-lg border border-neutral-100 bg-neutral-50/60 p-2.5 text-sm dark:border-neutral-800 dark:bg-neutral-900/40"
+						class="flex items-start justify-between gap-3 rounded-[10px_4px_8px_3px] border-2 border-brandy/30 bg-white/70 p-3 shadow-[2px_2px_0px_#78290f] dark:border-papaya/25 dark:bg-ink/80 dark:shadow-[2px_2px_0px_rgba(255,236,209,0.15)]"
 					>
 						<div class="flex-1 min-w-0">
-							<span class="font-medium truncate block">{item.name}</span>
-							<div class="mt-0.5 flex flex-wrap items-center gap-2 text-xs">
+							<span class="font-serif text-sm font-bold text-ink truncate block dark:text-papaya"
+								>{item.name}</span
+							>
+							<div class="mt-0.5 flex flex-wrap items-center gap-2">
 								{#if item.variantName}
 									<span
-										class="rounded bg-neutral-200/70 px-1.5 py-0.5 font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+										class="rounded-[4px_2px_4px_2px] border border-forest/30 bg-forest/15 px-1.5 py-0.5 font-mono text-[11px] font-bold text-forest"
 									>
 										{item.variantName}
 									</span>
 								{/if}
-								<span class="text-neutral-500">
+								<span class="font-mono text-xs text-brandy/80 dark:text-papaya/70">
 									{formatRupiah(item.price)}
 								</span>
 							</div>
-							<span class="mt-1 block text-xs font-semibold text-neutral-900 dark:text-white">
-								{formatRupiah(item.price * item.qty)}
+							<span class="mt-1 block font-mono text-xs font-bold text-teal dark:text-teal/90">
+								Subtotal: {formatRupiah(item.price * item.qty)}
 							</span>
 						</div>
 
-						<div class="flex flex-col items-end gap-1.5">
+						<div class="flex flex-col items-end gap-2">
 							<button
 								type="button"
 								onclick={() => (itemToDelete = item)}
 								disabled={isBusy}
-								class="text-neutral-400 transition-colors hover:text-red-600 disabled:opacity-50 dark:hover:text-red-400"
+								class="text-brandy/50 transition-colors hover:text-crimson disabled:opacity-50 dark:text-papaya/50 dark:hover:text-crimson"
 								aria-label={`Hapus ${item.name}`}
 							>
-								<Trash2 size={15} />
+								<Trash2 size={14} strokeWidth={2.5} />
 							</button>
 
-							<div
-								class="flex items-center rounded-lg border border-neutral-300 bg-white dark:border-neutral-700 dark:bg-neutral-800"
-							>
+							<div class="flex items-center gap-1">
 								<button
 									type="button"
 									onclick={() => handleDecrement(item)}
 									disabled={isBusy}
-									class="flex h-6 w-6 items-center justify-center rounded-l-lg hover:bg-neutral-100 disabled:opacity-50 dark:hover:bg-neutral-700"
+									class="flex h-6 w-6 items-center justify-center rounded-[3px_1px_3px_1px] border-2 border-brandy bg-papaya text-ink shadow-[1px_1px_0px_#78290f] hover:bg-brandy/10 active:translate-y-0.5 active:shadow-none disabled:opacity-50 dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[1px_1px_0px_rgba(255,236,209,0.2)]"
 									aria-label="Kurangi jumlah"
 								>
-									<Minus size={12} />
+									<Minus size={11} strokeWidth={2.75} />
 								</button>
-								<span class="w-7 text-center text-xs font-bold text-neutral-900 dark:text-white">
+								<span
+									class="w-6 text-center font-mono text-xs font-bold text-ink dark:text-papaya"
+								>
 									{item.qty}
 								</span>
 								<button
 									type="button"
 									onclick={() => handleIncrement(item)}
 									disabled={isBusy}
-									class="flex h-6 w-6 items-center justify-center rounded-r-lg hover:bg-neutral-100 disabled:opacity-50 dark:hover:bg-neutral-700"
+									class="flex h-6 w-6 items-center justify-center rounded-[3px_1px_3px_1px] border-2 border-brandy bg-papaya text-ink shadow-[1px_1px_0px_#78290f] hover:bg-brandy/10 active:translate-y-0.5 active:shadow-none disabled:opacity-50 dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[1px_1px_0px_rgba(255,236,209,0.2)]"
 									aria-label="Tambah jumlah"
 								>
-									<Plus size={12} />
+									<Plus size={11} strokeWidth={2.75} />
 								</button>
 							</div>
 						</div>
@@ -703,31 +822,38 @@
 
 				{#if cart.shipping}
 					<li
-						class="flex items-center justify-between border-t border-neutral-200 pt-2 text-sm dark:border-neutral-800"
+						class="flex items-center justify-between border-t-2 border-dashed border-brandy/20 pt-3 text-sm dark:border-papaya/20"
 					>
-						<span>
-							Ongkir · {shippingLabel(cart.shipping)}
+						<div>
+							<span class="font-serif text-xs font-bold text-ink dark:text-papaya"
+								>Ongkir · {shippingLabel(cart.shipping)}</span
+							>
 							{#if cart.shipping.kind === 'quote'}
-								<span class="block text-xs text-neutral-500">
+								<span class="block font-mono text-[11px] text-brandy/70 dark:text-papaya/60">
 									{cart.shipping.destLabel}{cart.shipping.etd && cart.shipping.etd !== '-'
 										? ` · ${cart.shipping.etd}`
 										: ''}
 								</span>
 							{/if}
-						</span>
-						<span>{formatRupiah(cart.shipping.cost)}</span>
+						</div>
+						<span class="font-mono text-xs font-bold text-teal dark:text-teal/90"
+							>{formatRupiah(cart.shipping.cost)}</span
+						>
 					</li>
 				{/if}
 
 				<li
-					class="flex items-center justify-between border-t border-neutral-200 pt-2 text-sm font-semibold dark:border-neutral-800"
+					class="flex items-center justify-between border-t-2 border-brandy pt-3 dark:border-papaya/30"
 				>
-					<span>Total</span>
-					<span>{formatRupiah(cart.total)}</span>
+					<span class="font-serif text-base font-bold text-ink dark:text-papaya">Total Akhir</span>
+					<span class="font-mono text-xl font-bold text-teal dark:text-teal/90"
+						>{formatRupiah(cart.total)}</span
+					>
 				</li>
 			</ul>
 		</div>
 
+		<!-- Step 3: Form Data Pembeli -->
 		<form
 			method="POST"
 			use:enhance={() => {
@@ -752,7 +878,7 @@
 					isBusy = false;
 				};
 			}}
-			class="space-y-4 rounded-xl border border-neutral-200 p-4 dark:border-neutral-800"
+			class="space-y-5 rounded-[14px_6px_12px_8px] border-2 border-brandy bg-papaya/50 p-5 shadow-[4px_4px_0px_#78290f] dark:border-papaya/30 dark:bg-ink/60 dark:shadow-[4px_4px_0px_rgba(255,236,209,0.2)]"
 		>
 			<input type="hidden" name="items" value={itemsJson} />
 			<input type="hidden" name="shipping" value={shippingJson} />
@@ -763,11 +889,20 @@
 				<input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
 			</div>
 
+			<div class="border-b-2 border-brandy/20 pb-3 dark:border-papaya/20">
+				<h2 class="font-serif text-lg font-bold text-ink dark:text-papaya">Data Pemesan</h2>
+				<p class="font-handwriting text-xl font-semibold text-teal dark:text-papaya/90">
+					Informasi ini akan tertera pada faktur resmi pesanan Anda.
+				</p>
+			</div>
+
 			<div>
-				<label for="handle" class="block text-sm font-medium">Handle Sosmed</label>
-				<div class="mt-1 flex rounded-lg">
+				<label for="handle" class="block font-serif text-sm font-bold text-ink dark:text-papaya"
+					>Handle Media Sosial</label
+				>
+				<div class="mt-1.5 flex">
 					<span
-						class="inline-flex items-center rounded-l-lg border border-r-0 border-neutral-300 bg-neutral-100 px-3 text-sm text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400"
+						class="inline-flex items-center rounded-l-[8px_3px_0px_2px] border-2 border-r-0 border-brandy bg-papaya px-3 font-mono text-sm font-bold text-brandy dark:border-papaya/40 dark:bg-ink dark:text-papaya"
 					>
 						@
 					</span>
@@ -776,18 +911,20 @@
 						name="handle"
 						type="text"
 						required
-						placeholder="namakamu"
+						placeholder="username_kamu"
 						disabled={isBusy}
-						class="w-full rounded-r-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder:text-neutral-500"
+						class="w-full rounded-r-[0px_3px_8px_0px] border-2 border-brandy bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-brandy/40 focus:border-brandy focus:ring-2 focus:ring-tangerine focus:outline-none disabled:opacity-50 dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:placeholder:text-papaya/40"
 					/>
 				</div>
-				<p class="mt-1 text-xs text-neutral-500">
-					Akun Instagram/X aktif (minimal 3 karakter) untuk verifikasi pesanan.
+				<p class="mt-1 font-mono text-[11px] text-brandy/70 dark:text-papaya/60">
+					Akun Instagram/X aktif untuk verifikasi pesanan.
 				</p>
 			</div>
 
 			<div>
-				<label for="email" class="block text-sm font-medium">Email</label>
+				<label for="email" class="block font-serif text-sm font-bold text-ink dark:text-papaya"
+					>Alamat Email</label
+				>
 				<input
 					id="email"
 					name="email"
@@ -795,41 +932,45 @@
 					required
 					placeholder="kamu@email.com"
 					disabled={isBusy}
-					class="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900
-                 placeholder:text-neutral-400 disabled:opacity-50
-                 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder:text-neutral-500"
+					class="mt-1.5 w-full rounded-[8px_3px_7px_2px] border-2 border-brandy bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-brandy/40 focus:border-brandy focus:ring-2 focus:ring-tangerine focus:outline-none disabled:opacity-50 dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:placeholder:text-papaya/40"
 				/>
 				{#if data.emailEnabled}
-					<p class="mt-1 text-xs text-neutral-500">
-						Invoice PDF dan bukti pesanan otomatis dikirim ke email ini.
+					<p class="mt-1 font-mono text-[11px] text-brandy/70 dark:text-papaya/60">
+						Invoice PDF dan konfirmasi pesanan otomatis dikirim ke email ini.
 					</p>
 				{:else}
-					<p class="mt-1 text-xs text-neutral-500">
-						Untuk identitas pemesan. Tautan & unduhan invoice langsung tersedia di halaman sukses setelah order dibuat.
+					<p class="mt-1 font-mono text-[11px] text-brandy/70 dark:text-papaya/60">
+						Tautan & unduhan invoice langsung tersedia di halaman sukses setelah order dibuat.
 					</p>
 				{/if}
 			</div>
 
 			<div>
-				<label for="note" class="block text-sm font-medium">Catatan (opsional)</label>
-				<textarea
-					id="note"
-					name="note"
-					rows="3"
-					placeholder="Ukuran, warna, atau catatan lain"
+				<label for="phone" class="block font-serif text-sm font-bold text-ink dark:text-papaya"
+					>Nomor WhatsApp</label
+				>
+				<input
+					id="phone"
+					name="phone"
+					type="tel"
+					required
+					placeholder="08123456789"
 					disabled={isBusy}
-					class="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900
-                 placeholder:text-neutral-400 disabled:opacity-50
-                 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder:text-neutral-500"
-				></textarea>
+					class="mt-1.5 w-full rounded-[8px_3px_7px_2px] border-2 border-brandy bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-brandy/40 focus:border-brandy focus:ring-2 focus:ring-tangerine focus:outline-none disabled:opacity-50 dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:placeholder:text-papaya/40"
+				/>
+				<p class="mt-1 font-mono text-[11px] text-brandy/70 dark:text-papaya/60">
+					Nomor aktif untuk konfirmasi ketersediaan barang dan info resi.
+				</p>
 			</div>
 
 			<div>
-				<label for="address" class="block text-sm font-medium">Alamat</label>
+				<label for="address" class="block font-serif text-sm font-bold text-ink dark:text-papaya"
+					>Alamat Lengkap</label
+				>
 				{#if shippingMethod === 'pickup' && data.pickupEnabled}
 					<input type="hidden" name="address" value="Ambil Sendiri di Toko / Self-Pickup" />
 					<div
-						class="mt-1 rounded-lg border border-dashed border-neutral-300 bg-neutral-50 p-3 text-xs text-neutral-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400"
+						class="mt-1.5 rounded-[8px_3px_7px_2px] border-2 border-dashed border-forest/40 bg-forest/10 p-3 text-xs text-forest"
 					>
 						Barang akan diambil langsung di toko. Alamat pengiriman kurir tidak diperlukan.
 					</div>
@@ -839,43 +980,37 @@
 						name="address"
 						rows="3"
 						required
-						placeholder="Jalan, nomor rumah, patokan, kecamatan, kota, kode pos"
+						placeholder="Jalan, nomor rumah, RT/RW, kelurahan, kecamatan, kota, kode pos, patokan"
 						disabled={isBusy}
-						class="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900
-                  placeholder:text-neutral-400 disabled:opacity-50
-                  dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder:text-neutral-500"
+						class="mt-1.5 w-full rounded-[8px_3px_7px_2px] border-2 border-brandy bg-white px-3.5 py-2.5 text-sm leading-relaxed text-ink placeholder:text-brandy/40 focus:border-brandy focus:ring-2 focus:ring-tangerine focus:outline-none disabled:opacity-50 dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:placeholder:text-papaya/40"
 					></textarea>
-					<p class="mt-1 text-xs text-neutral-500">
+					<p class="mt-1 font-mono text-[11px] text-brandy/70 dark:text-papaya/60">
 						Alamat lengkap beserta patokan rumah untuk kurir ekspedisi.
 					</p>
 				{/if}
 			</div>
 
 			<div>
-				<label for="phone" class="block text-sm font-medium">Nomor WhatsApp</label>
-				<input
-					id="phone"
-					name="phone"
-					type="tel"
-					required
-					placeholder="08xx xxxx xxxx"
+				<label for="note" class="block font-serif text-sm font-bold text-ink dark:text-papaya"
+					>Catatan Tambahan (opsional)</label
+				>
+				<textarea
+					id="note"
+					name="note"
+					rows="2"
+					placeholder="Permintaan khusus atau pesan untuk penjual"
 					disabled={isBusy}
-					class="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900
-                  placeholder:text-neutral-400 disabled:opacity-50
-                  dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder:text-neutral-500"
-				/>
-				<p class="mt-1 text-xs text-neutral-500">
-					Nomor WhatsApp aktif untuk konfirmasi ketersediaan barang dan info pengiriman.
-				</p>
+					class="mt-1.5 w-full rounded-[8px_3px_7px_2px] border-2 border-brandy bg-white px-3.5 py-2.5 text-sm leading-relaxed text-ink placeholder:text-brandy/40 focus:border-brandy focus:ring-2 focus:ring-tangerine focus:outline-none disabled:opacity-50 dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:placeholder:text-papaya/40"
+				></textarea>
 			</div>
 
 			<button
 				type="submit"
 				disabled={isBusy}
-				class="w-full rounded-lg bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white
-               disabled:opacity-50 dark:bg-white dark:text-neutral-900"
+				class="flex w-full items-center justify-center gap-2 rounded-[10px_5px_9px_4px] border-2 border-brandy bg-tangerine px-5 py-3.5 font-mono text-base font-bold text-white shadow-[4px_4px_0px_#78290f] transition-all hover:bg-[#e06d00] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none disabled:cursor-not-allowed disabled:border-brandy/30 disabled:bg-brandy/20 disabled:text-brandy/40 disabled:shadow-none"
 			>
-				{isBusy ? 'Membuat pesanan...' : 'Buat Pesanan'}
+				<span>{isBusy ? 'Membuat Pesanan...' : 'Buat Pesanan & Dapatkan Invoice'}</span>
+				<ArrowRight size={18} strokeWidth={2.5} />
 			</button>
 		</form>
 	{/if}

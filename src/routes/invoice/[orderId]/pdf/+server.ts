@@ -20,21 +20,23 @@ export const GET: RequestHandler = async ({ params, url }) => {
 		throw error(404, 'Invoice tidak ditemukan. Cek kembali link dari email.');
 	}
 
+	const force = url.searchParams.get('force') === '1' || url.searchParams.get('force') === 'true';
+
 	try {
 		let pdf: Uint8Array;
 
-		if (result.order.pdfFilePath) {
+		if (result.order.pdfFilePath && !force) {
 			// Idempotency: file sudah ada → pakai ulang, jangan render dobel.
 			try {
 				pdf = await downloadInvoicePdf(result.order.pdfFilePath);
 			} catch {
 				// File hilang dari Storage (dihapus manual) → generate ulang.
-				const ensured = await ensureInvoicePdf(params.orderId, token, toInvoiceData(result));
+				const ensured = await ensureInvoicePdf(params.orderId, token, toInvoiceData(result), { force: true });
 				pdf = ensured.pdf;
 			}
 		} else {
 			await updateOrderInvoiceResult(params.orderId, { invoiceStatus: 'GENERATING', error: null });
-			const ensured = await ensureInvoicePdf(params.orderId, token, toInvoiceData(result));
+			const ensured = await ensureInvoicePdf(params.orderId, token, toInvoiceData(result), { force });
 			pdf = ensured.pdf;
 		}
 

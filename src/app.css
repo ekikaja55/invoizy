@@ -3,3 +3,85 @@
 @plugin '@tailwindcss/typography';
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+	--font-headline: 'Fraunces', serif;
+	--font-handwriting: 'Caveat', cursive;
+	--font-sans: 'Plus Jakarta Sans', sans-serif;
+	--font-mono: 'Space Mono', monospace;
+
+	/* Mapping palet warna baru */
+	--color-ink: #001524;
+	--color-papaya: #ffecd1;
+	--color-teal: #15616d;
+	--color-tangerine: #ff7d00;
+	--color-brandy: #78290f;
+	--color-crimson: #c1121f; /* Error / Failed */
+	--color-forest: #2b9348; /* Success / Paid */
+}
+
+/* Invoizy Digital Scrapbook: Tactile Sticky Note Toast Overrides */
+[data-sonner-toast] {
+	--normal-bg: #ffecd1 !important;
+	--normal-border: #78290f !important;
+	--normal-text: #001524 !important;
+	--border-radius: 10px 4px 8px 3px !important;
+	font-family: 'Plus Jakarta Sans', sans-serif !important;
+	border: 2px solid #78290f !important;
+	box-shadow: 4px 4px 0px #78290f !important;
+	background-color: #ffecd1 !important;
+	color: #001524 !important;
+}
+
+:where(.dark) [data-sonner-toast] {
+	--normal-bg: #001524 !important;
+	--normal-border: rgba(255, 236, 209, 0.3) !important;
+	--normal-text: #ffecd1 !important;
+	border-color: rgba(255, 236, 209, 0.3) !important;
+	box-shadow: 4px 4px 0px rgba(255, 236, 209, 0.2) !important;
+	background-color: #001524 !important;
+	color: #ffecd1 !important;
+}
+
+[data-sonner-toast] [data-title] {
+	font-weight: 700 !important;
+	letter-spacing: -0.01em !important;
+	color: inherit !important;
+}
+
+[data-sonner-toast][data-type='success'] {
+	border-color: #2b9348 !important;
+	color: #2b9348 !important;
+}
+
+[data-sonner-toast][data-type='error'] {
+	border-color: #c1121f !important;
+	color: #c1121f !important;
+}
+
+[data-sonner-toast][data-type='warning'] {
+	border-color: #ff7d00 !important;
+	color: #ff7d00 !important;
+}
+
+[data-sonner-toast][data-type='info'] {
+	border-color: #15616d !important;
+	color: #15616d !important;
+}
+
+/* Global HTML & Body Canvas (Mencegah belang saat overscroll bounce) */
+html,
+body {
+	background-color: #ffecd1;
+	color: #001524;
+	font-family: 'Plus Jakarta Sans', sans-serif;
+	min-height: 100%;
+}
+
+html.dark,
+html.dark body {
+	background-color: #001524;
+	color: #ffecd1;
+}
+
+

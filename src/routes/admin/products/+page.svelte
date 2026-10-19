@@ -13,7 +13,8 @@
 		X,
 		ChevronRight,
 		Image as ImageIcon,
-		Eye
+		Eye,
+		Search
 	} from '@lucide/svelte';
 	import { processAndWatermarkImage } from '$lib/utils/image-watermark';
 	import { toast } from 'svelte-sonner';
@@ -27,6 +28,77 @@
 			expandedCategoryId = data.categoriesWithProducts[0].id;
 		}
 	});
+
+	let searchQuery = $state('');
+	let selectedCategoryFilter = $state<'all' | string>('all');
+	let selectedStockFilter = $state<'all' | 'in_stock' | 'out_of_stock'>('all');
+
+	const hasActiveFilter = $derived(
+		searchQuery.trim() !== '' || selectedCategoryFilter !== 'all' || selectedStockFilter !== 'all'
+	);
+
+	const filteredCategories = $derived.by(() => {
+		const q = searchQuery.trim().toLowerCase();
+
+		return data.categoriesWithProducts
+			.filter((cat) => {
+				if (selectedCategoryFilter !== 'all' && cat.id !== selectedCategoryFilter) {
+					return false;
+				}
+				return true;
+			})
+			.map((cat) => {
+				const matchingProducts = cat.products.filter((p) => {
+					// 1. Text filter
+					const matchesName =
+						!q ||
+						p.name.toLowerCase().includes(q) ||
+						(p.description && p.description.toLowerCase().includes(q));
+					if (!matchesName) return false;
+
+					// 2. Stock filter
+					if (selectedStockFilter === 'all') return true;
+					const isOutOfStock =
+						p.variants.length > 0
+							? p.variants.reduce((sum, v) => sum + v.stock, 0) <= 0
+							: p.trackStock && p.stock <= 0;
+
+					if (selectedStockFilter === 'out_of_stock') {
+						return isOutOfStock;
+					}
+					if (selectedStockFilter === 'in_stock') {
+						return !isOutOfStock;
+					}
+					return true;
+				});
+
+				return {
+					...cat,
+					products: matchingProducts,
+					totalOriginalProducts: cat.products.length
+				};
+			})
+			.filter((cat) => {
+				if (hasActiveFilter) {
+					return cat.products.length > 0;
+				}
+				return true;
+			});
+	});
+
+	$effect(() => {
+		if (hasActiveFilter && filteredCategories.length > 0) {
+			if (!filteredCategories.some((c) => c.id === expandedCategoryId)) {
+				expandedCategoryId = filteredCategories[0].id;
+			}
+		}
+	});
+
+	function resetFilters() {
+		searchQuery = '';
+		selectedCategoryFilter = 'all';
+		selectedStockFilter = 'all';
+	}
 
 	let creatingInCategoryId = $state<string | null>(null);
 	let editingId = $state<string | null>(null);
@@ -238,8 +310,67 @@
 </script>
 
 <div class="mx-auto max-w-3xl space-y-4">
-	<h1 class="text-xl font-semibold">Products</h1>
-	<p class="-mt-2 text-xs text-neutral-500">Urutkan tampilan dengan tombol panah di tiap baris.</p>
+	<div>
+		<h1 class="text-xl font-semibold">Products</h1>
+		<p class="text-xs text-neutral-500">Urutkan tampilan dengan tombol panah di tiap baris.</p>
+	</div>
+
+	{#if data.categoriesWithProducts && data.categoriesWithProducts.length > 0}
+		<!-- Filter & Search Controls -->
+		<div
+			class="flex flex-col gap-2 rounded-xl border border-neutral-200 bg-white p-3 sm:flex-row sm:items-center dark:border-neutral-800 dark:bg-neutral-900/50"
+		>
+			<div class="relative flex-1">
+				<Search size={16} class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+				<input
+					type="text"
+					bind:value={searchQuery}
+					placeholder="Cari produk berdasarkan nama..."
+					class="w-full rounded-lg border border-neutral-300 bg-white py-1.5 pl-9 pr-8 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:focus:border-white"
+				/>
+				{#if searchQuery}
+					<button
+						type="button"
+						onclick={() => (searchQuery = '')}
+						class="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
+					>
+						<X size={14} />
+					</button>
+				{/if}
+			</div>
+
+			<div class="flex items-center gap-2">
+				<select
+					bind:value={selectedCategoryFilter}
+					class="rounded-lg border border-neutral-300 bg-white px-2.5 py-1.5 text-xs text-neutral-900 focus:border-neutral-900 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:focus:border-white"
+				>
+					<option value="all">Semua Kategori</option>
+					{#each data.categoriesWithProducts as cat (cat.id)}
+						<option value={cat.id}>{cat.name}</option>
+					{/each}
+				</select>
+
+				<select
+					bind:value={selectedStockFilter}
+					class="rounded-lg border border-neutral-300 bg-white px-2.5 py-1.5 text-xs text-neutral-900 focus:border-neutral-900 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:focus:border-white"
+				>
+					<option value="all">Semua Stok</option>
+					<option value="in_stock">Tersedia</option>
+					<option value="out_of_stock">Habis</option>
+				</select>
+
+				{#if hasActiveFilter}
+					<button
+						type="button"
+						onclick={resetFilters}
+						class="rounded-lg border border-neutral-300 px-2.5 py-1.5 text-xs font-medium text-neutral-600 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+					>
+						Reset
+					</button>
+				{/if}
+			</div>
+		</div>
+	{/if}
 
 	{#if !data.categoriesWithProducts}
 		<ListSkeleton rows={3} />
@@ -247,9 +378,21 @@
 		<p class="py-8 text-center text-sm text-neutral-500">
 			Belum ada kategori. Buat kategori dulu di halaman Categories.
 		</p>
+	{:else if filteredCategories.length === 0}
+		<div class="rounded-xl border border-dashed border-neutral-300 p-8 text-center dark:border-neutral-700">
+			<p class="text-sm font-medium text-neutral-900 dark:text-neutral-100">Tidak ada produk yang cocok</p>
+			<p class="mt-1 text-xs text-neutral-500">Coba ubah kata kunci pencarian atau filter yang aktif.</p>
+			<button
+				type="button"
+				onclick={resetFilters}
+				class="mt-3 inline-flex items-center gap-1 rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200"
+			>
+				Reset Filter
+			</button>
+		</div>
 	{:else}
 		<div class="space-y-3">
-			{#each data.categoriesWithProducts as category (category.id)}
+			{#each filteredCategories as category (category.id)}
 				<div class="rounded-xl border border-neutral-200 dark:border-neutral-800">
 					<button
 						onclick={() => toggleCategory(category.id)}
@@ -261,7 +404,13 @@
 								class="transition-transform {expandedCategoryId === category.id ? 'rotate-90' : ''}"
 							/>
 							<span class="font-medium">{category.name}</span>
-							<span class="text-xs text-neutral-500">({category.products.length} produk)</span>
+							{#if hasActiveFilter && category.products.length !== category.totalOriginalProducts}
+								<span class="text-xs text-neutral-500">
+									({category.products.length} dari {category.totalOriginalProducts} produk)
+								</span>
+							{:else}
+								<span class="text-xs text-neutral-500">({category.products.length} produk)</span>
+							{/if}
 						</div>
 					</button>
 
@@ -1003,7 +1152,8 @@
 															<input type="hidden" name="direction" value="up" />
 															<button
 																type="submit"
-																disabled={isBusy || index === 0}
+																disabled={isBusy || hasActiveFilter || index === 0}
+																title={hasActiveFilter ? 'Reset filter untuk mengubah urutan produk' : undefined}
 																class="rounded p-1.5 hover:bg-neutral-100 disabled:opacity-30 dark:hover:bg-white/10"
 															>
 																<ChevronUp size={16} />
@@ -1030,7 +1180,8 @@
 															<input type="hidden" name="direction" value="down" />
 															<button
 																type="submit"
-																disabled={isBusy || index === category.products.length - 1}
+																disabled={isBusy || hasActiveFilter || index === category.products.length - 1}
+																title={hasActiveFilter ? 'Reset filter untuk mengubah urutan produk' : undefined}
 																class="rounded p-1.5 hover:bg-neutral-100 disabled:opacity-30 dark:hover:bg-white/10"
 															>
 																<ChevronDown size={16} />

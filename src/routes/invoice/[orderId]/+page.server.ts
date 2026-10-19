@@ -30,6 +30,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
 			subtotal: result.order.subtotal,
 			total: result.order.total,
 			shippingLabel: result.order.shippingLabel,
+			paymentStatus: result.order.paymentStatus as 'PENDING' | 'CONFIRMED' | 'CANCELLED',
 			createdAt: result.order.createdAt.toISOString(),
 			items: result.order.items.map((i) => ({
 				id: i.id,

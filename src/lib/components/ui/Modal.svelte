@@ -41,39 +41,39 @@
 		<button
 			aria-label="Tutup dialog"
 			onclick={onCancel}
-			class="absolute inset-0 cursor-default bg-black/50"
+			class="absolute inset-0 cursor-default bg-ink/70 backdrop-blur-xs dark:bg-ink/85"
 		></button>
 		<div
 			role="dialog"
 			aria-modal="true"
 			aria-label={title}
-			class="relative w-full max-w-sm rounded-2xl border border-neutral-200 bg-white p-5
-			       dark:border-neutral-800 dark:bg-neutral-950"
+			class="relative w-full max-w-sm rounded-[18px_6px_16px_8px] border-2 border-brandy bg-papaya p-6 shadow-[6px_6px_0px_#78290f] dark:border-papaya/40 dark:bg-ink dark:shadow-[6px_6px_0px_rgba(255,236,209,0.25)]"
 		>
-			<h2 class="text-base font-semibold">{title}</h2>
+			<h2 class="font-serif text-lg font-bold text-ink dark:text-papaya">{title}</h2>
 			{#if children}
 				{@render children()}
 			{:else if message}
-				<p class="mt-2 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">{message}</p>
+				<p class="mt-2.5 text-sm leading-relaxed text-ink/80 dark:text-papaya/80">{message}</p>
 			{/if}
 			{#if !hideActions}
-			<div class="mt-4 flex justify-end gap-2">
-				<button
-					onclick={onCancel}
-					class="rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium
-					       hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-white/10"
-				>
-					{cancelLabel}
-				</button>
-				<button
-					onclick={() => onConfirm?.()}
-					class={danger
-						? 'rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500'
-						: 'rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-neutral-900'}
-				>
-					{confirmLabel}
-				</button>
-			</div>
+				<div class="mt-5 flex justify-end gap-2.5">
+					<button
+						type="button"
+						onclick={onCancel}
+						class="rounded-[8px_3px_7px_2px] border-2 border-brandy bg-papaya px-4 py-2 font-mono text-xs font-bold text-ink shadow-[2px_2px_0px_#78290f] transition-all hover:bg-brandy/10 active:translate-y-0.5 active:shadow-none dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[2px_2px_0px_rgba(255,236,209,0.2)]"
+					>
+						{cancelLabel}
+					</button>
+					<button
+						type="button"
+						onclick={() => onConfirm?.()}
+						class="rounded-[8px_3px_7px_2px] border-2 border-brandy px-4 py-2 font-mono text-xs font-bold text-white shadow-[2px_2px_0px_#78290f] transition-all active:translate-y-0.5 active:shadow-none {danger
+							? 'bg-crimson hover:bg-[#a50f1b]'
+							: 'bg-tangerine hover:bg-[#e06d00]'}"
+					>
+						{confirmLabel}
+					</button>
+				</div>
 			{/if}
 		</div>
 	</div>

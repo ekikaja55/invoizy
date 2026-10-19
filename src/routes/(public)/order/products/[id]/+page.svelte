@@ -3,7 +3,16 @@
 	import { cart } from '$lib/stores/cart.svelte';
 	import { formatRupiah } from '$lib/utils/currency';
 	import { toast } from 'svelte-sonner';
-	import { ArrowLeft, Copy, Check, Plus, Minus, ShoppingBag, Image as ImageIcon } from '@lucide/svelte';
+	import {
+		ArrowLeft,
+		Copy,
+		Check,
+		Plus,
+		Minus,
+		ShoppingBag,
+		Image as ImageIcon,
+		Layers
+	} from '@lucide/svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -121,22 +130,22 @@
 	<div class="flex items-center justify-between">
 		<a
 			href={resolve('/(public)/order')}
-			class="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
+			class="inline-flex items-center gap-1.5 rounded-[6px_2px_5px_1px] border-2 border-brandy bg-papaya px-3 py-1.5 font-mono text-xs font-bold text-brandy shadow-[2px_2px_0px_#78290f] transition-all hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[2px_2px_0px_rgba(255,236,209,0.2)]"
 		>
-			<ArrowLeft size={16} />
-			Kembali ke Katalog
+			<ArrowLeft size={14} strokeWidth={2.5} />
+			<span>Kembali ke Katalog</span>
 		</a>
 
 		<button
 			type="button"
 			onclick={copyProductLink}
-			class="inline-flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 shadow-sm transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
+			class="inline-flex items-center gap-1.5 rounded-[6px_2px_5px_1px] border-2 border-brandy bg-papaya px-3 py-1.5 font-mono text-xs font-bold text-brandy shadow-[2px_2px_0px_#78290f] transition-all hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[2px_2px_0px_rgba(255,236,209,0.2)]"
 		>
 			{#if copied}
-				<Check size={14} class="text-emerald-600 dark:text-emerald-400" />
-				<span class="text-emerald-600 dark:text-emerald-400">Tersalin</span>
+				<Check size={14} strokeWidth={2.75} class="text-forest" />
+				<span class="text-forest">Tersalin</span>
 			{:else}
-				<Copy size={14} />
+				<Copy size={14} strokeWidth={2.5} />
 				<span>Salin Link</span>
 			{/if}
 		</button>
@@ -146,7 +155,7 @@
 	{#if product.imageUrls && product.imageUrls.length > 0}
 		<div class="space-y-3">
 			<div
-				class="relative overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900"
+				class="relative overflow-hidden rounded-[16px_8px_14px_6px] border-2 border-brandy bg-papaya/70 shadow-[4px_4px_0px_#78290f] dark:border-papaya/30 dark:bg-ink/70 dark:shadow-[4px_4px_0px_rgba(255,236,209,0.2)]"
 			>
 				<img
 					src={product.imageUrls[activeImageIndex] ?? product.imageUrls[0]}
@@ -156,15 +165,15 @@
 			</div>
 
 			{#if product.imageUrls.length > 1}
-				<div class="flex justify-center gap-2 overflow-x-auto py-1">
+				<div class="flex justify-center gap-2.5 overflow-x-auto py-1">
 					{#each product.imageUrls as imgUrl, idx (imgUrl)}
 						<button
 							type="button"
 							onclick={() => (activeImageIndex = idx)}
-							class="h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 transition-all {activeImageIndex ===
+							class="h-16 w-16 shrink-0 overflow-hidden rounded-[8px_4px_7px_3px] border-2 transition-all duration-150 {activeImageIndex ===
 							idx
-								? 'border-neutral-900 dark:border-white'
-								: 'border-transparent opacity-60 hover:opacity-100'}"
+								? 'border-brandy ring-2 ring-tangerine shadow-[2px_2px_0px_#78290f] -translate-y-0.5 dark:border-papaya dark:ring-tangerine'
+								: 'border-brandy/30 opacity-60 hover:opacity-100 hover:border-brandy dark:border-papaya/30'}"
 						>
 							<img src={imgUrl} alt="Thumbnail {idx + 1}" class="h-full w-full object-cover" />
 						</button>
@@ -174,26 +183,37 @@
 		</div>
 	{:else}
 		<div
-			class="flex h-52 items-center justify-center rounded-2xl border border-neutral-200 bg-neutral-100 text-neutral-400 dark:border-neutral-800 dark:bg-neutral-900"
+			class="flex h-52 flex-col items-center justify-center gap-2 rounded-[16px_8px_14px_6px] border-2 border-dashed border-brandy/40 bg-papaya/40 text-brandy/60 shadow-[3px_3px_0px_#78290f] dark:border-papaya/30 dark:bg-ink/40 dark:text-papaya/60 dark:shadow-[3px_3px_0px_rgba(255,236,209,0.15)]"
 		>
-			<ImageIcon size={36} />
+			<ImageIcon size={36} strokeWidth={2} />
+			<span class="font-handwriting text-xl font-semibold text-brandy/70 dark:text-papaya/70">Belum ada foto produk</span>
 		</div>
 	{/if}
 
 	<!-- Header Informasi Produk -->
-	<div class="space-y-2 border-b border-neutral-200 pb-5 dark:border-neutral-800">
-		<span class="text-xs font-semibold tracking-wider text-neutral-500 uppercase">
-			{product.category.name}
-		</span>
-		<h1 class="text-2xl font-bold text-neutral-900 dark:text-white">
+	<div
+		class="space-y-3 rounded-[14px_6px_12px_8px] border-2 border-brandy bg-papaya/50 p-5 shadow-[4px_4px_0px_#78290f] dark:border-papaya/30 dark:bg-ink/60 dark:shadow-[4px_4px_0px_rgba(255,236,209,0.2)]"
+	>
+		<div class="flex items-center gap-2">
+			<span
+				class="rounded-[5px_2px_4px_2px] border border-brandy/30 bg-brandy/10 px-2 py-0.5 font-mono text-[11px] font-bold text-brandy uppercase dark:border-papaya/30 dark:bg-papaya/10 dark:text-papaya"
+			>
+				{product.category.name}
+			</span>
+		</div>
+
+		<h1
+			class="font-serif text-2xl font-bold tracking-normal text-ink md:text-3xl dark:text-papaya"
+		>
 			{product.name}
 		</h1>
+
 		<div class="flex items-baseline gap-3">
-			<p class="text-2xl font-extrabold text-neutral-900 dark:text-neutral-100">
+			<p class="font-mono text-2xl font-bold text-teal md:text-3xl dark:text-teal/90">
 				{formatRupiah(product.priceInt)}
 			</p>
 			{#if product.weightGrams > 0}
-				<span class="text-xs text-neutral-500">
+				<span class="font-mono text-xs font-medium text-brandy/70 dark:text-papaya/70">
 					· {product.weightGrams} gram
 				</span>
 			{/if}
@@ -203,19 +223,20 @@
 		<div class="pt-1">
 			{#if isOutOfStock}
 				<span
-					class="inline-block rounded-md bg-red-100 px-2.5 py-1 text-xs font-semibold text-red-700 dark:bg-red-950/60 dark:text-red-400"
+					class="inline-block rounded-[6px_2px_5px_1px] border border-crimson/30 bg-crimson/15 px-2.5 py-1 font-mono text-xs font-bold text-crimson"
 				>
 					Stok Habis
 				</span>
 			{:else if hasVariants}
 				<span
-					class="inline-block rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+					class="inline-flex items-center gap-1.5 rounded-[6px_2px_5px_1px] border border-forest/30 bg-forest/15 px-2.5 py-1 font-mono text-xs font-bold text-forest"
 				>
-					Tersedia {product.variants.length} Varian
+					<Layers size={13} strokeWidth={2.5} />
+					<span>Tersedia {product.variants.length} Varian</span>
 				</span>
 			{:else if product.trackStock}
-				<span class="text-xs text-neutral-500">
-					Sisa stok: <strong class="font-semibold text-neutral-800 dark:text-neutral-200">{product.stock}</strong>
+				<span class="font-mono text-xs text-brandy/80 dark:text-papaya/80">
+					Sisa stok: <strong class="font-bold text-ink dark:text-papaya">{product.stock}</strong>
 				</span>
 			{/if}
 		</div>
@@ -223,35 +244,37 @@
 
 	<!-- Pilihan Varian (jika produk memiliki varian) -->
 	{#if hasVariants}
-		<div class="space-y-3 rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
+		<div
+			class="space-y-3 rounded-[14px_6px_12px_8px] border-2 border-brandy bg-papaya/50 p-5 shadow-[4px_4px_0px_#78290f] dark:border-papaya/30 dark:bg-ink/60 dark:shadow-[4px_4px_0px_rgba(255,236,209,0.2)]"
+		>
 			<div class="flex items-center justify-between">
-				<span class="text-sm font-semibold">Pilih Varian:</span>
+				<span class="font-serif text-sm font-bold text-ink dark:text-papaya">Pilih Varian:</span>
 				{#if selectedVariant}
-					<span class="text-xs text-neutral-500">
-						Stok varian ini: <strong class="font-medium text-neutral-800 dark:text-neutral-200">{selectedVariant.stock}</strong>
+					<span class="font-mono text-xs text-brandy/70 dark:text-papaya/70">
+						Stok varian ini: <strong class="font-bold text-teal">{selectedVariant.stock}</strong>
 					</span>
 				{/if}
 			</div>
 
-			<div class="flex flex-wrap gap-2">
+			<div class="flex flex-wrap gap-2.5">
 				{#each product.variants as variant (variant.id)}
 					{@const variantOutOfStock = variant.stock <= 0}
 					<button
 						type="button"
 						disabled={variantOutOfStock}
 						onclick={() => selectVariant(variant.id)}
-						class="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-all {selectedVariantId ===
+						class="flex items-center gap-1.5 rounded-[8px_3px_7px_2px] border-2 px-3.5 py-2 font-mono text-xs font-bold transition-all duration-150 {selectedVariantId ===
 						variant.id
-							? 'border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white dark:text-neutral-900'
+							? 'border-brandy bg-tangerine text-white shadow-[2px_2px_0px_#78290f] -translate-y-0.5'
 							: variantOutOfStock
-								? 'cursor-not-allowed border-neutral-200 bg-neutral-100 text-neutral-400 opacity-60 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-600'
-								: 'border-neutral-300 bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800'}"
+								? 'cursor-not-allowed border-brandy/20 bg-brandy/5 text-brandy/40 opacity-50 line-through dark:border-papaya/20 dark:text-papaya/40'
+								: 'border-brandy/50 bg-papaya text-ink shadow-[1px_1px_0px_#78290f] hover:border-brandy hover:bg-brandy/10 dark:border-papaya/30 dark:bg-ink dark:text-papaya'}"
 					>
 						<span>{variant.name}</span>
 						{#if variantOutOfStock}
-							<span class="text-[10px] text-neutral-400">(Habis)</span>
+							<span class="text-[10px] opacity-75">(Habis)</span>
 						{:else}
-							<span class="text-[10px] opacity-75">({variant.stock})</span>
+							<span class="text-[10px] opacity-80">({variant.stock})</span>
 						{/if}
 					</button>
 				{/each}
@@ -261,28 +284,36 @@
 
 	<!-- Deskripsi Produk -->
 	{#if product.description}
-		<div class="space-y-2 rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
-			<h2 class="text-sm font-semibold tracking-wide text-neutral-700 uppercase dark:text-neutral-300">
+		<div
+			class="space-y-2 rounded-[14px_6px_12px_8px] border-2 border-brandy bg-papaya/50 p-5 shadow-[4px_4px_0px_#78290f] dark:border-papaya/30 dark:bg-ink/60 dark:shadow-[4px_4px_0px_rgba(255,236,209,0.2)]"
+		>
+			<h2
+				class="font-serif text-sm font-bold tracking-wide text-ink uppercase dark:text-papaya"
+			>
 				Deskripsi Produk
 			</h2>
-			<p class="text-sm leading-relaxed whitespace-pre-line text-neutral-600 dark:text-neutral-400">
+			<p
+				class="text-sm leading-relaxed whitespace-pre-line text-ink/85 dark:text-papaya/85"
+			>
 				{product.description}
 			</p>
 		</div>
 	{/if}
 
 	<!-- Kontrol Jumlah & Tambah ke Keranjang -->
-	<div class="space-y-3 rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
+	<div
+		class="space-y-4 rounded-[14px_6px_12px_8px] border-2 border-brandy bg-papaya/60 p-5 shadow-[4px_4px_0px_#78290f] dark:border-papaya/30 dark:bg-ink/60 dark:shadow-[4px_4px_0px_rgba(255,236,209,0.2)]"
+	>
 		<div class="flex items-center justify-between">
-			<span class="text-sm font-semibold">Jumlah Pesanan:</span>
+			<span class="font-serif text-sm font-bold text-ink dark:text-papaya">Jumlah Pesanan:</span>
 			<div class="flex items-center gap-2">
 				<button
 					type="button"
 					onclick={() => (qty = Math.max(1, qty - 1))}
 					disabled={qty <= 1 || effectiveStock <= 0}
-					class="flex h-8 w-8 items-center justify-center rounded-lg border border-neutral-300 hover:bg-neutral-100 disabled:opacity-30 dark:border-neutral-700 dark:hover:bg-neutral-800"
+					class="flex h-9 w-9 items-center justify-center rounded-[6px_3px_5px_2px] border-2 border-brandy bg-papaya font-bold text-ink shadow-[2px_2px_0px_#78290f] transition-all hover:bg-brandy/10 active:translate-y-0.5 active:shadow-none disabled:cursor-not-allowed disabled:opacity-30 dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[2px_2px_0px_rgba(255,236,209,0.2)]"
 				>
-					<Minus size={14} />
+					<Minus size={15} strokeWidth={2.75} />
 				</button>
 				<input
 					type="number"
@@ -294,15 +325,15 @@
 						if (effectiveStock > 0 && qty > effectiveStock) qty = effectiveStock;
 					}}
 					disabled={effectiveStock <= 0}
-					class="h-8 w-14 rounded-lg border border-neutral-300 bg-white text-center text-sm font-semibold text-neutral-900 focus:border-neutral-900 focus:outline-none disabled:opacity-50 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:focus:border-white"
+					class="h-9 w-16 rounded-[6px_3px_5px_2px] border-2 border-brandy bg-white text-center font-mono text-base font-bold text-ink shadow-[inset_1px_1px_0px_rgba(0,0,0,0.1)] focus:border-brandy focus:ring-2 focus:ring-tangerine focus:outline-none disabled:opacity-50 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none dark:border-papaya/40 dark:bg-ink dark:text-papaya"
 				/>
 				<button
 					type="button"
 					onclick={() => (qty = Math.min(effectiveStock, qty + 1))}
 					disabled={qty >= effectiveStock || effectiveStock <= 0}
-					class="flex h-8 w-8 items-center justify-center rounded-lg border border-neutral-300 hover:bg-neutral-100 disabled:opacity-30 dark:border-neutral-700 dark:hover:bg-neutral-800"
+					class="flex h-9 w-9 items-center justify-center rounded-[6px_3px_5px_2px] border-2 border-brandy bg-papaya font-bold text-ink shadow-[2px_2px_0px_#78290f] transition-all hover:bg-brandy/10 active:translate-y-0.5 active:shadow-none disabled:cursor-not-allowed disabled:opacity-30 dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[2px_2px_0px_rgba(255,236,209,0.2)]"
 				>
-					<Plus size={14} />
+					<Plus size={15} strokeWidth={2.75} />
 				</button>
 			</div>
 		</div>
@@ -311,9 +342,9 @@
 			type="button"
 			onclick={handleAddToCart}
 			disabled={effectiveStock <= 0 || (hasVariants && !selectedVariant)}
-			class="flex w-full items-center justify-center gap-2 rounded-xl bg-neutral-900 py-3 text-sm font-semibold text-white shadow-md transition-all hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
+			class="flex w-full items-center justify-center gap-2 rounded-[10px_5px_9px_4px] border-2 border-brandy bg-tangerine px-4 py-3.5 font-bold text-sm text-white shadow-[4px_4px_0px_#78290f] transition-all duration-150 hover:bg-[#e06d00] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none disabled:cursor-not-allowed disabled:border-brandy/30 disabled:bg-brandy/15 disabled:text-brandy/40 disabled:shadow-none dark:disabled:border-papaya/20 dark:disabled:text-papaya/30"
 		>
-			<ShoppingBag size={16} />
+			<ShoppingBag size={18} strokeWidth={2.5} />
 			<span>
 				{effectiveStock <= 0
 					? 'Stok Pilihan Ini Habis'

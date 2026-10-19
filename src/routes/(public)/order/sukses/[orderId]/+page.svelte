@@ -4,11 +4,14 @@
 	import { browser } from '$app/environment';
 	import { resolve } from '$app/paths';
 	import type { ResolvedPathname } from '$app/types';
-	import { FILE_PREFIX } from '$lib/constants';
-	import { downloadFile } from '$lib/utils/download';
 	import { waLink } from '$lib/utils/contact';
-	import { toast } from 'svelte-sonner';
-	import { CheckCircle2 } from '@lucide/svelte';
+	import {
+		CheckCircle2,
+		ExternalLink,
+		FileText,
+		ArrowLeft,
+		MessageCircle
+	} from '@lucide/svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -36,98 +39,106 @@
 		}
 		return waLink(data.contact, text);
 	});
-
-	let downloading = $state(false);
-
-	// PDF sudah jadi saat halaman ini tampil (dibuat sinkron waktu submit).
-	const pdfHref = $derived(
-		data.token
-			? (`${resolve('/invoice/[orderId]/pdf', { orderId: data.orderId })}?token=${data.token}` as ResolvedPathname)
-			: null
-	);
-
-	async function doDownload() {
-		if (!pdfHref) return;
-		downloading = true;
-		try {
-			await downloadFile(pdfHref, `${FILE_PREFIX}-invoice-${data.orderId}.pdf`);
-			toast.success('Invoice terunduh.');
-		} catch {
-			toast.error('PDF belum siap. Buka lewat link invoice atau hubungi admin.');
-		} finally {
-			downloading = false;
-		}
-	}
 </script>
 
-<div class="flex flex-col items-center justify-center py-16 text-center">
-	<CheckCircle2 size={48} class="text-green-600 dark:text-green-400" />
-	<h1 class="mt-4 text-2xl font-semibold">Pesanan berhasil dibuat!</h1>
-	<p class="mt-2 text-sm text-neutral-500">
-		ID pesanan kamu:
-		<span class="font-mono font-semibold text-neutral-900 dark:text-neutral-100"
-			>{data.orderId}</span
+<div class="mx-auto max-w-lg space-y-8 py-10 text-center">
+	<!-- Rubber Stamp / Status Tag -->
+	<div class="space-y-3">
+		<div
+			class="inline-block -rotate-2 rounded-[6px_2px_5px_1px] border-2 border-forest bg-forest/15 px-4 py-1.5 font-mono text-xs font-bold tracking-widest text-forest uppercase shadow-[2px_2px_0px_#2b9348]"
 		>
-	</p>
-	{#if data.emailEnabled}
-		<p class="mt-1 text-sm text-neutral-500">
-			Invoice akan dikirim ke email kamu. Simpan ID pesanan untuk memudahkan konfirmasi.
+			PESANAN BERHASIL DIBUAT
+		</div>
+
+		<h1
+			class="font-serif text-3xl font-bold tracking-normal text-ink md:text-4xl dark:text-papaya"
+		>
+			Hore, Order Terkirim!
+		</h1>
+		<p class="font-handwriting text-2xl font-semibold leading-snug text-teal md:text-3xl dark:text-papaya/90">
+			Terima kasih banyak sudah memesan di toko kami.
 		</p>
-	{:else}
-		<p class="mt-2 text-sm text-neutral-500">
-			Simpan ID pesanan ini, lalu hubungi admin via tombol di bawah untuk menerima link invoice
-			kamu.
-		</p>
-	{/if}
-	{#if waHref}
-		<a
-			href={waHref}
-			target="_blank"
-			rel="external"
-			class="mt-4 rounded-lg bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white
-               hover:bg-neutral-700 dark:bg-white dark:text-neutral-900"
-		>
-			Hubungi Admin via WA
-		</a>
-	{:else if data.contact}
-		<p class="mt-4 text-sm text-neutral-500">Hubungi admin: {data.contact}</p>
-	{/if}
-	{#if invoiceHref}
-		<a
-			href={invoiceHref}
-			class="mt-4 rounded-lg border border-neutral-300 px-5 py-2.5 text-sm font-medium
-             hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-white/10"
-		>
-			Lihat Invoice
-		</a>
-	{/if}
-	{#if pdfHref}
-		<p class="mt-4 text-sm font-medium">Simpan buktinya — unduh invoice-nya sekarang.</p>
-		<button
-			onclick={doDownload}
-			disabled={downloading}
-			class="mt-2 rounded-lg border border-neutral-300 px-5 py-2.5 text-sm font-medium
-             hover:bg-neutral-100 disabled:opacity-50
-             dark:border-neutral-700 dark:hover:bg-white/10"
-		>
-			{downloading ? 'Mengunduh...' : 'Unduh Invoice (PDF)'}
-		</button>
-	{/if}
-	<p class="mt-3 text-xs text-neutral-500">
-		Invoice ini juga tersimpan di
-		<a
-			href={resolve('/order/riwayat')}
-			class="underline hover:text-neutral-800 dark:hover:text-neutral-200"
-		>
-			Riwayat
-		</a>
-		perangkat ini.
-	</p>
-	<a
-		href={resolve('/order')}
-		class="mt-6 rounded-lg bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white
-           hover:bg-neutral-700 dark:bg-white dark:text-neutral-900"
+	</div>
+
+	<!-- Scrapbook Ticket Card -->
+	<div
+		class="relative space-y-5 rounded-[16px_8px_14px_6px] border-2 border-brandy bg-papaya/60 p-6 shadow-[6px_6px_0px_#78290f] dark:border-papaya/30 dark:bg-ink/60 dark:shadow-[6px_6px_0px_rgba(255,236,209,0.2)]"
 	>
-		Kembali ke Order
-	</a>
+		<!-- Ticket Header -->
+		<div>
+			<span class="font-mono text-xs font-bold text-brandy/70 dark:text-papaya/70">KODE PESANAN ANDA:</span>
+			<div class="mt-2">
+				<span
+					class="inline-block rounded-[8px_3px_7px_2px] border-2 border-brandy bg-white px-5 py-2 font-mono text-3xl font-extrabold tracking-widest text-tangerine shadow-[3px_3px_0px_#78290f] dark:border-papaya/40 dark:bg-ink"
+				>
+					{data.orderId}
+				</span>
+			</div>
+		</div>
+
+		<div class="border-t-2 border-dashed border-brandy/20 pt-4 dark:border-papaya/20">
+			{#if data.emailEnabled}
+				<p class="text-xs leading-relaxed text-ink/80 dark:text-papaya/80">
+					Salinan invoice PDF otomatis dikirimkan ke alamat email Anda. Simpan kode pesanan di atas untuk mempermudah pengecekan status.
+				</p>
+			{:else}
+				<p class="text-xs leading-relaxed text-ink/80 dark:text-papaya/80">
+					Simpan kode pesanan di atas, lalu hubungi admin melalui WhatsApp untuk konfirmasi dan mendapatkan link invoice resmi Anda.
+				</p>
+			{/if}
+		</div>
+
+		<!-- Action Buttons -->
+		<div class="space-y-2.5 pt-2">
+			{#if waHref}
+				<a
+					href={waHref}
+					target="_blank"
+					rel="external"
+					class="flex w-full items-center justify-center gap-2 rounded-[8px_3px_7px_2px] border-2 border-brandy bg-[#25D366] px-5 py-3 font-mono text-sm font-bold text-ink shadow-[3px_3px_0px_#78290f] transition-all hover:bg-[#20ba59] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none"
+				>
+					<MessageCircle size={18} strokeWidth={2.5} />
+					<span>Hubungi Admin via WhatsApp</span>
+				</a>
+			{:else if data.contact}
+				<p class="font-mono text-xs text-brandy/80 dark:text-papaya/80">
+					Kontak Admin: {data.contact}
+				</p>
+			{/if}
+
+			{#if invoiceHref}
+				<a
+					href={invoiceHref}
+					class="flex w-full items-center justify-center gap-2 rounded-[8px_3px_7px_2px] border-2 border-brandy bg-tangerine px-5 py-3 font-mono text-sm font-bold text-white shadow-[3px_3px_0px_#78290f] transition-all hover:bg-[#e06d00] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none"
+				>
+					<FileText size={16} strokeWidth={2.5} />
+					<span>Buka & Cetak Invoice</span>
+					<ExternalLink size={14} strokeWidth={2.5} />
+				</a>
+			{/if}
+		</div>
+
+		<!-- Riwayat Link -->
+		<p class="border-t border-dashed border-brandy/20 pt-3 font-mono text-[11px] text-brandy/70 dark:border-papaya/20 dark:text-papaya/60">
+			Invoice ini juga otomatis diarsipkan di
+			<a
+				href={resolve('/(public)/order/riwayat')}
+				class="font-bold underline hover:text-tangerine"
+			>
+				Riwayat Perangkat
+			</a>
+			ini.
+		</p>
+	</div>
+
+	<!-- Back to catalog -->
+	<div>
+		<a
+			href={resolve('/(public)/order')}
+			class="inline-flex items-center gap-1.5 rounded-[8px_3px_7px_2px] border-2 border-brandy/40 bg-papaya px-4 py-2 font-mono text-xs font-bold text-brandy transition-all hover:border-brandy hover:bg-brandy/10 active:translate-y-0.5 dark:border-papaya/30 dark:bg-ink dark:text-papaya"
+		>
+			<ArrowLeft size={14} strokeWidth={2.5} />
+			<span>Kembali ke Katalog</span>
+		</a>
+	</div>
 </div>

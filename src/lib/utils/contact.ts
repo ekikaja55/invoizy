@@ -4,7 +4,7 @@
 // Hanya nomor yang bisa jadi link wa.me; sisanya kembalikan null (tampil teks).
 export function waLink(
 	contact: string,
-	text = 'Halo, saya butuh bantuan order di Invoizy.'
+	text = 'Halo, saya butuh bantuan order di cho.lazey - CHIBICONXI CATALOGUE.'
 ): string | null {
 	const digits = contact.replace(/\D/g, '');
 	if (digits.length < 9 || digits.length > 15) return null;

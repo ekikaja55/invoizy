@@ -3,70 +3,38 @@ import { formatRupiah } from '$lib/utils/currency';
 import { logger } from '$lib/server/logger';
 import type { InvoiceData } from '$lib/components/invoice/index';
 
-// Replika desain client: kertas krem, strip geometri kiri, aksen peach,
-// teks outline, tabel header peach, penekanan total. pdf-lib murni — aman serverless.
+// Dimensi A4 pt standar
 const PAGE_W = 595.28; // A4 pt
 const PAGE_H = 841.89;
-const LM = 78; // margin kiri dilebarkan untuk strip dekorasi
+const LM = 46; // margin simetris kiri-kanan
 const RM = 46;
 const CONTENT_W = PAGE_W - LM - RM;
-const STRIP_W = 44;
 
-const INK = rgb(0.12, 0.1, 0.09);
-const PAPER = rgb(0.98, 0.965, 0.937); // krem kertas
-const PEACH = rgb(0.961, 0.725, 0.541);
-const WHITE = rgb(1, 1, 1);
-const GRAY = rgb(0.42, 0.4, 0.38);
-const TEAL = rgb(0.498, 0.784, 0.737);
-const ORANGE = rgb(0.961, 0.616, 0.424);
-const LAVENDER = rgb(0.725, 0.655, 0.902);
+// Palet warna resmi profesional & bersih (putih formal untuk lampiran email serverless)
+const WHITE = rgb(1.0, 1.0, 1.0);
+const BLACK = rgb(0.08, 0.08, 0.08); // teks & border utama
+const GRAY_DARK = rgb(0.35, 0.35, 0.35); // teks sekunder
+const GRAY_LIGHT = rgb(0.94, 0.94, 0.94); // latar header tabel
+const BORDER_LIGHT = rgb(0.85, 0.85, 0.85); // garis pemisah tabel
+const GREEN_PAID = rgb(0.12, 0.52, 0.22); // stempel lunas
+const RED_VOID = rgb(0.72, 0.12, 0.12); // stempel batal
 
 interface Ctx {
 	pdf: PDFDocument;
 	page: PDFPage;
 	regular: PDFFont;
 	bold: PDFFont;
-	serif: PDFFont;
-	serifBold: PDFFont;
 	y: number;
 }
 
-// Strip geometri kiri: pita miring bergantian + garis hitam tebal.
-function drawSidebar(ctx: Ctx) {
-	const bands = [TEAL, ORANGE, LAVENDER, TEAL, ORANGE, LAVENDER, TEAL];
-	const slant = 22;
-	let y = PAGE_H;
-	let i = 0;
-	ctx.page.drawRectangle({ x: 0, y: 0, width: STRIP_W, height: PAGE_H, color: bands[0] });
-	while (y > -20) {
-		const h = 110;
-		const color = bands[i % bands.length];
-		const yTop = y;
-		const yBot = Math.max(0, y - h);
-		ctx.page.drawRectangle({ x: 0, y: yBot, width: STRIP_W, height: yTop - yBot, color });
-		// garis diagonal hitam di batas bawah pita
-		ctx.page.drawLine({
-			start: { x: 0, y: yBot },
-			end: { x: STRIP_W, y: yBot - slant },
-			thickness: 3,
-			color: INK
-		});
-		y = yBot - 26;
-		i++;
-	}
-	// garis tepi kanan strip
-	ctx.page.drawRectangle({ x: STRIP_W - 2, y: 0, width: 2, height: PAGE_H, color: INK });
-}
-
-function newPage(ctx: Ctx, withSidebar = true) {
+function newPage(ctx: Ctx) {
 	ctx.page = ctx.pdf.addPage([PAGE_W, PAGE_H]);
-	ctx.page.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: PAPER });
-	if (withSidebar) drawSidebar(ctx);
-	ctx.y = PAGE_H - 56;
+	ctx.page.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: WHITE });
+	ctx.y = PAGE_H - 46;
 }
 
 function ensure(ctx: Ctx, h: number) {
-	if (ctx.y - h < 50) newPage(ctx);
+	if (ctx.y - h < 46) newPage(ctx);
 }
 
 function wrap(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
@@ -86,50 +54,33 @@ function wrap(text: string, font: PDFFont, size: number, maxWidth: number): stri
 	return lines.length > 0 ? lines : [''];
 }
 
-// Teks outline ala stiker: jiplakan hitam di 4 arah + isi warna di tengah.
-function outlineText(
-	ctx: Ctx,
-	text: string,
-	x: number,
-	y: number,
-	size: number,
-	font: PDFFont,
-	fill: ReturnType<typeof rgb>
-) {
-	const o = Math.max(1, size / 16);
-	for (const [dx, dy] of [[-o, 0], [o, 0], [0, -o], [0, o]] as const) {
-		ctx.page.drawText(text, { x: x + dx, y: y + dy, font, size, color: INK });
-	}
-	ctx.page.drawText(text, { x, y, font, size, color: fill });
-}
-
 function para(
 	ctx: Ctx,
 	text: string,
-	opts?: { size?: number; bold?: boolean; serif?: boolean; color?: ReturnType<typeof rgb>; x?: number; maxWidth?: number }
+	opts?: { size?: number; bold?: boolean; color?: ReturnType<typeof rgb>; x?: number; maxWidth?: number }
 ) {
-	const size = opts?.size ?? 11;
-	const font = opts?.serif ? (opts?.bold ? ctx.serifBold : ctx.serif) : opts?.bold ? ctx.bold : ctx.regular;
-	const color = opts?.color ?? INK;
+	const size = opts?.size ?? 10;
+	const font = opts?.bold ? ctx.bold : ctx.regular;
+	const color = opts?.color ?? BLACK;
 	const x = opts?.x ?? LM;
 	const maxWidth = opts?.maxWidth ?? CONTENT_W;
 	for (const line of wrap(text, font, size, maxWidth)) {
-		const h = size + 5;
+		const h = size + 4;
 		ensure(ctx, h);
 		ctx.page.drawText(line, { x, y: ctx.y - size, font, size, color });
 		ctx.y -= h;
 	}
 }
 
-function rightText(ctx: Ctx, text: string, size: number, font: PDFFont, color = INK) {
+function rightText(ctx: Ctx, text: string, size: number, font: PDFFont, color = BLACK) {
 	const w = font.widthOfTextAtSize(text, size);
 	ctx.page.drawText(text, { x: PAGE_W - RM - w, y: ctx.y - size, font, size, color });
 }
 
-function blackRule(ctx: Ctx, thickness = 2) {
-	ensure(ctx, 14);
-	ctx.page.drawRectangle({ x: LM, y: ctx.y - 6, width: CONTENT_W, height: thickness, color: INK });
-	ctx.y -= 14;
+function rule(ctx: Ctx, thickness = 1, color = BLACK) {
+	ensure(ctx, 10);
+	ctx.page.drawRectangle({ x: LM, y: ctx.y - 4, width: CONTENT_W, height: thickness, color });
+	ctx.y -= 10;
 }
 
 export async function renderInvoicePdf(data: InvoiceData): Promise<Uint8Array> {
@@ -139,124 +90,238 @@ export async function renderInvoicePdf(data: InvoiceData): Promise<Uint8Array> {
 	const pdf = await PDFDocument.create();
 	const regular = await pdf.embedFont(StandardFonts.Helvetica);
 	const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
-	const serif = await pdf.embedFont(StandardFonts.TimesRoman);
-	const serifBold = await pdf.embedFont(StandardFonts.TimesRomanBold);
-	const ctx: Ctx = { pdf, page: pdf.addPage([PAGE_W, PAGE_H]), regular, bold, serif, serifBold, y: 0 };
-	ctx.page.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: PAPER });
-	drawSidebar(ctx);
-	ctx.y = PAGE_H - 56;
+	const ctx: Ctx = { pdf, page: pdf.addPage([PAGE_W, PAGE_H]), regular, bold, y: PAGE_H - 46 };
 
-	// ── Kop: Invoice + nomor + nama toko kanan ──
-	{
-		ensure(ctx, 70);
-		outlineText(ctx, 'Invoice', LM, ctx.y - 34, 34, serifBold, PEACH);
-		const store = settings.storeName || 'INVOIZY STORE';
-		const sw = bold.widthOfTextAtSize(store.toUpperCase(), 11);
-		ctx.page.drawText(store.toUpperCase(), {
-			x: PAGE_W - RM - sw,
-			y: ctx.y - 20,
-			font: bold,
-			size: 11,
-			color: INK
-		});
-		ctx.y -= 44;
-		para(ctx, `Invoice No. ${order.orderId}`, { size: 9, color: GRAY });
-		ctx.y -= 2;
-		blackRule(ctx, 2);
-	}
+	// Latar halaman putih bersih
+	ctx.page.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: WHITE });
 
-	// ── Invoice To + Total kanan ──
-	{
-		ensure(ctx, 64);
-		para(ctx, 'Invoice To:', { size: 10, color: GRAY });
-		para(ctx, order.handle, { size: 17, serif: true, bold: true });
-		const t = formatRupiah(order.total);
-		const tw = serifBold.widthOfTextAtSize(t, 17);
-		ctx.page.drawText(t, { x: PAGE_W - RM - tw, y: ctx.y + 30, font: serifBold, size: 17, color: INK });
-		para(ctx, 'TOTAL:', { size: 10, color: GRAY });
-		if (order.phone) para(ctx, order.phone, { size: 11, color: GRAY });
-		if (order.address) para(ctx, order.address, { size: 11, color: GRAY, maxWidth: CONTENT_W - 170 });
-		if (order.note) para(ctx, `Catatan: ${order.note}`, { size: 11, color: GRAY });
-		ctx.y -= 6;
-	}
+	const createdLabel = new Intl.DateTimeFormat('id-ID', {
+		dateStyle: 'medium',
+		timeStyle: 'short'
+	}).format(new Date(order.createdAt));
 
-	// ── Tabel item: header peach, teks outline putih ──
-	const colQty = LM + 300;
-	const colPrice = LM + 395;
+	// ── 1. Kop Surat Profesional ──
 	{
-		ensure(ctx, 30);
+		ensure(ctx, 60);
 		const top = ctx.y;
-		ctx.page.drawRectangle({ x: LM, y: top - 24, width: CONTENT_W, height: 24, color: PEACH });
-		outlineText(ctx, 'ITEM', LM + 14, top - 18, 10, bold, WHITE);
-		const qh = 'QTY';
-		ctx.page.drawText(qh, { x: colQty - bold.widthOfTextAtSize(qh, 10) / 2, y: top - 18, font: bold, size: 10, color: WHITE });
-		const ph = 'PRICE';
-		ctx.page.drawText(ph, { x: colPrice - bold.widthOfTextAtSize(ph, 10) / 2, y: top - 18, font: bold, size: 10, color: WHITE });
-		outlineText(ctx, 'TOTAL', PAGE_W - RM - bold.widthOfTextAtSize('TOTAL', 10), top - 18, 10, bold, WHITE);
-		ctx.y = top - 24 - 4;
+
+		// Sisi Kiri: Nama Toko
+		const store = settings.storeName || 'CHO.LAZEY - CHIBICONXI CATALOGUE';
+		ctx.page.drawText(store, {
+			x: LM,
+			y: top - 18,
+			font: bold,
+			size: 18,
+			color: BLACK
+		});
+		ctx.page.drawText('BUKTI TRANSAKSI & INVOICE RESMI', {
+			x: LM,
+			y: top - 32,
+			font: regular,
+			size: 8,
+			color: GRAY_DARK
+		});
+
+		// Sisi Kanan: Nomor Invoice & Tanggal
+		const invTitle = `INVOICE #${order.orderId}`;
+		const invW = bold.widthOfTextAtSize(invTitle, 14);
+		ctx.page.drawText(invTitle, {
+			x: PAGE_W - RM - invW,
+			y: top - 16,
+			font: bold,
+			size: 14,
+			color: BLACK
+		});
+
+		const dateText = `Tanggal: ${createdLabel}`;
+		const dateW = regular.widthOfTextAtSize(dateText, 9);
+		ctx.page.drawText(dateText, {
+			x: PAGE_W - RM - dateW,
+			y: top - 30,
+			font: regular,
+			size: 9,
+			color: GRAY_DARK
+		});
+
+		// Stempel Status Pembayaran Formal
+		const status = order.paymentStatus;
+		const stampText =
+			status === 'CONFIRMED'
+				? 'STATUS: LUNAS / PAID'
+				: status === 'CANCELLED'
+					? 'STATUS: DIBATALKAN / VOID'
+					: 'STATUS: MENUNGGU PEMBAYARAN';
+		const stampColor =
+			status === 'CONFIRMED' ? GREEN_PAID : status === 'CANCELLED' ? RED_VOID : GRAY_DARK;
+		const stampW = bold.widthOfTextAtSize(stampText, 8) + 12;
+
+		ctx.page.drawRectangle({
+			x: PAGE_W - RM - stampW,
+			y: top - 48,
+			width: stampW,
+			height: 14,
+			color: WHITE,
+			borderColor: stampColor,
+			borderWidth: 1
+		});
+		ctx.page.drawText(stampText, {
+			x: PAGE_W - RM - stampW + 6,
+			y: top - 44,
+			font: bold,
+			size: 8,
+			color: stampColor
+		});
+
+		ctx.y = top - 56;
+		rule(ctx, 1.5, BLACK);
 	}
+
+	// ── 2. Data Pembeli & Tujuan Pengiriman ──
+	{
+		ensure(ctx, 50);
+		para(ctx, 'TUJUAN PENGIRIMAN', { size: 9, bold: true, color: GRAY_DARK });
+		para(ctx, order.handle, { size: 12, bold: true, color: BLACK });
+		if (order.email) para(ctx, `Email: ${order.email}`, { size: 9, color: GRAY_DARK });
+		if (order.phone) para(ctx, `Telepon: ${order.phone}`, { size: 9, color: GRAY_DARK });
+		if (order.address) para(ctx, `Alamat: ${order.address}`, { size: 9, color: BLACK, maxWidth: CONTENT_W - 60 });
+		if (order.note) para(ctx, `Catatan: ${order.note}`, { size: 9, color: GRAY_DARK });
+		ctx.y -= 10;
+	}
+
+	// ── 3. Tabel Rincian Barang ──
+	const colQty = LM + 290;
+	const colPrice = LM + 375;
+	{
+		ensure(ctx, 24);
+		const top = ctx.y;
+		// Background header abu-abu tipis
+		ctx.page.drawRectangle({ x: LM, y: top - 20, width: CONTENT_W, height: 20, color: GRAY_LIGHT });
+		ctx.page.drawRectangle({ x: LM, y: top - 20, width: CONTENT_W, height: 1, color: BLACK });
+
+		ctx.page.drawText('ITEM & SPESIFIKASI', { x: LM + 8, y: top - 14, font: bold, size: 8, color: BLACK });
+		const qh = 'QTY';
+		ctx.page.drawText(qh, { x: colQty - bold.widthOfTextAtSize(qh, 8) / 2, y: top - 14, font: bold, size: 8, color: BLACK });
+		const ph = 'HARGA SATUAN';
+		ctx.page.drawText(ph, { x: colPrice - bold.widthOfTextAtSize(ph, 8) / 2, y: top - 14, font: bold, size: 8, color: BLACK });
+		const th = 'TOTAL';
+		ctx.page.drawText(th, { x: PAGE_W - RM - bold.widthOfTextAtSize(th, 8) - 8, y: top - 14, font: bold, size: 8, color: BLACK });
+
+		ctx.y = top - 20 - 4;
+	}
+
 	for (const item of order.items) {
-		ensure(ctx, 40);
-		para(ctx, item.nameSnapshot, { size: 11, maxWidth: 250 });
+		ensure(ctx, 32);
+		const itemName = item.variantNameSnapshot ? `${item.nameSnapshot} (${item.variantNameSnapshot})` : item.nameSnapshot;
+		para(ctx, itemName, { size: 9, bold: true, maxWidth: 240, x: LM + 8 });
+		para(ctx, item.categorySnapshot, { size: 8, color: GRAY_DARK, maxWidth: 240, x: LM + 8 });
+
 		const qty = String(item.qty);
 		ctx.page.drawText(qty, {
-			x: colQty - regular.widthOfTextAtSize(qty, 11) / 2,
-			y: ctx.y + 16,
+			x: colQty - regular.widthOfTextAtSize(qty, 9) / 2,
+			y: ctx.y + 14,
 			font: regular,
-			size: 11,
-			color: INK
+			size: 9,
+			color: BLACK
 		});
+
 		const price = formatRupiah(item.priceSnapshot);
 		ctx.page.drawText(price, {
-			x: colPrice - regular.widthOfTextAtSize(price, 11) / 2,
-			y: ctx.y + 16,
+			x: colPrice - regular.widthOfTextAtSize(price, 9) / 2,
+			y: ctx.y + 14,
 			font: regular,
-			size: 11,
-			color: INK
+			size: 9,
+			color: BLACK
 		});
-		rightText(ctx, formatRupiah(item.subtotal), 11, regular);
-		ctx.y -= 16;
-	}
-	blackRule(ctx, 2.5);
 
-	// ── Ringkasan kanan + bar peach total ──
+		const subtotal = formatRupiah(item.subtotal);
+		const sw = bold.widthOfTextAtSize(subtotal, 9);
+		ctx.page.drawText(subtotal, {
+			x: PAGE_W - RM - sw - 8,
+			y: ctx.y + 14,
+			font: bold,
+			size: 9,
+			color: BLACK
+		});
+
+		ctx.y -= 4;
+		// Garis pemisah antar item tipis
+		ctx.page.drawRectangle({ x: LM, y: ctx.y, width: CONTENT_W, height: 0.5, color: BORDER_LIGHT });
+		ctx.y -= 4;
+	}
+
+	// ── 4. Subtotal, Ongkir & Total Pembayaran ──
 	{
-		const rows: [string, string][] = [[`Sub-total :`, formatRupiah(order.subtotal)]];
+		ensure(ctx, 50);
+		ctx.y -= 4;
+		const rows: [string, string][] = [[`Subtotal Produk`, formatRupiah(order.subtotal)]];
 		if (shippingDiff > 0) {
-			rows.push([`Ongkir${order.shippingLabel ? ` · ${order.shippingLabel}` : ''} :`, formatRupiah(shippingDiff)]);
+			rows.push([`Biaya Pengiriman${order.shippingLabel ? ` (${order.shippingLabel})` : ''}`, formatRupiah(shippingDiff)]);
 		}
+
 		for (const [label, val] of rows) {
-			ensure(ctx, 20);
-			const wrapped = wrap(label, regular, 11, 250);
-			rightText(ctx, val, 11, regular);
-			para(ctx, wrapped[wrapped.length - 1], { size: 11, color: INK, x: LM, maxWidth: 250 });
-			for (let i = wrapped.length - 2; i >= 0; i--) para(ctx, wrapped[i], { size: 11, color: INK, x: LM, maxWidth: 250 });
-			ctx.y -= 2;
+			ensure(ctx, 14);
+			const sw = regular.widthOfTextAtSize(val, 9);
+			ctx.page.drawText(val, { x: PAGE_W - RM - sw - 8, y: ctx.y - 9, font: regular, size: 9, color: BLACK });
+			const lw = regular.widthOfTextAtSize(label, 9);
+			ctx.page.drawText(label, { x: PAGE_W - RM - sw - lw - 32, y: ctx.y - 9, font: regular, size: 9, color: GRAY_DARK });
+			ctx.y -= 14;
 		}
-		ensure(ctx, 40);
-		const t = `Total :   ${formatRupiah(order.total)}`;
-		const tw = bold.widthOfTextAtSize(t, 12);
-		const bw = tw + 36;
-		const bx = PAGE_W - RM - bw;
+
+		// Kotak Total Hitam Elegan
+		ensure(ctx, 28);
+		const tVal = formatRupiah(order.total);
+		const tValW = bold.widthOfTextAtSize(tVal, 11);
+		const tLabel = 'TOTAL PEMBAYARAN:';
+		const tLabelW = bold.widthOfTextAtSize(tLabel, 10);
+		const totalBoxW = tValW + tLabelW + 36;
+		const totalBoxX = PAGE_W - RM - totalBoxW;
 		const top = ctx.y;
-		ctx.page.drawRectangle({ x: bx, y: top - 28, width: bw, height: 28, color: PEACH });
-		outlineText(ctx, t, bx + 18, top - 21, 12, bold, WHITE);
-		ctx.y = top - 28 - 14;
+
+		ctx.page.drawRectangle({
+			x: totalBoxX,
+			y: top - 24,
+			width: totalBoxW,
+			height: 24,
+			color: BLACK
+		});
+		ctx.page.drawText(tLabel, {
+			x: totalBoxX + 12,
+			y: top - 16,
+			font: bold,
+			size: 10,
+			color: WHITE
+		});
+		ctx.page.drawText(tVal, {
+			x: totalBoxX + 12 + tLabelW + 12,
+			y: top - 16,
+			font: bold,
+			size: 11,
+			color: WHITE
+		});
+
+		ctx.y = top - 34;
 	}
 
-	// ── Payment ──
-	{
-		ensure(ctx, 26);
-		para(ctx, 'Payment Method :', { size: 12, bold: true });
+	// ── 5. Instruksi Pembayaran & Rekening ──
+	if (paymentMethods.length > 0 || qrisCodes.length > 0 || settings.proofContact || settings.paymentNote) {
+		ensure(ctx, 30);
+		para(ctx, 'INFORMASI PEMBAYARAN', { size: 9, bold: true, color: GRAY_DARK });
+		rule(ctx, 0.5, BORDER_LIGHT);
+
 		for (const m of paymentMethods) {
-			para(ctx, `${m.label} — ${m.accountNumber} (a.n. ${m.accountHolder})`, { size: 11 });
-			if (m.note) para(ctx, m.note, { size: 10, color: GRAY });
-			ctx.y -= 2;
+			ensure(ctx, 16);
+			para(ctx, `${m.label}: ${m.accountNumber} — a.n. ${m.accountHolder}${m.note ? ` (${m.note})` : ''}`, {
+				size: 9,
+				bold: true,
+				color: BLACK
+			});
 		}
+
 		for (const q of qrisCodes) {
-			para(ctx, q.label, { size: 11, bold: true });
+			ensure(ctx, 16);
+			para(ctx, `QRIS: ${q.label}`, { size: 9, bold: true, color: BLACK });
 			try {
-				const res = await fetch(q.imageUrl, { signal: AbortSignal.timeout(8000) });
+				const res = await fetch(q.imageUrl, { signal: AbortSignal.timeout(6000) });
 				const type = res.headers.get('content-type') ?? '';
 				if (!res.ok) throw new Error(`HTTP ${res.status}`);
 				const bytes = new Uint8Array(await res.arrayBuffer());
@@ -264,37 +329,55 @@ export async function renderInvoicePdf(data: InvoiceData): Promise<Uint8Array> {
 					type.includes('jpeg') || type.includes('jpg')
 						? await pdf.embedJpg(bytes)
 						: await pdf.embedPng(bytes);
-				const max = 190;
+				const max = 130;
 				const scale = Math.min(max / img.width, max / img.height);
 				const w = img.width * scale;
 				const h = img.height * scale;
-				ensure(ctx, h + 10);
-				const cx = LM + (CONTENT_W - w) / 2;
-				ctx.page.drawImage(img, { x: cx, y: ctx.y - h, width: w, height: h });
-				ctx.y -= h + 10;
+				ensure(ctx, h + 8);
+				ctx.page.drawImage(img, { x: LM + 8, y: ctx.y - h, width: w, height: h });
+				ctx.y -= h + 8;
 			} catch (err) {
 				logger.warn('invoice.qris-skipped', { label: q.label, error: err });
-				para(ctx, '(QRIS tidak dapat dimuat)', { size: 10, color: GRAY });
 			}
+		}
+
+		if (settings.proofContact) {
+			ensure(ctx, 14);
+			para(ctx, `Konfirmasi transfer ke: ${settings.proofContact}${settings.instagram ? ` (Instagram: ${settings.instagram})` : ''}`, {
+				size: 9,
+				color: GRAY_DARK
+			});
+		}
+		if (settings.paymentNote) {
+			ensure(ctx, 14);
+			para(ctx, settings.paymentNote, { size: 8, color: GRAY_DARK });
 		}
 	}
 
-	if (settings.proofContact) {
-		ensure(ctx, 40);
-		para(ctx, `Sudah transfer? Kirim bukti ke ${settings.proofContact}`, { size: 11, bold: true });
-		if (settings.instagram) para(ctx, `atau DM ${settings.instagram}`, { size: 10, color: GRAY });
-		ctx.y -= 4;
-	}
-	if (settings.paymentNote) para(ctx, settings.paymentNote, { size: 10, color: GRAY });
-
-	// ── Penutup ala desain ──
+	// ── 6. Footer Penutup ──
 	{
 		ensure(ctx, 30);
-		const t = 'Thank you for purchase!';
-		const tw = serifBold.widthOfTextAtSize(t, 13);
-		ctx.page.drawText(t, { x: LM + (CONTENT_W - tw) / 2, y: ctx.y - 13, font: serifBold, size: 13, color: INK });
-		ctx.y -= 24;
-		para(ctx, `Dibuat otomatis oleh ${settings.storeName || 'Invoizy Store'}`, { size: 9, color: GRAY });
+		ctx.y -= 12;
+		rule(ctx, 0.5, BORDER_LIGHT);
+		const closing = `Terima kasih atas pesanan Anda di ${settings.storeName || 'toko kami'}!`;
+		const cw = regular.widthOfTextAtSize(closing, 9);
+		ctx.page.drawText(closing, {
+			x: LM + (CONTENT_W - cw) / 2,
+			y: ctx.y - 10,
+			font: regular,
+			size: 9,
+			color: GRAY_DARK
+		});
+
+		const autoNote = 'Dokumen ini dibuat otomatis oleh cho.lazey - CHIBICONXI CATALOGUE';
+		const aw = regular.widthOfTextAtSize(autoNote, 7);
+		ctx.page.drawText(autoNote, {
+			x: LM + (CONTENT_W - aw) / 2,
+			y: ctx.y - 20,
+			font: regular,
+			size: 7,
+			color: BORDER_LIGHT
+		});
 	}
 
 	return pdf.save();

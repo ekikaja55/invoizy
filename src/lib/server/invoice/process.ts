@@ -26,6 +26,7 @@ export function toInvoiceData(result: OrderByToken): InvoiceData {
 			subtotal: result.order.subtotal,
 			total: result.order.total,
 			shippingLabel: result.order.shippingLabel,
+			paymentStatus: result.order.paymentStatus as 'PENDING' | 'CONFIRMED' | 'CANCELLED',
 			createdAt: result.order.createdAt.toISOString(),
 			items: result.order.items.map((i) => ({
 				id: i.id,
@@ -148,7 +149,7 @@ export async function processNewInvoice(
 		await sendInvoiceEmail({
 			to: data.order.email,
 			orderId,
-			storeName: data.settings.storeName || 'Invoizy Store',
+			storeName: data.settings.storeName || 'cho.lazey - CHIBICONXI CATALOGUE',
 			handle: data.order.handle,
 			total: data.order.total,
 			invoiceUrl: link,
@@ -216,7 +217,7 @@ export async function resendInvoiceEmail(orderId: string): Promise<void> {
 		await sendInvoiceEmail({
 			to: data.order.email,
 			orderId,
-			storeName: data.settings.storeName || 'Invoizy Store',
+			storeName: data.settings.storeName || 'cho.lazey - CHIBICONXI CATALOGUE',
 			handle: data.order.handle,
 			total: data.order.total,
 			invoiceUrl: link,

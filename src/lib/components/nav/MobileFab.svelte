@@ -78,15 +78,13 @@
 <div class="fixed right-4 bottom-4 z-50 md:hidden">
 	{#if open}
 		<div
-			class="mb-2 w-52 rounded-xl border border-neutral-200 bg-white/95 p-2 text-neutral-900
-             shadow-xl backdrop-blur dark:border-neutral-800 dark:bg-neutral-900/95
-             dark:text-neutral-100"
+			class="mb-3 w-56 rounded-[14px_6px_12px_8px] border-2 border-brandy bg-papaya/95 p-2.5 text-ink shadow-[6px_6px_0px_#78290f] backdrop-blur-xs dark:border-papaya/30 dark:bg-ink/95 dark:text-papaya dark:shadow-[6px_6px_0px_rgba(255,236,209,0.25)]"
 		>
 			<nav class="flex flex-col gap-1">
 				{#each items as item (item.href)}
 					{@const isActive = currentPath === item.href}
 					<a href={resolve(item.href)} class={navItemClass(isActive)} onclick={close}>
-						<item.icon size={16} />
+						<item.icon size={16} strokeWidth={2.5} />
 						<span>{item.label}</span>
 					</a>
 				{/each}
@@ -96,14 +94,15 @@
 						<button
 							type="button"
 							onclick={() => (contactAccordionOpen = !contactAccordionOpen)}
-							class="flex items-center justify-between rounded-lg px-3 py-2 text-left text-sm text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-white/10 dark:hover:text-white"
+							class="flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-sm font-bold text-ink/80 transition-colors hover:bg-brandy/10 dark:text-papaya/80 dark:hover:bg-papaya/10"
 						>
 							<div class="flex items-center gap-2">
-								<Headset size={16} />
+								<Headset size={16} strokeWidth={2.5} />
 								<span>Hubungi Kami</span>
 							</div>
 							<ChevronDown
 								size={14}
+								strokeWidth={2.5}
 								class="transition-transform duration-200 {contactAccordionOpen
 									? 'rotate-180'
 									: ''}"
@@ -112,7 +111,7 @@
 
 						{#if contactAccordionOpen}
 							<div
-								class="mt-1 flex flex-col gap-1 rounded-lg bg-neutral-100/70 p-1.5 dark:bg-white/5"
+								class="mt-1 flex flex-col gap-1 rounded-xl border border-brandy/20 bg-white/60 p-2 dark:border-papaya/20 dark:bg-ink/60"
 							>
 								{#if waHref}
 									<a
@@ -120,16 +119,13 @@
 										target="_blank"
 										rel="external noopener noreferrer"
 										onclick={close}
-										class="flex items-center justify-between rounded-md px-2 py-1.5 text-xs text-neutral-700 transition-colors hover:bg-white dark:text-neutral-200 dark:hover:bg-white/10"
+										class="flex items-center justify-between rounded-lg border border-forest/30 bg-forest/10 px-2 py-1.5 text-xs font-bold text-forest hover:bg-forest/20 transition-colors"
 									>
 										<div class="flex items-center gap-2">
-											<MessageCircle
-												size={14}
-												class="text-emerald-600 dark:text-emerald-400"
-											/>
-											<span class="font-medium">WhatsApp</span>
+											<MessageCircle size={14} strokeWidth={2.5} />
+											<span>WhatsApp</span>
 										</div>
-										<ExternalLink size={11} class="text-neutral-400" />
+										<ExternalLink size={11} strokeWidth={2.5} />
 									</a>
 								{/if}
 
@@ -139,13 +135,13 @@
 										target="_blank"
 										rel="external noopener noreferrer"
 										onclick={close}
-										class="flex items-center justify-between rounded-md px-2 py-1.5 text-xs text-neutral-700 transition-colors hover:bg-white dark:text-neutral-200 dark:hover:bg-white/10"
+										class="flex items-center justify-between rounded-lg border border-pink-500/30 bg-pink-500/10 px-2 py-1.5 text-xs font-bold text-pink-600 hover:bg-pink-500/20 transition-colors"
 									>
 										<div class="flex items-center gap-2">
-											<InstagramIcon size={14} class="text-pink-600 dark:text-pink-400" />
-											<span class="font-medium">Instagram</span>
+											<InstagramIcon size={14} />
+											<span>Instagram</span>
 										</div>
-										<ExternalLink size={11} class="text-neutral-400" />
+										<ExternalLink size={11} strokeWidth={2.5} />
 									</a>
 								{/if}
 							</div>
@@ -154,7 +150,7 @@
 				{/if}
 			</nav>
 
-			<div class="mt-1 border-t border-neutral-200 pt-1 dark:border-neutral-800">
+			<div class="mt-2 border-t-2 border-brandy/20 pt-2 dark:border-papaya/20">
 				<ThemeToggle />
 
 				{#if isAdmin}
@@ -166,7 +162,7 @@
 							}}
 							class={navActionClass()}
 						>
-							<Home size={16} />
+							<Home size={16} strokeWidth={2.5} />
 							<span>Home</span>
 						</button>
 					{:else}
@@ -177,18 +173,16 @@
 							}}
 							class={navActionClass()}
 						>
-							<LayoutDashboard size={16} />
+							<LayoutDashboard size={16} strokeWidth={2.5} />
 							<span>Dashboard</span>
 						</button>
 					{/if}
 
 					<button
 						onclick={handleLogout}
-						class="flex items-center gap-2 rounded-lg px-2 py-2 text-left text-sm text-neutral-600
-                   hover:bg-neutral-100 hover:text-neutral-900
-                   dark:text-neutral-300 dark:hover:bg-white/10 dark:hover:text-white"
+						class={navActionClass()}
 					>
-						<LogOut size={16} />
+						<LogOut size={16} strokeWidth={2.5} />
 						<span>Logout</span>
 					</button>
 				{/if}
@@ -198,23 +192,20 @@
 
 	<button
 		onclick={() => (open = !open)}
-		class="flex h-12 w-12 items-center justify-center rounded-full
-           bg-neutral-900 text-white shadow-xl
-           dark:bg-white dark:text-neutral-900"
+		class="flex h-13 w-13 items-center justify-center rounded-full border-2 border-brandy bg-tangerine text-white shadow-[4px_4px_0px_#78290f] transition-all hover:scale-105 active:scale-95 active:shadow-none"
 		aria-label={open ? 'Close menu' : 'Open menu'}
 	>
 		{#if open}
-			<X size={20} />
+			<X size={22} strokeWidth={2.75} />
 		{:else}
-			<Menu size={20} />
+			<Menu size={22} strokeWidth={2.75} />
 		{/if}
 	</button>
 </div>
 
 {#if open}
 	<button
-		class="fixed inset-0 z-40 cursor-default bg-black/20 backdrop-blur-[2px]
-           md:hidden dark:bg-black/40"
+		class="fixed inset-0 z-40 cursor-default bg-ink/70 backdrop-blur-xs md:hidden dark:bg-ink/85"
 		onclick={close}
 		aria-label="Close menu overlay"
 	></button>
