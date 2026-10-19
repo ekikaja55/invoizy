@@ -44,9 +44,9 @@
 		<!-- Event Edition Banner: Pembeda Visual Branch Event Offline -->
 		<div class="flex flex-wrap items-center justify-center gap-2.5">
 			<div
-				class="inline-flex items-center gap-1.5 -rotate-2 rounded-[8px_3px_7px_2px] border-2 border-brandy bg-tangerine px-3.5 py-1.5 font-mono text-xs font-black tracking-wider text-white uppercase shadow-[3px_3px_0px_#78290f]"
+				class="inline-flex -rotate-2 items-center gap-1.5 rounded-[8px_3px_7px_2px] border-2 border-brandy bg-tangerine px-3.5 py-1.5 font-mono text-xs font-black tracking-wider text-white uppercase shadow-[3px_3px_0px_#78290f]"
 			>
-				<span>★ CHIBICONXI OFFLINE EDITION — 28 OKTOBER ★</span>
+				<span>CHIBICONXI EDITION</span>
 			</div>
 			<div
 				class="inline-block rotate-1 rounded-xs border-2 border-brandy bg-yellow-200 px-3 py-1 shadow-[2px_2px_0px_#78290f]"
@@ -70,7 +70,6 @@
 			class="mx-auto max-w-lg font-sans text-sm leading-relaxed text-brandy/80 sm:text-base dark:text-papaya/70"
 		>
 			<strong class="font-bold text-ink dark:text-papaya">Katalog Khusus Pameran Offline:</strong>
-			Pilih barang merchandise impianmu langsung di booth, checkout cepat, dan dapatkan faktur instan di tempat!
 		</p>
 	</div>
 
