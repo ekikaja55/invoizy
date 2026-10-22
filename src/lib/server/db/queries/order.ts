@@ -7,7 +7,8 @@ import {
 	storeSettings,
 	paymentMethods,
 	qrisCodes,
-	productVariants
+	productVariants,
+	productPromos
 } from '$lib/server/db/schema';
 import { eq, asc, and, gte, lte, inArray, sql, count, desc, ilike, or, sum } from 'drizzle-orm';
 import { generateOrderId, generateAccessToken } from '$lib/utils/order-id';
@@ -17,6 +18,18 @@ import { getSettings } from '$lib/server/db/queries/settings';
 import { logger } from '$lib/server/logger';
 
 export class OrderError extends Error {}
+
+export interface ShippingMailOrderInput {
+	kind: 'mail_order';
+}
+
+export interface ShippingPickupDay1Input {
+	kind: 'pickup_day_1';
+}
+
+export interface ShippingPickupDay2Input {
+	kind: 'pickup_day_2';
+}
 
 export interface ShippingQuoteInput {
 	kind: 'quote';
@@ -33,10 +46,13 @@ export interface ShippingFallbackInput {
 
 export interface ShippingPickupInput {
 	kind: 'pickup';
-	code: string;
+	code?: string;
 }
 
 export type ShippingInput =
+	| ShippingMailOrderInput
+	| ShippingPickupDay1Input
+	| ShippingPickupDay2Input
 	| ShippingQuoteInput
 	| ShippingFallbackInput
 	| ShippingPickupInput
@@ -46,7 +62,7 @@ export interface CreateOrderInput {
 	handle: string;
 	email: string;
 	note: string;
-	address: string;
+	address?: string;
 	phone: string;
 	items: {
 		productId: string;
@@ -67,6 +83,9 @@ export async function getActiveCatalog() {
 				with: {
 					variants: {
 						orderBy: [asc(productVariants.sortOrder), asc(productVariants.createdAt)]
+					},
+					promos: {
+						where: eq(productPromos.active, true)
 					}
 				}
 			}
@@ -75,6 +94,18 @@ export async function getActiveCatalog() {
 
 	// buang kategori yang tidak punya produk aktif sama sekali (tidak ada yang bisa dipesan)
 	return allCategories.filter((c) => c.products.length > 0);
+}
+
+export async function getActivePromoRules() {
+	const promos = await db.query.productPromos.findMany({
+		where: eq(productPromos.active, true)
+	});
+	return promos.map((p) => ({
+		productId: p.productId,
+		name: p.name,
+		minQty: p.minQty,
+		discountAmount: p.discountAmount
+	}));
 }
 
 export async function createOrder(input: CreateOrderInput) {
@@ -87,7 +118,10 @@ export async function createOrder(input: CreateOrderInput) {
 				where: inArray(products.id, productIds),
 				with: {
 					category: true,
-					variants: true
+					variants: true,
+					promos: {
+						where: eq(productPromos.active, true)
+					}
 				}
 			});
 			const byId = new Map(rows.map((p) => [p.id, p]));
@@ -106,7 +140,8 @@ export async function createOrder(input: CreateOrderInput) {
 					if (!variant) {
 						throw new OrderError(`Varian "${item.variantName ?? ''}" untuk "${product.name}" tidak ditemukan.`);
 					}
-					if (variant.stock < item.qty) {
+					const shouldTrack = product.trackStock && (variant.trackStock !== false);
+					if (shouldTrack && variant.stock < item.qty) {
 						throw new OrderError(`Stok varian "${variant.name}" (${product.name}) tidak cukup (tersisa ${variant.stock}).`);
 					}
 				} else if (product.trackStock && product.stock < item.qty) {
@@ -114,59 +149,38 @@ export async function createOrder(input: CreateOrderInput) {
 				}
 			}
 
-			// ── Berat total dari DB (wajib > 0 — produk belum ditimbang gagal keras) ──
-			let weightGrams = 0;
-			for (const item of input.items) {
-				const product = byId.get(item.productId)!;
-				if (!product.weightGrams || product.weightGrams <= 0) {
-					throw new OrderError(`Produk "${product.name}" belum ada data berat. Hubungi admin.`);
-				}
-				weightGrams += product.weightGrams * item.qty;
-			}
-
-			// ── Ongkir: hitung ulang dari API (jangan percaya angka client) ──
+			// ── Ongkir & Mode Pengiriman (3 opsi event offline + fallback) ──
 			let shippingPrice = 0;
+			let shippingType = 'MAIL_ORDER';
 			let shipLabel: string | null = null;
 
-			if (input.shipping?.kind === 'quote') {
+			if (input.shipping?.kind === 'mail_order') {
+				shippingPrice = 0;
+				shippingType = 'MAIL_ORDER';
+				shipLabel = 'Mail Order (Pengiriman via Shopee)';
+			} else if (input.shipping?.kind === 'pickup_day_1') {
+				shippingPrice = 0;
+				shippingType = 'PICKUP_DAY_1';
+				shipLabel = 'Self-Pickup: Chibiconxi Day 1 (12 Des 2026)';
+			} else if (input.shipping?.kind === 'pickup_day_2') {
+				shippingPrice = 0;
+				shippingType = 'PICKUP_DAY_2';
+				shipLabel = 'Self-Pickup: Chibiconxi Day 2 (13 Des 2026)';
+			} else if (input.shipping?.kind === 'quote') {
 				const s = input.shipping;
-				const recalc = await calculateCourier(s.courier, s.destId, weightGrams);
-				const match = recalc.options.find((o) => o.service === s.service);
-				if (!match || match.cost !== s.cost) {
-					logger.warn('order.shipping-mismatch', {
-						courier: s.courier,
-						service: s.service,
-						clientCost: s.cost,
-						serverCost: match?.cost ?? null
-					});
-					throw new OrderError('Ongkir berubah. Silakan pilih ulang opsi pengiriman.');
-				}
+				shippingPrice = s.cost || 0;
+				shippingType = 'QUOTE';
 				const label =
 					SHIPPING_COURIERS.find((c) => c.code === s.courier)?.label ?? s.courier.toUpperCase();
-				shippingPrice = match.cost;
-				const etd = match.etd && match.etd !== '-' ? ` • ${match.etd}` : '';
-				shipLabel = `${label} ${match.service} • ${s.destLabel}${etd}`;
-			} else if (input.shipping?.kind === 'fallback') {
-				const settings = await getSettings();
-				const rate = settings?.emergencyFlatRate ?? 0;
-				if (rate <= 0) {
-					throw new OrderError('Layanan ongkir gangguan. Coba lagi nanti.');
-				}
-				shippingPrice = rate;
-				shipLabel = 'Ongkir flat darurat';
-				logger.info('order.shipping-fallback', { rate });
+				shipLabel = `${label} ${s.service} • ${s.destLabel}`;
 			} else if (input.shipping?.kind === 'pickup') {
-				const settings = await getSettings();
-				if (
-					!settings?.pickupCodeEnabled ||
-					!settings.pickupCode ||
-					input.shipping.code.trim().toUpperCase() !== settings.pickupCode.trim().toUpperCase()
-				) {
-					throw new OrderError('Kode pickup salah atau opsi ambil di tempat sedang tidak aktif.');
-				}
 				shippingPrice = 0;
+				shippingType = 'PICKUP';
 				shipLabel = 'Ambil Sendiri (Self-Pickup)';
-				logger.info('order.shipping-pickup');
+			} else {
+				shippingPrice = 0;
+				shippingType = 'MAIL_ORDER';
+				shipLabel = 'Mail Order (Pengiriman via Shopee)';
 			}
 
 			// ── Snapshot line item: nama & harga diambil dari DB, BUKAN dari client ──
@@ -194,21 +208,43 @@ export async function createOrder(input: CreateOrderInput) {
 				};
 			});
 
-			const total = subtotal + shippingPrice;
+			// ── Hitung Diskon Promo Kuantitas Produk ──
+			const qtyPerProduct = new Map<string, number>();
+			for (const item of input.items) {
+				qtyPerProduct.set(item.productId, (qtyPerProduct.get(item.productId) || 0) + item.qty);
+			}
+
+			let discountTotal = 0;
+			for (const [prodId, totalQty] of qtyPerProduct.entries()) {
+				const product = byId.get(prodId);
+				if (!product || !product.promos || product.promos.length === 0) continue;
+				for (const promo of product.promos) {
+					if (promo.active && promo.minQty > 0 && totalQty >= promo.minQty && promo.discountAmount > 0) {
+						const multiplier = Math.floor(totalQty / promo.minQty);
+						discountTotal += multiplier * promo.discountAmount;
+					}
+				}
+			}
+
+			const total = Math.max(0, subtotal - discountTotal) + shippingPrice;
 
 			// ── Kurangi stok secara atomik: UPDATE ... WHERE stock >= qty ──
 			// Aman dari race condition (dua order bersamaan tidak bisa oversell)
 			for (const item of input.items) {
 				const product = byId.get(item.productId)!;
 				if (item.variantId) {
-					const updated = await tx
-						.update(productVariants)
-						.set({ stock: sql`${productVariants.stock} - ${item.qty}` })
-						.where(and(eq(productVariants.id, item.variantId), gte(productVariants.stock, item.qty)))
-						.returning({ id: productVariants.id });
+					const variant = product.variants.find((v) => v.id === item.variantId);
+					const shouldTrack = product.trackStock && (variant?.trackStock !== false);
+					if (shouldTrack) {
+						const updated = await tx
+							.update(productVariants)
+							.set({ stock: sql`${productVariants.stock} - ${item.qty}` })
+							.where(and(eq(productVariants.id, item.variantId), gte(productVariants.stock, item.qty)))
+							.returning({ id: productVariants.id });
 
-					if (updated.length === 0) {
-						throw new OrderError(`Stok varian "${item.variantName ?? ''}" untuk "${product.name}" habis saat diproses.`);
+						if (updated.length === 0) {
+							throw new OrderError(`Stok varian "${item.variantName ?? ''}" untuk "${product.name}" habis saat diproses.`);
+						}
 					}
 				} else if (product.trackStock) {
 					const updated = await tx
@@ -231,10 +267,12 @@ export async function createOrder(input: CreateOrderInput) {
 					handle: input.handle,
 					email: input.email,
 					note: input.note,
-					address: input.address,
+					address: input.address || '',
 					phone: input.phone,
 					subtotal,
+					discountTotal,
 					total,
+					shippingType,
 					shippingLabel: shipLabel,
 					invoiceStatus: 'PENDING',
 					paymentStatus: 'PENDING'

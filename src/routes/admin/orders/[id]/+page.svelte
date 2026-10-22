@@ -19,6 +19,29 @@
 	let selectedTemplate = $state<'unpaid' | 'paid' | 'ready' | 'basic'>('unpaid');
 	let customMessage = $state('');
 
+	// Modal konfirmasi perubahan status bayar
+	let pendingPaymentStatus = $state<string>('');
+	$effect(() => {
+		pendingPaymentStatus = data.order.paymentStatus;
+	});
+	let isConfirmPaymentModalOpen = $state(false);
+	let paymentFormEl = $state<HTMLFormElement | null>(null);
+
+	function openPaymentConfirm() {
+		if (pendingPaymentStatus === data.order.paymentStatus) {
+			toast.info('Status pembayaran tidak berubah.');
+			return;
+		}
+		isConfirmPaymentModalOpen = true;
+	}
+
+	function executePaymentChange() {
+		isConfirmPaymentModalOpen = false;
+		if (paymentFormEl) {
+			paymentFormEl.requestSubmit();
+		}
+	}
+
 	async function copyInvoiceLink() {
 		if (!data.order.invoiceUrl) {
 			toast.error('Link invoice belum tersedia.');
@@ -41,10 +64,28 @@
 		data.order.invoiceUrl || (typeof window !== 'undefined' ? `${window.location.origin}${invoiceHref}` : '')
 	);
 
+	const itemsSummaryText = $derived(
+		data.order.items
+			.map(
+				(i) =>
+					`- ${i.nameSnapshot}${i.variantNameSnapshot ? ` (${i.variantNameSnapshot})` : ''} × ${i.qty}`
+			)
+			.join('\n')
+	);
+
+	const shopeeLink = $derived(
+		data.storeSettings?.shopeeCheckoutUrl ||
+			'https://shopee.co.id/cholazey.store'
+	);
+
 	const templates = $derived({
-		unpaid: `Halo kak *${data.order.handle}*, terima kasih telah memesan. Berikut tagihan pesanan #${data.order.orderId} sebesar *${formatRupiah(data.order.total)}*.\n\nSilakan cek detail rekening & selesaikan pembayaran melalui tautan invoice berikut:\n${effectiveInvoiceUrl}\n\nTerima kasih!`,
-		paid: `Halo kak *${data.order.handle}*, pembayaran untuk pesanan #${data.order.orderId} sebesar *${formatRupiah(data.order.total)}* telah kami terima dan terkonfirmasi lunas.\n\nPesanan sedang diproses. Detail invoice bisa dicek di:\n${effectiveInvoiceUrl}\n\nTerima kasih!`,
-		ready: `Halo kak *${data.order.handle}*, pesanan #${data.order.orderId} kamu sudah siap diambil di lokasi toko.\n\nMohon sebutkan ID pesanan saat pengambilan:\n${effectiveInvoiceUrl}\n\nSampai jumpa!`,
+		unpaid: `Halo kak *${data.order.handle}*! Terima kasih sudah order fanmerch cho.lazey ✨\n\nPesanan:\n${itemsSummaryText}\nTotal: *${formatRupiah(data.order.total)}*\nStatus: *Menunggu Pembayaran*\n\nSilakan cek rekening transfer & selesaikan pembayaran melalui invoice berikut:\n${effectiveInvoiceUrl}\n\nTerima kasih banyak! 💕`,
+		paid: `Halo kak *${data.order.handle}*! Terima kasih sudah pre-order fanmerch cho.lazey!! ✨\nPembayaran sebesar *${formatRupiah(data.order.total)}* atas nama @${data.order.handle} sudah kami terima ya! Terima kasih banyak 💕\n\nPesanan:\n${itemsSummaryText}\nTotal: *${formatRupiah(data.order.total)}*\nStatus: *Lunas*\n\n${
+			data.order.shippingType === 'MAIL_ORDER'
+				? `Mohon dibantu untuk checkout link pengirimannya di Shopee berikut ya kak:\n${shopeeLink}\n\n📦 Estimasi Paket Siap Dikirim: Pasca Event Pameran Chibiconxi\n(Konter ekspedisi aktif hari kerja Senin-Jumat)\n\nNanti Kakak akan diberitahukan kembali saat resi sudah keluar. See ya! ✨`
+				: `Metode Pengambilan: *${data.order.shippingLabel}*\n\nSilakan tunjukkan ID Pesanan #${data.order.orderId} atau invoice ini ke penjaga booth saat mengambil barang:\n${effectiveInvoiceUrl}\n\nSampai jumpa di venue Chibiconxi! ✨`
+		}`,
+		ready: `Halo kak *${data.order.handle}*, pesanan #${data.order.orderId} kamu sudah siap diambil di booth!\n\nID Pesanan: #${data.order.orderId}\nDetail Invoice: ${effectiveInvoiceUrl}\n\nSampai jumpa di booth kami! ✨`,
 		basic: `Halo kak *${data.order.handle}*, terkait pesanan #${data.order.orderId}.\nTautan invoice: ${effectiveInvoiceUrl}`
 	});
 
@@ -273,13 +314,14 @@
 		</div>
 
 		<form
+			bind:this={paymentFormEl}
 			method="POST"
 			action="?/setPayment"
 			use:enhance={() => {
 				isBusy = true;
 				return async ({ result, update }) => {
 					handleFormResult(result, {
-						success: 'Status pembayaran diperbarui.',
+						success: 'Status pembayaran diperbarui & PDF otomatis dibuat ulang.',
 						failure: 'Gagal mengubah status pembayaran.'
 					});
 					if (result.type === 'success') await update();
@@ -292,28 +334,41 @@
 			<select
 				id="paymentStatus"
 				name="paymentStatus"
+				bind:value={pendingPaymentStatus}
 				disabled={isBusy}
 				class="min-w-0 flex-1 truncate rounded-lg border border-neutral-300 bg-white py-2 pr-8 pl-3 text-sm
                disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-900"
 			>
 				{#each ['PENDING', 'CONFIRMED', 'CANCELLED'] as s (s)}
-					<option value={s} selected={data.order.paymentStatus === s}
-						>{paymentStatusLabel(s)}</option
-					>
+					<option value={s}>{paymentStatusLabel(s)}</option>
 				{/each}
 			</select>
 			<button
-				type="submit"
-				disabled={isBusy}
-				class="rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium
-               hover:bg-neutral-100 disabled:opacity-50
-               dark:border-neutral-700 dark:hover:bg-white/10"
+				type="button"
+				onclick={openPaymentConfirm}
+				disabled={isBusy || pendingPaymentStatus === data.order.paymentStatus}
+				class="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white
+               hover:bg-neutral-800 disabled:opacity-50
+               dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
 			>
 				Simpan
 			</button>
 		</form>
 	</div>
 </div>
+
+<Modal
+	open={isConfirmPaymentModalOpen}
+	title="Konfirmasi Perubahan Status Pembayaran"
+	message="Ubah status pesanan #{data.order.orderId} menjadi {paymentStatusLabel(pendingPaymentStatus)}? Sistem akan otomatis memperbarui data dan membuat ulang stempel status di PDF invoice."
+	confirmLabel="Ya, Perbarui"
+	cancelLabel="Batal"
+	onConfirm={executePaymentChange}
+	onCancel={() => {
+		pendingPaymentStatus = data.order.paymentStatus;
+		isConfirmPaymentModalOpen = false;
+	}}
+/>
 
 <Modal
 	open={waModalOpen}

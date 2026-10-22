@@ -9,7 +9,8 @@ export const settingsSchema = z.object({
 	proofContact: z.string().trim().max(200).optional().or(z.literal('')),
 	emergencyFlatRate: z.coerce.number().int().min(0).max(1_000_000),
 	pickupCode: z.string().trim().max(50).optional().or(z.literal('')),
-	pickupCodeEnabled: z.boolean().default(false)
+	pickupCodeEnabled: z.boolean().default(false),
+	shopeeCheckoutUrl: z.string().trim().url('Format URL tidak valid').optional().or(z.literal(''))
 });
 
 export type SettingsInput = z.infer<typeof settingsSchema>;

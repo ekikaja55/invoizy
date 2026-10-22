@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { resolve } from '$app/paths';
 	import { handleFormResult } from '$lib/utils/handle-form-result';
 	import ListSkeleton from '$lib/components/ui/ListSkeleton.svelte';
 	import BusyOverlay from '$lib/components/ui/BusyOverlay.svelte';
@@ -14,7 +15,8 @@
 		ChevronRight,
 		Image as ImageIcon,
 		Eye,
-		Search
+		Search,
+		FileSpreadsheet
 	} from '@lucide/svelte';
 	import { processAndWatermarkImage } from '$lib/utils/image-watermark';
 	import { toast } from 'svelte-sonner';
@@ -115,11 +117,28 @@
 		id?: string;
 		name: string;
 		stock: number;
+		trackStock?: boolean;
 	}
 
 	let createDescription = $state('');
 	let createHasVariants = $state(false);
 	let createVariants = $state<VariantFormItem[]>([]);
+	let createNameInput = $state<Record<string, string>>({});
+	let editNameInput = $state<Record<string, string>>({});
+
+	function findDuplicateProductName(name: string, excludeId?: string) {
+		const trimmed = name.trim().toLowerCase();
+		if (!trimmed) return null;
+		for (const cat of data.categoriesWithProducts) {
+			for (const p of cat.products) {
+				if (excludeId && p.id === excludeId) continue;
+				if (p.name.trim().toLowerCase() === trimmed) {
+					return { productName: p.name, categoryName: cat.name };
+				}
+			}
+		}
+		return null;
+	}
 
 	let editDescription = $state<Record<string, string>>({});
 	let editHasVariants = $state<Record<string, boolean>>({});
@@ -155,6 +174,7 @@
 
 	function startCreate(categoryId: string) {
 		creatingInCategoryId = categoryId;
+		createNameInput[categoryId] = '';
 		createTrackStock = false;
 		createDescription = '';
 		createHasVariants = false;
@@ -165,6 +185,7 @@
 
 	function cancelCreate() {
 		creatingInCategoryId = null;
+		createNameInput = {};
 		createNewFiles = [];
 		createPreviews = [];
 		createVariants = [];
@@ -173,6 +194,7 @@
 
 	function startEdit(product: {
 		id: string;
+		name: string;
 		trackStock: boolean;
 		stock: number;
 		description?: string | null;
@@ -180,6 +202,7 @@
 		variants?: { id?: string; name: string; stock: number }[];
 	}) {
 		editingId = product.id;
+		editNameInput[product.id] = product.name;
 		editTrackStock[product.id] = product.trackStock;
 		editDescription[product.id] = product.description ?? '';
 		editExistingImages[product.id] = [...(product.imageUrls ?? [])];
@@ -310,9 +333,20 @@
 </script>
 
 <div class="mx-auto max-w-3xl space-y-4">
-	<div>
-		<h1 class="text-xl font-semibold">Products</h1>
-		<p class="text-xs text-neutral-500">Urutkan tampilan dengan tombol panah di tiap baris.</p>
+	<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+		<div>
+			<h1 class="text-xl font-semibold">Products</h1>
+			<p class="text-xs text-neutral-500">Urutkan tampilan dengan tombol panah di tiap baris.</p>
+		</div>
+		<div>
+			<a
+				href={resolve('/admin/products/import')}
+				class="inline-flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-3.5 py-2 text-xs font-semibold text-neutral-800 shadow-xs transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
+			>
+				<FileSpreadsheet size={15} class="text-teal" />
+				<span>Import Produk via CSV / Excel</span>
+			</a>
+		</div>
 	</div>
 
 	{#if data.categoriesWithProducts && data.categoriesWithProducts.length > 0}
@@ -321,18 +355,18 @@
 			class="flex flex-col gap-2 rounded-xl border border-neutral-200 bg-white p-3 sm:flex-row sm:items-center dark:border-neutral-800 dark:bg-neutral-900/50"
 		>
 			<div class="relative flex-1">
-				<Search size={16} class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+				<Search size={16} class="absolute top-1/2 left-3 -translate-y-1/2 text-neutral-400" />
 				<input
 					type="text"
 					bind:value={searchQuery}
 					placeholder="Cari produk berdasarkan nama..."
-					class="w-full rounded-lg border border-neutral-300 bg-white py-1.5 pl-9 pr-8 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:focus:border-white"
+					class="w-full rounded-lg border border-neutral-300 bg-white py-1.5 pr-8 pl-9 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:focus:border-white"
 				/>
 				{#if searchQuery}
 					<button
 						type="button"
 						onclick={() => (searchQuery = '')}
-						class="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
+						class="absolute top-1/2 right-2.5 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
 					>
 						<X size={14} />
 					</button>
@@ -379,9 +413,15 @@
 			Belum ada kategori. Buat kategori dulu di halaman Categories.
 		</p>
 	{:else if filteredCategories.length === 0}
-		<div class="rounded-xl border border-dashed border-neutral-300 p-8 text-center dark:border-neutral-700">
-			<p class="text-sm font-medium text-neutral-900 dark:text-neutral-100">Tidak ada produk yang cocok</p>
-			<p class="mt-1 text-xs text-neutral-500">Coba ubah kata kunci pencarian atau filter yang aktif.</p>
+		<div
+			class="rounded-xl border border-dashed border-neutral-300 p-8 text-center dark:border-neutral-700"
+		>
+			<p class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+				Tidak ada produk yang cocok
+			</p>
+			<p class="mt-1 text-xs text-neutral-500">
+				Coba ubah kata kunci pencarian atau filter yang aktif.
+			</p>
 			<button
 				type="button"
 				onclick={resetFilters}
@@ -468,13 +508,24 @@
 										<input
 											id="create-name-{category.id}"
 											name="name"
+											bind:value={createNameInput[category.id]}
 											required
 											disabled={isBusy}
 											placeholder="Contoh: Stiker Gintoki"
-											class="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900
-                             disabled:opacity-50
-                             dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+											class="mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm text-neutral-900
+                             disabled:opacity-50 {findDuplicateProductName(
+												createNameInput[category.id] || ''
+											)
+												? 'border-amber-400 bg-amber-50/40 text-amber-900 focus:border-amber-500 dark:border-amber-500/60 dark:bg-amber-950/20 dark:text-amber-200'
+												: 'border-neutral-300 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100'}"
 										/>
+										{#if findDuplicateProductName(createNameInput[category.id] || '')}
+											{@const dup = findDuplicateProductName(createNameInput[category.id] || '')}
+											<p class="mt-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
+												Nama produk ini sudah terdaftar di kategori "{dup?.categoryName}". Silakan
+												gunakan nama lain agar tidak duplikat.
+											</p>
+										{/if}
 									</div>
 
 									<div class="grid grid-cols-2 gap-3">
@@ -777,13 +828,29 @@
 														<input
 															id="edit-name-{product.id}"
 															name="name"
-															value={product.name}
+															bind:value={editNameInput[product.id]}
 															required
 															disabled={isBusy}
-															class="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900
-                                     disabled:opacity-50
-                                     dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+															class="mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm text-neutral-900
+                                     disabled:opacity-50 {findDuplicateProductName(
+																editNameInput[product.id] ?? product.name,
+																product.id
+															)
+																? 'border-amber-400 bg-amber-50/40 text-amber-900 focus:border-amber-500 dark:border-amber-500/60 dark:bg-amber-950/20 dark:text-amber-200'
+																: 'border-neutral-300 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100'}"
 														/>
+														{#if findDuplicateProductName(editNameInput[product.id] ?? product.name, product.id)}
+															{@const dup = findDuplicateProductName(
+																editNameInput[product.id] ?? product.name,
+																product.id
+															)}
+															<p
+																class="mt-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400"
+															>
+																Nama produk ini sudah digunakan di kategori "{dup?.categoryName}".
+																Silakan gunakan nama lain agar tidak duplikat.
+															</p>
+														{/if}
 													</div>
 
 													<div class="grid grid-cols-2 gap-3">
@@ -1153,7 +1220,9 @@
 															<button
 																type="submit"
 																disabled={isBusy || hasActiveFilter || index === 0}
-																title={hasActiveFilter ? 'Reset filter untuk mengubah urutan produk' : undefined}
+																title={hasActiveFilter
+																	? 'Reset filter untuk mengubah urutan produk'
+																	: undefined}
 																class="rounded p-1.5 hover:bg-neutral-100 disabled:opacity-30 dark:hover:bg-white/10"
 															>
 																<ChevronUp size={16} />
@@ -1180,8 +1249,12 @@
 															<input type="hidden" name="direction" value="down" />
 															<button
 																type="submit"
-																disabled={isBusy || hasActiveFilter || index === category.products.length - 1}
-																title={hasActiveFilter ? 'Reset filter untuk mengubah urutan produk' : undefined}
+																disabled={isBusy ||
+																	hasActiveFilter ||
+																	index === category.products.length - 1}
+																title={hasActiveFilter
+																	? 'Reset filter untuk mengubah urutan produk'
+																	: undefined}
 																class="rounded p-1.5 hover:bg-neutral-100 disabled:opacity-30 dark:hover:bg-white/10"
 															>
 																<ChevronDown size={16} />

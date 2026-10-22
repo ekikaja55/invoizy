@@ -4,7 +4,7 @@
 	import { cart } from '$lib/stores/cart.svelte';
 	import { resolve } from '$app/paths';
 	import { formatRupiah } from '$lib/utils/currency';
-	import { ArrowRight, PackageX, Layers, Search, X } from '@lucide/svelte';
+	import { ArrowRight, PackageX, Layers, Search, X, Sparkles, Tag } from '@lucide/svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -25,6 +25,8 @@
 			}
 		>();
 
+		const promoRules: { productId: string; name: string; minQty: number; discountAmount: number }[] = [];
+
 		for (const category of [...data.productCategories]) {
 			for (const product of category.products) {
 				catalogMap.set(product.id, {
@@ -34,10 +36,23 @@
 					stock: product.stock,
 					variants: product.variants
 				});
+				if ('promos' in product && Array.isArray((product as any).promos)) {
+					for (const promo of (product as any).promos) {
+						promoRules.push({
+							productId: product.id,
+							name: promo.name,
+							minQty: promo.minQty,
+							discountAmount: promo.discountAmount
+						});
+					}
+				}
 			}
 		}
 
-		untrack(() => cart.reconcile(catalogMap));
+		untrack(() => {
+			cart.reconcile(catalogMap);
+			cart.setPromoRules(promoRules);
+		});
 	});
 
 	// Filter reaktif sisi klien untuk Kategori dan Pencarian Teks
@@ -266,6 +281,14 @@
 							<p class="mt-1 font-mono text-base font-bold text-teal dark:text-teal/90">
 								{formatRupiah(product.priceInt)}
 							</p>
+
+							{#if 'promos' in product && Array.isArray((product as any).promos) && (product as any).promos.length > 0}
+								{@const activePromo = (product as any).promos[0]}
+								<div class="mt-2 inline-flex items-center gap-1.5 rounded-[6px_2px_5px_1px] border border-tangerine/60 bg-tangerine/15 px-2.5 py-1 text-xs font-bold text-brandy shadow-[1px_1px_0px_#78290f] dark:border-tangerine/40 dark:bg-tangerine/20 dark:text-papaya">
+									<Sparkles size={13} strokeWidth={2.5} class="shrink-0 text-tangerine" />
+									<span>Beli ≥{activePromo.minQty} Diskon {formatRupiah(activePromo.discountAmount)}</span>
+								</div>
+							{/if}
 
 							{#if product.description}
 								<p

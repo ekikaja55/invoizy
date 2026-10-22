@@ -1,11 +1,16 @@
 import { fail } from '@sveltejs/kit';
+import { db } from '$lib/server/db';
+import { products } from '$lib/server/db/schema';
+import { sql, and, ne } from 'drizzle-orm';
 import { productSchema } from '$lib/schemas/product';
 import {
 	listProductsGroupedByCategory,
 	createProduct,
 	updateProduct,
 	deleteProduct,
-	reorderProduct
+	reorderProduct,
+	bulkImportProducts,
+	type BulkProductItem
 } from '$lib/server/db/queries/product';
 import { getSettings } from '$lib/server/db/queries/settings';
 import { uploadProductImage, deleteProductImage } from '$lib/server/storage/supabase';
@@ -75,6 +80,20 @@ export const actions: Actions = {
 			return fail(400, { error: parsed.error.issues[0]?.message ?? 'Data tidak valid.' });
 		}
 
+		// Cek apakah nama produk sudah terdaftar (case-insensitive)
+		const existingProduct = await db.query.products.findFirst({
+			where: sql`lower(${products.name}) = lower(${parsed.data.name.trim()})`,
+			with: { category: true }
+		});
+		if (existingProduct) {
+			for (const url of uploadedUrls) {
+				await deleteProductImage(url).catch(() => {});
+			}
+			return fail(400, {
+				error: `Nama produk "${parsed.data.name}" sudah terdaftar di kategori "${existingProduct.category.name}". Gunakan nama lain agar tidak duplikat.`
+			});
+		}
+
 		try {
 			await createProduct(parsed.data);
 			return { success: true };
@@ -126,6 +145,23 @@ export const actions: Actions = {
 				await deleteProductImage(url).catch(() => {});
 			}
 			return fail(400, { error: parsed.error.issues[0]?.message ?? 'Data tidak valid.' });
+		}
+
+		// Cek apakah nama baru bentrok dengan produk lain (case-insensitive)
+		const duplicateName = await db.query.products.findFirst({
+			where: and(
+				sql`lower(${products.name}) = lower(${parsed.data.name.trim()})`,
+				ne(products.id, id)
+			),
+			with: { category: true }
+		});
+		if (duplicateName) {
+			for (const url of newUploadedUrls) {
+				await deleteProductImage(url).catch(() => {});
+			}
+			return fail(400, {
+				error: `Nama produk "${parsed.data.name}" sudah digunakan oleh produk lain di kategori "${duplicateName.category.name}".`
+			});
 		}
 
 		// Bersihkan gambar lama yang dihapus dari Supabase Storage
@@ -184,6 +220,28 @@ export const actions: Actions = {
 		} catch (err) {
 			logger.error('product.reorder-failed', { error: err, productId: id });
 			return fail(500, { error: 'Gagal mengubah urutan.' });
+		}
+	},
+
+	bulkImport: async ({ request }) => {
+		const formData = await request.formData();
+		const rawItems = formData.get('items');
+
+		if (typeof rawItems !== 'string') {
+			return fail(400, { error: 'Data impor tidak valid.' });
+		}
+
+		try {
+			const items: BulkProductItem[] = JSON.parse(rawItems);
+			if (!Array.isArray(items) || items.length === 0) {
+				return fail(400, { error: 'Tidak ada produk yang valid untuk diimpor.' });
+			}
+
+			const res = await bulkImportProducts(items);
+			return { success: true, count: res.count };
+		} catch (err) {
+			logger.error('product.bulk-import-failed', { error: err });
+			return fail(500, { error: 'Gagal mengimpor produk dari CSV.' });
 		}
 	}
 };

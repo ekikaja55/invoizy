@@ -58,19 +58,19 @@ export async function processAndWatermarkImage(
 				ctx.translate(width / 2, height / 2);
 				ctx.rotate((-25 * Math.PI) / 180);
 
-				// Outline hitam semi-transparan untuk keterbacaan di background terang
-				ctx.strokeStyle = 'rgba(0, 0, 0, 0.45)';
-				ctx.lineWidth = Math.max(2, Math.round(fontSize * 0.04));
+				// Outline hitam semi-transparan tipis untuk keterbacaan di background terang
+				ctx.strokeStyle = 'rgba(0, 0, 0, 0.22)';
+				ctx.lineWidth = Math.max(1.5, Math.round(fontSize * 0.035));
 				ctx.strokeText(tag, 0, 0);
 
 				// Bayangan halus untuk efek kedalaman
-				ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-				ctx.shadowBlur = 8;
-				ctx.shadowOffsetX = 2;
-				ctx.shadowOffsetY = 2;
+				ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
+				ctx.shadowBlur = 4;
+				ctx.shadowOffsetX = 1;
+				ctx.shadowOffsetY = 1;
 
-				// Teks putih lebih kontras dan tegas (~55% opasitas)
-				ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+				// Teks putih lembut (~30% opasitas, terbaca namun tidak menutupi produk)
+				ctx.fillStyle = 'rgba(255, 255, 255, 0.30)';
 				ctx.fillText(tag, 0, 0);
 
 				ctx.restore();

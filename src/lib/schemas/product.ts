@@ -15,7 +15,8 @@ export const productSchema = z.object({
 			z.object({
 				id: z.string().uuid().optional(),
 				name: z.string().trim().min(1, 'Nama varian wajib diisi').max(100),
-				stock: z.coerce.number().int().min(0, 'Stok varian tidak boleh negatif')
+				stock: z.coerce.number().int().min(0, 'Stok varian tidak boleh negatif').default(0),
+				trackStock: z.coerce.boolean().default(true)
 			})
 		)
 		.default([])

@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db';
-import { products, categories, productVariants } from '$lib/server/db/schema';
+import { products, categories, productVariants, productPromos } from '$lib/server/db/schema';
 import { eq, asc } from 'drizzle-orm';
 import { deleteProductImage } from '$lib/server/storage/supabase';
 import type { ProductInput } from '$lib/schemas/product';
@@ -27,6 +27,9 @@ export async function getProductById(id: string) {
 			category: true,
 			variants: {
 				orderBy: [asc(productVariants.sortOrder), asc(productVariants.createdAt)]
+			},
+			promos: {
+				where: eq(productPromos.active, true)
 			}
 		}
 	});
@@ -43,6 +46,7 @@ export async function createProduct(input: ProductInput) {
 					productId: row.id,
 					name: v.name,
 					stock: v.stock,
+					trackStock: v.trackStock !== undefined ? v.trackStock : true,
 					sortOrder: idx
 				}))
 			);
@@ -65,12 +69,78 @@ export async function updateProduct(id: string, input: ProductInput) {
 					productId: id,
 					name: v.name,
 					stock: v.stock,
+					trackStock: v.trackStock !== undefined ? v.trackStock : true,
 					sortOrder: idx
 				}))
 			);
 		}
 
 		return row;
+	});
+}
+
+export interface BulkProductItem {
+	categoryName: string;
+	name: string;
+	priceInt: number;
+	trackStock: boolean;
+	stock: number;
+	description?: string;
+	variants: { name: string; stock: number; trackStock?: boolean }[];
+}
+
+export async function bulkImportProducts(items: BulkProductItem[]) {
+	return db.transaction(async (tx) => {
+		const existingCategories = await tx.query.categories.findMany();
+		const categoryMap = new Map<string, string>();
+		for (const cat of existingCategories) {
+			categoryMap.set(cat.name.trim().toLowerCase(), cat.id);
+		}
+
+		let createdCount = 0;
+		for (const item of items) {
+			const catKey = item.categoryName.trim().toLowerCase();
+			let categoryId = categoryMap.get(catKey);
+
+			if (!categoryId) {
+				const [newCat] = await tx
+					.insert(categories)
+					.values({ name: item.categoryName.trim(), sortOrder: existingCategories.length + categoryMap.size })
+					.returning();
+				categoryId = newCat.id;
+				categoryMap.set(catKey, categoryId);
+			}
+
+			const [product] = await tx
+				.insert(products)
+				.values({
+					categoryId,
+					name: item.name.trim(),
+					priceInt: item.priceInt,
+					trackStock: item.trackStock,
+					stock: item.stock,
+					weightGrams: 0,
+					description: item.description?.trim() || null,
+					active: true
+				})
+				.returning();
+
+			if (item.variants && item.variants.length > 0) {
+				await tx.insert(productVariants).values(
+					item.variants.map((v, idx) => ({
+						productId: product.id,
+						name: v.name.trim(),
+						stock: v.stock,
+						trackStock: v.trackStock !== undefined ? v.trackStock : item.trackStock,
+						sortOrder: idx
+					}))
+				);
+			}
+
+			createdCount++;
+		}
+
+		return { count: createdCount };
 	});
 }
 

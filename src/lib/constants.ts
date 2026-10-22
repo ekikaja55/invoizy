@@ -3,6 +3,7 @@ import {
 	ShoppingCart,
 	Package,
 	FolderTree,
+	Tag,
 	Settings,
 	Home,
 	ShoppingBag,
@@ -15,6 +16,7 @@ export type AdminRoute =
 	| '/admin/orders'
 	| '/admin/products'
 	| '/admin/categories'
+	| '/admin/promo'
 	| '/admin/settings'
 	| '/admin/settings/payment-methods'
 	| '/admin/settings/qris';
@@ -45,6 +47,7 @@ export const adminNavItems: NavItem[] = [
 	{ label: 'Orders', href: '/admin/orders', icon: ShoppingCart },
 	{ label: 'Products', href: '/admin/products', icon: Package },
 	{ label: 'Categories', href: '/admin/categories', icon: FolderTree },
+	{ label: 'Promo', href: '/admin/promo', icon: Tag },
 	{ label: 'Settings', href: '/admin/settings', icon: Settings }
 ];
 

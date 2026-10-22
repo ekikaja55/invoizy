@@ -1,5 +1,6 @@
 import { error, fail } from '@sveltejs/kit';
 import { getOrderById } from '$lib/server/db/queries/order';
+import { getSettings } from '$lib/server/db/queries/settings';
 import {
 	regenerateInvoicePdf,
 	resendInvoiceEmail,
@@ -10,13 +11,20 @@ import { logger } from '$lib/server/logger';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params }) => {
-	const order = await getOrderById(params.id);
+	const [order, settings] = await Promise.all([
+		getOrderById(params.id),
+		getSettings()
+	]);
 
 	if (!order) {
 		throw error(404, 'Order tidak ditemukan.');
 	}
 
 	return {
+		storeSettings: {
+			storeName: settings?.storeName ?? '',
+			shopeeCheckoutUrl: settings?.shopeeCheckoutUrl ?? ''
+		},
 		order: {
 			orderId: order.orderId,
 			accessToken: order.accessToken,
@@ -26,7 +34,10 @@ export const load: PageServerLoad = async ({ params }) => {
 			address: order.address,
 			phone: order.phone,
 			subtotal: order.subtotal,
+			discountTotal: order.discountTotal ?? 0,
 			total: order.total,
+			shippingType: order.shippingType ?? 'MAIL_ORDER',
+			shippingLabel: order.shippingLabel,
 			invoiceStatus: order.invoiceStatus,
 			paymentStatus: order.paymentStatus,
 			invoiceUrl: order.invoiceUrl,

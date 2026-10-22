@@ -217,6 +217,24 @@
 			</div>
 
 			<div>
+				<label for="shopeeCheckoutUrl" class="block text-sm font-medium">Link Checkout Shopee (Event / Booth)</label>
+				<input
+					id="shopeeCheckoutUrl"
+					name="shopeeCheckoutUrl"
+					type="url"
+					value={data.settings?.shopeeCheckoutUrl ?? ''}
+					placeholder="https://shopee.co.id/Link-khusus-co-..."
+					disabled={isBusy}
+					class="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900
+                 placeholder:text-neutral-400 disabled:opacity-50
+                 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder:text-neutral-500"
+				/>
+				<p class="mt-1 text-xs text-neutral-500">
+					Tautan ini akan otomatis disertakan pada draf pesan WhatsApp saat pesanan dengan metode pengiriman Mail Order (Shopee) telah lunas.
+				</p>
+			</div>
+
+			<div>
 				<label for="emergencyFlatRate" class="block text-sm font-medium">
 					Ongkir Flat Darurat (Rp)
 				</label>

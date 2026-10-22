@@ -50,6 +50,7 @@ export const storeSettings = pgTable('store_settings', {
 	emergencyFlatRate: integer('emergency_flat_rate').notNull().default(0),
 	pickupCode: text('pickup_code'),
 	pickupCodeEnabled: boolean('pickup_code_enabled').notNull().default(false),
+	shopeeCheckoutUrl: text('shopee_checkout_url').default(''),
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
 });
 
@@ -135,6 +136,7 @@ export const productVariants = pgTable('product_variants', {
 		.references(() => products.id, { onDelete: 'cascade' }),
 	name: text('name').notNull(),
 	stock: integer('stock').notNull().default(0),
+	trackStock: boolean('track_stock').notNull().default(true),
 	sortOrder: integer('sort_order').notNull().default(0),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
@@ -147,12 +149,37 @@ export const productVariantsRelations = relations(productVariants, ({ one }) => 
 	})
 }));
 
+// ─────────────────────────────────────────────
+// PROMOS (Diskon kuantitas kelipatan per produk)
+// ─────────────────────────────────────────────
+
+export const productPromos = pgTable('product_promos', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	productId: uuid('product_id')
+		.notNull()
+		.references(() => products.id, { onDelete: 'cascade' }),
+	name: text('name').notNull(), // e.g. "Beli 3 Diskon 3rb"
+	minQty: integer('min_qty').notNull().default(1),
+	discountAmount: integer('discount_amount').notNull().default(0), // dalam integer Rupiah
+	active: boolean('active').notNull().default(true),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export const productPromosRelations = relations(productPromos, ({ one }) => ({
+	product: one(products, {
+		fields: [productPromos.productId],
+		references: [products.id]
+	})
+}));
+
 export const productsRelations = relations(products, ({ one, many }) => ({
 	category: one(categories, {
 		fields: [products.categoryId],
 		references: [categories.id]
 	}),
 	variants: many(productVariants),
+	promos: many(productPromos),
 	orderItems: many(orderItems)
 }));
 
@@ -173,7 +200,11 @@ export const orders = pgTable('orders', {
 	phone: text('phone').notNull().default(''),
 
 	subtotal: integer('subtotal').notNull(),
+	discountTotal: integer('discount_total').notNull().default(0),
 	total: integer('total').notNull(),
+
+	shippingType: text('shipping_type').notNull().default('MAIL_ORDER'),
+	shippingLabel: text('shipping_label'),
 
 	invoiceStatus: invoiceStatusEnum('invoice_status').notNull().default('PENDING'),
 	paymentStatus: paymentStatusEnum('payment_status').notNull().default('PENDING'),
@@ -181,7 +212,6 @@ export const orders = pgTable('orders', {
 	invoiceUrl: text('invoice_url'),
 	pdfFilePath: text('pdf_file_path'),
 	error: text('error'),
-	shippingLabel: text('shipping_label'),
 
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()

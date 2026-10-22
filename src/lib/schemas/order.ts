@@ -8,12 +8,24 @@ export const checkoutSchema = z.object({
 		.pipe(z.string().min(3, 'Handle minimal 3 karakter').max(100, 'Handle terlalu panjang')),
 	email: z.string().trim().email('Email tidak valid').max(254),
 	note: z.string().trim().max(1000).optional().or(z.literal('')),
-	address: z.string().trim().min(10, 'Alamat lengkap wajib diisi').max(500),
+	address: z.string().trim().max(500).optional().default(''),
 	phone: z
 		.string()
 		.trim()
 		.max(20)
 		.refine((v) => /^(\+?62|0)\d{9,13}$/.test(v.replace(/[\s\-.]/g, '')), 'Nomor HP tidak valid')
+});
+
+const mailOrderShippingSchema = z.object({
+	kind: z.literal('mail_order')
+});
+
+const pickupDay1ShippingSchema = z.object({
+	kind: z.literal('pickup_day_1')
+});
+
+const pickupDay2ShippingSchema = z.object({
+	kind: z.literal('pickup_day_2')
 });
 
 // Ongkir dari kalkulasi client — cost & service divalidasi ulang server saat submit.
@@ -33,10 +45,13 @@ const fallbackShippingSchema = z.object({
 
 const pickupShippingSchema = z.object({
 	kind: z.literal('pickup'),
-	code: z.string().trim().min(1, 'Kode pickup wajib diisi').max(50)
+	code: z.string().trim().max(50).optional()
 });
 
 export const checkoutShippingSchema = z.union([
+	mailOrderShippingSchema,
+	pickupDay1ShippingSchema,
+	pickupDay2ShippingSchema,
 	quoteShippingSchema,
 	fallbackShippingSchema,
 	pickupShippingSchema

@@ -51,7 +51,7 @@ export const actions: Actions = {
 			handle: formData.get('handle'),
 			email: formData.get('email'),
 			note: formData.get('note'),
-			address: formData.get('address'),
+			address: (formData.get('address') as string) || '',
 			phone: formData.get('phone')
 		});
 

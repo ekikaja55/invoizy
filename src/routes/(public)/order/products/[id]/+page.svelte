@@ -11,7 +11,8 @@
 		Minus,
 		ShoppingBag,
 		Image as ImageIcon,
-		Layers
+		Layers,
+		Sparkles
 	} from '@lucide/svelte';
 	import type { PageData } from './$types';
 
@@ -240,6 +241,24 @@
 				</span>
 			{/if}
 		</div>
+
+		<!-- Banner Promo Kuantitas Produk -->
+		{#if product.promos && product.promos.length > 0}
+			{@const p = product.promos[0]}
+			<div
+				class="mt-3 flex items-start gap-2.5 rounded-[10px_4px_8px_3px] border-2 border-dashed border-tangerine bg-tangerine/15 p-3.5 text-xs shadow-[2px_2px_0px_#78290f] dark:bg-tangerine/20"
+			>
+				<Sparkles size={20} strokeWidth={2.5} class="mt-0.5 shrink-0 text-tangerine animate-pulse" />
+				<div class="space-y-1">
+					<p class="font-serif text-sm font-bold text-ink dark:text-papaya">
+						Spesial Promo: {p.name}
+					</p>
+					<p class="font-mono text-xs text-brandy dark:text-papaya/90">
+						Beli minimal <strong>{p.minQty} pcs</strong> (bebas campur desain varian), otomatis hemat <strong>{formatRupiah(p.discountAmount)}</strong>! Diskon berlaku kelipatan saat checkout.
+					</p>
+				</div>
+			</div>
+		{/if}
 	</div>
 
 	<!-- Pilihan Varian (jika produk memiliki varian) -->

@@ -102,7 +102,7 @@
 		>
 			<div class="flex items-center justify-between border-b border-brandy/20 pb-2 dark:border-papaya/20 print:border-black">
 				<span class="font-mono text-xs font-bold tracking-wider text-brandy uppercase dark:text-tangerine print:text-black">
-					Tujuan Pengiriman
+					Informasi Pemesan
 				</span>
 				<span class="font-mono text-xs text-brandy/70 dark:text-papaya/70 print:text-gray-600">
 					{order.email}
@@ -117,7 +117,12 @@
 						</span>
 					{/if}
 				</p>
-				{#if order.address}
+				{#if order.shippingLabel}
+					<p class="font-sans text-xs font-bold text-teal dark:text-tangerine print:text-black">
+						Metode: {order.shippingLabel}
+					</p>
+				{/if}
+				{#if order.address && order.address.trim() !== ''}
 					<p class="font-sans text-xs sm:text-sm text-brandy/90 dark:text-papaya/80 print:text-black leading-relaxed">
 						{order.address}
 					</p>
@@ -172,11 +177,23 @@
 				<span class="font-bold text-ink dark:text-papaya print:text-black">{formatRupiah(order.subtotal)}</span>
 			</div>
 
-			{#if shippingDiff > 0}
+			{#if (order.discountTotal ?? 0) > 0}
+				<div class="flex items-center justify-between font-mono text-xs sm:text-sm text-crimson dark:text-red-400 px-2 print:text-black">
+					<span class="font-bold">Potongan Diskon Promo</span>
+					<span class="font-bold">-{formatRupiah(order.discountTotal ?? 0)}</span>
+				</div>
+			{/if}
+
+			{#if order.shippingLabel}
 				<div class="flex items-center justify-between font-mono text-xs sm:text-sm text-brandy/80 dark:text-papaya/70 px-2 print:text-black">
 					<span>
-						Biaya Pengiriman{#if order.shippingLabel} · <span class="text-teal dark:text-tangerine font-semibold print:text-black">{order.shippingLabel}</span>{/if}
+						Metode Pengiriman · <span class="text-teal dark:text-tangerine font-semibold print:text-black">{order.shippingLabel}</span>
 					</span>
+					<span class="font-bold text-forest print:text-black">{shippingDiff > 0 ? formatRupiah(shippingDiff) : 'Rp 0'}</span>
+				</div>
+			{:else if shippingDiff > 0}
+				<div class="flex items-center justify-between font-mono text-xs sm:text-sm text-brandy/80 dark:text-papaya/70 px-2 print:text-black">
+					<span>Biaya Pengiriman</span>
 					<span class="font-bold text-ink dark:text-papaya print:text-black">{formatRupiah(shippingDiff)}</span>
 				</div>
 			{/if}

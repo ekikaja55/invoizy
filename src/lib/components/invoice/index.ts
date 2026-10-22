@@ -10,7 +10,9 @@ export interface InvoiceData {
 		address: string;
 		phone: string;
 		subtotal: number;
+		discountTotal?: number;
 		total: number;
+		shippingType?: string;
 		shippingLabel: string | null;
 		createdAt: string | Date;
 		paymentStatus?: 'PENDING' | 'CONFIRMED' | 'CANCELLED';

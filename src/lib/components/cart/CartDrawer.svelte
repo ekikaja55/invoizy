@@ -247,6 +247,16 @@
 			<!-- Footer -->
 			{#if !cart.isEmpty}
 				<div class="border-t-2 border-brandy/20 bg-papaya/80 p-4 dark:border-papaya/20 dark:bg-ink/90">
+					{#if cart.discountTotal > 0}
+						<div class="mb-1.5 flex items-center justify-between text-xs font-mono">
+							<span class="text-brandy/80 dark:text-papaya/70">Subtotal</span>
+							<span class="font-bold text-ink dark:text-papaya">{formatRupiah(cart.subtotal)}</span>
+						</div>
+						<div class="mb-2 flex items-center justify-between text-xs font-mono text-crimson dark:text-red-400">
+							<span class="font-bold">Hemat Diskon Promo</span>
+							<span class="font-bold">-{formatRupiah(cart.discountTotal)}</span>
+						</div>
+					{/if}
 					<div class="mb-3.5 flex items-center justify-between text-sm">
 						<span class="font-serif text-sm font-bold text-ink dark:text-papaya">Total Belanja</span>
 						<span class="font-mono text-xl font-bold text-teal dark:text-teal/90">

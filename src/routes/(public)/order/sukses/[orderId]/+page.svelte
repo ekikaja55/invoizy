@@ -6,7 +6,6 @@
 	import type { ResolvedPathname } from '$app/types';
 	import { waLink } from '$lib/utils/contact';
 	import {
-		CheckCircle2,
 		ExternalLink,
 		FileText,
 		ArrowLeft,
@@ -78,9 +77,20 @@
 
 		<div class="border-t-2 border-dashed border-brandy/20 pt-4 dark:border-papaya/20">
 			{#if data.emailEnabled}
-				<p class="text-xs leading-relaxed text-ink/80 dark:text-papaya/80">
-					Salinan invoice PDF otomatis dikirimkan ke alamat email Anda. Simpan kode pesanan di atas untuk mempermudah pengecekan status.
-				</p>
+				<div class="space-y-1.5 text-xs text-ink/80 dark:text-papaya/80">
+					<p class="leading-relaxed">
+						Salinan invoice PDF otomatis dikirimkan ke
+						{#if data.customerEmail}
+							<strong class="font-semibold text-ink dark:text-papaya">{data.customerEmail}</strong>.
+						{:else}
+							alamat email Anda.
+						{/if}
+						Simpan kode pesanan di atas untuk mempermudah pengecekan status.
+					</p>
+					<p class="text-[11px] text-brandy/70 dark:text-papaya/60">
+						<em>Belum menerima email dalam beberapa menit? Silakan periksa tab <strong>Promosi</strong> atau folder <strong>Spam</strong> Anda.</em>
+					</p>
+				</div>
 			{:else}
 				<p class="text-xs leading-relaxed text-ink/80 dark:text-papaya/80">
 					Simpan kode pesanan di atas, lalu hubungi admin melalui WhatsApp untuk konfirmasi dan mendapatkan link invoice resmi Anda.

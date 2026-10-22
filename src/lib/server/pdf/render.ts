@@ -179,11 +179,12 @@ export async function renderInvoicePdf(data: InvoiceData): Promise<Uint8Array> {
 	// ── 2. Data Pembeli & Tujuan Pengiriman ──
 	{
 		ensure(ctx, 50);
-		para(ctx, 'TUJUAN PENGIRIMAN', { size: 9, bold: true, color: GRAY_DARK });
+		para(ctx, 'INFORMASI PEMESAN & PENGIRIMAN', { size: 9, bold: true, color: GRAY_DARK });
 		para(ctx, order.handle, { size: 12, bold: true, color: BLACK });
 		if (order.email) para(ctx, `Email: ${order.email}`, { size: 9, color: GRAY_DARK });
-		if (order.phone) para(ctx, `Telepon: ${order.phone}`, { size: 9, color: GRAY_DARK });
-		if (order.address) para(ctx, `Alamat: ${order.address}`, { size: 9, color: BLACK, maxWidth: CONTENT_W - 60 });
+		if (order.phone) para(ctx, `WhatsApp: ${order.phone}`, { size: 9, color: GRAY_DARK });
+		if (order.shippingLabel) para(ctx, `Metode: ${order.shippingLabel}`, { size: 9, bold: true, color: BLACK });
+		if (order.address && order.address.trim() !== '') para(ctx, `Alamat: ${order.address}`, { size: 9, color: BLACK, maxWidth: CONTENT_W - 60 });
 		if (order.note) para(ctx, `Catatan: ${order.note}`, { size: 9, color: GRAY_DARK });
 		ctx.y -= 10;
 	}
@@ -254,8 +255,13 @@ export async function renderInvoicePdf(data: InvoiceData): Promise<Uint8Array> {
 		ensure(ctx, 50);
 		ctx.y -= 4;
 		const rows: [string, string][] = [[`Subtotal Produk`, formatRupiah(order.subtotal)]];
-		if (shippingDiff > 0) {
-			rows.push([`Biaya Pengiriman${order.shippingLabel ? ` (${order.shippingLabel})` : ''}`, formatRupiah(shippingDiff)]);
+		if ((order.discountTotal ?? 0) > 0) {
+			rows.push([`Potongan Diskon Promo`, `-${formatRupiah(order.discountTotal ?? 0)}`]);
+		}
+		if (order.shippingLabel) {
+			rows.push([`Metode: ${order.shippingLabel}`, shippingDiff > 0 ? formatRupiah(shippingDiff) : 'Rp 0']);
+		} else if (shippingDiff > 0) {
+			rows.push([`Biaya Pengiriman`, formatRupiah(shippingDiff)]);
 		}
 
 		for (const [label, val] of rows) {

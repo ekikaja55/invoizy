@@ -5,7 +5,6 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { cart, shippingLabel, type CartProduct } from '$lib/stores/cart.svelte';
-	import { waLink } from '$lib/utils/contact';
 	import Modal from '$lib/components/ui/Modal.svelte';
 	import { toast } from 'svelte-sonner';
 	import { handleFormResult } from '$lib/utils/handle-form-result';
@@ -18,11 +17,11 @@
 		Minus,
 		Truck,
 		Store,
-		MapPin,
-		Search,
-		AlertCircle,
 		ArrowRight,
-		Check
+		ArrowLeft,
+		Check,
+		Sparkles,
+		Calendar
 	} from '@lucide/svelte';
 	import type { PageData } from './$types';
 
@@ -37,22 +36,16 @@
 			itemToDelete = item;
 		} else {
 			cart.addOrUpdateItem(item, item.qty - 1);
-			cart.setShipping(null);
-			quotedKey = null;
 		}
 	}
 
 	function handleIncrement(item: CartProduct) {
 		cart.addOrUpdateItem(item, item.qty + 1);
-		cart.setShipping(null);
-		quotedKey = null;
 	}
 
 	function confirmDeleteItem() {
 		if (itemToDelete) {
 			cart.addOrUpdateItem(itemToDelete, 0);
-			cart.setShipping(null);
-			quotedKey = null;
 			itemToDelete = null;
 			toast.success('Produk dihapus dari keranjang.');
 		}
@@ -60,7 +53,6 @@
 
 	function confirmClearCart() {
 		cart.clear();
-		quotedKey = null;
 		confirmClearOpen = false;
 		toast.success('Keranjang belanja dikosongkan.');
 	}
@@ -77,211 +69,6 @@
 	);
 	const shippingJson = $derived(cart.shipping ? JSON.stringify(cart.shipping) : '');
 
-	interface Destination {
-		id: number;
-		label: string;
-	}
-
-	interface QuoteOption {
-		service: string;
-		description: string;
-		cost: number;
-		etd: string;
-	}
-
-	interface QuoteGroup {
-		courier: string;
-		courierLabel: string;
-		options: QuoteOption[];
-		cached: boolean;
-	}
-
-	let destQuery = $state('');
-	let destResults = $state<Destination[]>([]);
-	let searching = $state(false);
-	let searchError = $state('');
-	let hasSearched = $state(false);
-
-	let dest = $state<{ id: number; label: string } | null>(
-		cart.shipping?.kind === 'quote'
-			? { id: cart.shipping.destId, label: cart.shipping.destLabel }
-			: null
-	);
-	let quoting = $state(false);
-	let quoteError = $state('');
-	let quoteGroups = $state<QuoteGroup[]>([]);
-	let fallbackRate = $state<number | null>(null);
-	// Eskalasi: 3x gagal beruntun (cari maupun kalkulasi) → tawarkan bantuan + flat darurat.
-	let failCount = $state(0);
-	let modalOpen = $state(false);
-	let emergencyRate = $state<number | null>(null);
-	const showEscalation = $derived(failCount >= 3);
-	// Kunci item+dest saat quote sukses — beda = basi, wajib cek ulang (berat pengaruhi harga).
-	let quotedKey = $state<string | null>(null);
-
-	const itemsKey = $derived(
-		JSON.stringify(cart.items.map((i) => ({ productId: i.productId, qty: i.qty })))
-	);
-	const currentKey = $derived(`${itemsKey}|${dest?.id ?? ''}`);
-	const needsQuote = $derived(
-		dest !== null && !cart.isEmpty && (quotedKey === null || quotedKey !== currentKey)
-	);
-
-	let pickupCodeInput = $state(
-		cart.shipping?.kind === 'pickup' ? cart.shipping.code : ''
-	);
-	let shippingMethod = $state<'courier' | 'pickup'>(
-		cart.shipping?.kind === 'pickup' ? 'pickup' : 'courier'
-	);
-
-	function switchShippingMethod(method: 'courier' | 'pickup') {
-		shippingMethod = method;
-		if (method === 'pickup') {
-			cart.setShipping({ kind: 'pickup', code: pickupCodeInput.trim(), cost: 0 });
-		} else {
-			cart.setShipping(null);
-		}
-	}
-
-	function handlePickupCodeInput(val: string) {
-		pickupCodeInput = val;
-		if (shippingMethod === 'pickup') {
-			cart.setShipping({ kind: 'pickup', code: val.trim(), cost: 0 });
-		}
-	}
-
-	// Pencarian eksplisit via tombol (bukan per huruf): tiap hit = 1 req kuota.
-	async function doSearch() {
-		const q = destQuery.trim();
-		if (q.length < 3) {
-			destResults = [];
-			searchError = 'Ketik minimal 3 huruf dulu.';
-			hasSearched = false;
-			return;
-		}
-		if (searching) return;
-		searching = true;
-		searchError = '';
-		hasSearched = true;
-		try {
-			const res = await fetch(`/api/shipping/search?q=${encodeURIComponent(q)}`);
-			const json = await res.json();
-			if (!res.ok) throw new Error(json.error ?? 'Pencarian gagal.');
-			destResults = json.results;
-			failCount = 0;
-		} catch (e) {
-			destResults = [];
-			searchError = e instanceof Error ? e.message : 'Pencarian gagal.';
-			failCount += 1;
-		} finally {
-			searching = false;
-		}
-	}
-
-	function selectDest(d: Destination) {
-		dest = d;
-		destQuery = d.label;
-		destResults = [];
-		cart.setShipping(null);
-		quotedKey = null;
-		quoteGroups = [];
-		fallbackRate = null;
-		quoteError = '';
-		fetchQuote();
-	}
-
-	function clearDest() {
-		dest = null;
-		destQuery = '';
-		destResults = [];
-		hasSearched = false;
-		cart.setShipping(null);
-		quotedKey = null;
-		quoteGroups = [];
-		fallbackRate = null;
-	}
-
-	async function fetchQuote() {
-		if (!dest || cart.isEmpty || quoting) return;
-		quoting = true;
-		quoteError = '';
-		try {
-			const res = await fetch('/api/shipping/quote', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					destinationId: dest.id,
-					items: cart.items.map((i) => ({ productId: i.productId, qty: i.qty }))
-				})
-			});
-			const json = await res.json();
-			if (!res.ok) throw new Error(json.error ?? 'Kalkulasi gagal.');
-			quoteGroups = json.options;
-			fallbackRate = json.fallback?.rate ?? null;
-			quotedKey = currentKey;
-			failCount = 0;
-			// Pertahankan pilihan lama bila masih tersedia dgn harga sama.
-			const cur = cart.shipping;
-			if (cur?.kind === 'quote') {
-				const still = quoteGroups
-					.find((g) => g.courier === cur.courier)
-					?.options.find((o) => o.service === cur.service && o.cost === cur.cost);
-				if (!still) cart.setShipping(null);
-			}
-		} catch (e) {
-			quoteError = e instanceof Error ? e.message : 'Kalkulasi gagal.';
-			failCount += 1;
-		} finally {
-			quoting = false;
-		}
-	}
-
-	function selectService(group: QuoteGroup, opt: QuoteOption) {
-		if (!dest) return;
-		cart.setShipping({
-			kind: 'quote',
-			courier: group.courier,
-			courierLabel: group.courierLabel,
-			service: opt.service,
-			cost: opt.cost,
-			etd: opt.etd,
-			destId: dest.id,
-			destLabel: dest.label
-		});
-	}
-
-	function isSelected(group: QuoteGroup, opt: QuoteOption): boolean {
-		const s = cart.shipping;
-		return s?.kind === 'quote' && s.courier === group.courier && s.service === opt.service;
-	}
-
-	function etdLabel(etd: string): string {
-		return etd && etd !== '-' ? ` · ${etd}` : '';
-	}
-
-	async function openEmergency() {
-		try {
-			const res = await fetch('/api/shipping/fallback');
-			const json = await res.json();
-			if (!res.ok || typeof json.rate !== 'number' || json.rate <= 0) {
-				throw new Error('Flat darurat tidak tersedia saat ini.');
-			}
-			emergencyRate = json.rate;
-			modalOpen = true;
-		} catch (e) {
-			toast.error(e instanceof Error ? e.message : 'Flat darurat tidak tersedia.');
-		}
-	}
-
-	function confirmEmergency() {
-		modalOpen = false;
-		if (emergencyRate === null) return;
-		cart.setShipping({ kind: 'fallback', cost: emergencyRate });
-		quotedKey = currentKey;
-		failCount = 0;
-		toast.success('Ongkir flat darurat dipakai.');
-	}
-
 	// Riwayat perangkat: satu-satunya momen token ada di client adalah sesaat
 	// setelah order sukses — simpan di sini, dibaca halaman /order/riwayat.
 	function saveInvoiceToHistory(orderId: string, token: string, total: number) {
@@ -297,7 +84,14 @@
 		}
 	}
 
-	// Sinkronkan cart dengan katalog terbaru saat halaman dimuat (harga/stok bisa berubah).
+	// 3 Opsi Pengiriman Khusus Event Chibiconxi
+	type ShippingKind = 'mail_order' | 'pickup_day_1' | 'pickup_day_2';
+
+	function selectShippingKind(kind: ShippingKind) {
+		cart.setShipping({ kind, cost: 0 });
+	}
+
+	// Sinkronkan cart dengan katalog terbaru & aturan diskon promo saat halaman dimuat
 	$effect(() => {
 		const catalogMap = new SvelteMap<
 			string,
@@ -309,6 +103,7 @@
 				variants?: { id: string; name: string; stock: number }[];
 			}
 		>();
+		const promoRules: { productId: string; name: string; minQty: number; discountAmount: number }[] = [];
 
 		for (const category of [...data.productCategories]) {
 			for (const product of category.products) {
@@ -319,14 +114,47 @@
 					stock: product.stock,
 					variants: product.variants
 				});
+				if ('promos' in product && Array.isArray((product as any).promos)) {
+					for (const promo of (product as any).promos) {
+						promoRules.push({
+							productId: product.id,
+							name: promo.name,
+							minQty: promo.minQty,
+							discountAmount: promo.discountAmount
+						});
+					}
+				}
 			}
 		}
 
-		untrack(() => cart.reconcile(catalogMap));
+		untrack(() => {
+			cart.reconcile(catalogMap);
+			cart.setPromoRules(promoRules);
+			// Default ke mail_order jika belum ada opsi pengiriman aktif
+			if (
+				!cart.shipping ||
+				(cart.shipping.kind !== 'mail_order' &&
+					cart.shipping.kind !== 'pickup_day_1' &&
+					cart.shipping.kind !== 'pickup_day_2')
+			) {
+				cart.setShipping({ kind: 'mail_order', cost: 0 });
+			}
+		});
 	});
 </script>
 
 <div class="space-y-8 pb-24">
+	<!-- Tombol Kembali ke Katalog -->
+	<div>
+		<a
+			href={resolve('/(public)/order')}
+			class="inline-flex items-center gap-2 rounded-[8px_3px_7px_2px] border-2 border-brandy/50 bg-papaya px-3.5 py-1.5 font-mono text-xs font-bold text-ink shadow-[2px_2px_0px_#78290f] transition-all hover:-translate-y-0.5 hover:border-brandy hover:bg-brandy/10 dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[2px_2px_0px_rgba(255,236,209,0.2)]"
+		>
+			<ArrowLeft size={14} strokeWidth={2.5} />
+			<span>Kembali ke Katalog Merchandise</span>
+		</a>
+	</div>
+
 	<!-- Page Header / Scrapbook Title -->
 	<header class="space-y-3">
 		<div
@@ -335,12 +163,12 @@
 			CHECKOUT PESANAN
 		</div>
 		<h1
-			class="font-serif text-3xl font-bold tracking-normal text-ink md:text-4xl dark:text-papaya"
+			class="font-headline text-3xl font-extrabold tracking-normal text-ink md:text-4xl dark:text-papaya"
 		>
 			Lengkapi Pesanan Anda
 		</h1>
 		<p class="font-handwriting text-2xl font-semibold leading-snug text-teal md:text-3xl dark:text-papaya/90">
-			Periksa kembali rincian belanjaan dan isi data pengiriman dengan benar.
+			Pilih metode penerimaan barang dan isi kontak Anda untuk faktur resmi.
 		</p>
 	</header>
 
@@ -349,385 +177,153 @@
 			class="mx-auto max-w-md rounded-[16px_8px_14px_6px] border-2 border-dashed border-brandy/40 bg-papaya/40 p-10 text-center shadow-[4px_4px_0px_#78290f] dark:border-papaya/30 dark:bg-ink/40 dark:shadow-[4px_4px_0px_rgba(255,236,209,0.15)]"
 		>
 			<div
-				class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full border-2 border-brandy bg-tangerine/20 text-brandy dark:border-papaya/40 dark:text-papaya"
+				class="mx-auto flex h-16 w-16 items-center justify-center rounded-[12px_4px_10px_3px] border-2 border-brandy bg-papaya text-brandy shadow-[3px_3px_0px_#78290f] dark:border-papaya/40 dark:bg-ink dark:text-papaya"
 			>
-				<ShoppingBag size={28} strokeWidth={2.5} />
+				<ShoppingBag size={28} strokeWidth={2.25} />
 			</div>
-			<p class="font-serif text-lg font-bold text-ink dark:text-papaya">
-				Keranjang Kamu Masih Kosong
+			<h2 class="mt-4 font-headline text-xl font-bold text-ink dark:text-papaya">
+				Keranjang Masih Kosong
+			</h2>
+			<p class="mt-1 font-sans text-xs text-brandy/80 dark:text-papaya/70">
+				Belum ada produk yang dipilih untuk dicheckout. Silakan jelajahi katalog merchandise terlebih dahulu.
 			</p>
-			<p class="mt-1 text-sm text-brandy/80 dark:text-papaya/70">
-				Belum ada produk yang kamu pilih untuk dipesan.
-			</p>
-			<div class="mt-5">
+			<div class="mt-6">
 				<a
 					href={resolve('/(public)/order')}
-					class="inline-flex items-center gap-2 rounded-[8px_3px_7px_2px] border-2 border-brandy bg-tangerine px-5 py-2.5 font-mono text-sm font-bold text-white shadow-[3px_3px_0px_#78290f] transition-all hover:bg-[#e06d00] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none"
+					class="inline-flex items-center gap-2 rounded-[10px_5px_9px_4px] border-2 border-brandy bg-tangerine px-5 py-2.5 font-sans text-sm font-bold text-white shadow-[3px_3px_0px_#78290f] transition-all hover:bg-[#e06d00] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none"
 				>
-					<span>Mulai Belanja</span>
-					<ArrowRight size={15} strokeWidth={2.5} />
+					<span>Buka Katalog Merchandise</span>
+					<ArrowRight size={16} strokeWidth={2.5} />
 				</a>
 			</div>
 		</div>
 	{:else}
-		<!-- Step 1: Pengiriman -->
+		<!-- Step 1: Metode Pengambilan / Pengiriman Barang -->
 		<div
 			class="space-y-4 rounded-[14px_6px_12px_8px] border-2 border-brandy bg-papaya/50 p-5 shadow-[4px_4px_0px_#78290f] dark:border-papaya/30 dark:bg-ink/60 dark:shadow-[4px_4px_0px_rgba(255,236,209,0.2)]"
 		>
-			<div class="flex items-center gap-2">
-				<div
-					class="flex h-8 w-8 items-center justify-center rounded-[6px_2px_5px_1px] border-2 border-brandy bg-tangerine text-white shadow-[2px_2px_0px_#78290f]"
-				>
-					<Truck size={16} strokeWidth={2.5} />
+			<div class="border-b-2 border-brandy/20 pb-3 dark:border-papaya/20">
+				<div class="flex items-center gap-2">
+					<div
+						class="flex h-8 w-8 items-center justify-center rounded-[6px_2px_5px_1px] border-2 border-brandy bg-tangerine text-white shadow-[2px_2px_0px_#78290f]"
+					>
+						<Truck size={16} strokeWidth={2.5} />
+					</div>
+					<div>
+						<h2 class="font-headline text-lg font-bold text-ink dark:text-papaya">
+							Metode Pengiriman / Pengambilan
+						</h2>
+					</div>
 				</div>
-				<h2 class="font-serif text-lg font-bold text-ink dark:text-papaya">Metode Pengiriman</h2>
+				<p class="mt-1 font-sans text-xs text-brandy/80 dark:text-papaya/70">
+					Pilih apakah barang ingin dikirim lewat ekspedisi atau diambil langsung di booth pameran.
+				</p>
 			</div>
 
-			{#if data.pickupEnabled}
-				<div class="grid grid-cols-2 gap-2.5">
-					<button
-						type="button"
-						onclick={() => switchShippingMethod('courier')}
-						class="rounded-[8px_3px_7px_2px] border-2 p-3 font-mono text-xs font-bold transition-all duration-150 {shippingMethod ===
-						'courier'
-							? 'border-brandy bg-tangerine text-white shadow-[2px_2px_0px_#78290f] -translate-y-0.5'
-							: 'border-brandy/40 bg-papaya text-ink hover:bg-brandy/10 dark:border-papaya/30 dark:bg-ink dark:text-papaya'}"
-					>
-						Kirim via Kurir
-					</button>
-					<button
-						type="button"
-						onclick={() => switchShippingMethod('pickup')}
-						class="rounded-[8px_3px_7px_2px] border-2 p-3 font-mono text-xs font-bold transition-all duration-150 {shippingMethod ===
-						'pickup'
-							? 'border-brandy bg-tangerine text-white shadow-[2px_2px_0px_#78290f] -translate-y-0.5'
-							: 'border-brandy/40 bg-papaya text-ink hover:bg-brandy/10 dark:border-papaya/30 dark:bg-ink dark:text-papaya'}"
-					>
-						Ambil Sendiri (Rp 0)
-					</button>
-				</div>
-			{/if}
-
-			{#if shippingMethod === 'pickup' && data.pickupEnabled}
-				<div
-					class="space-y-3 rounded-[10px_4px_8px_3px] border-2 border-dashed border-forest/50 bg-forest/10 p-4"
+			<!-- 3 Pilihan Pengiriman Event -->
+			<div class="grid gap-3 sm:grid-cols-1">
+				<!-- Opsi 1: Mail Order (Shopee Link) -->
+				<label
+					class="flex cursor-pointer items-start justify-between gap-3 rounded-[12px_5px_10px_4px] border-2 p-4 transition-all duration-150 {cart.shipping?.kind === 'mail_order'
+						? 'border-brandy bg-tangerine/15 shadow-[3px_3px_0px_#78290f] dark:border-papaya dark:bg-tangerine/25'
+						: 'border-brandy/30 bg-white/70 hover:border-brandy hover:bg-papaya/40 dark:border-papaya/25 dark:bg-ink/70'}"
 				>
-					<div class="flex items-center justify-between">
-						<span class="font-serif text-sm font-bold text-forest"
-							>Self-Pickup di Lokasi Toko</span
-						>
-						<span
-							class="rounded-[4px_2px_4px_2px] border border-forest/40 bg-forest/20 px-2 py-0.5 font-mono text-xs font-bold text-forest"
-						>
-							Gratis (Rp 0)
-						</span>
-					</div>
-					<p class="text-xs leading-relaxed text-ink/80 dark:text-papaya/80">
-						Khusus rekanan/teman yang mengambil pesanan langsung ke lokasi toko. Masukkan kode
-						khusus dari admin.
-					</p>
-					<div>
-						<label
-							for="pickupCodeInput"
-							class="block font-mono text-xs font-bold text-brandy dark:text-papaya"
-						>
-							Kode Rahasia Rekanan
-						</label>
+					<div class="flex items-start gap-3">
 						<input
-							id="pickupCodeInput"
-							type="text"
-							value={pickupCodeInput}
-							oninput={(e) => handlePickupCodeInput(e.currentTarget.value)}
-							placeholder="MASUKKAN KODE"
+							type="radio"
+							name="shipping_kind"
+							checked={cart.shipping?.kind === 'mail_order'}
+							onchange={() => selectShippingKind('mail_order')}
 							disabled={isBusy}
-							class="mt-1 w-full rounded-[6px_3px_5px_2px] border-2 border-brandy bg-white px-3.5 py-2 font-mono text-sm font-bold uppercase text-ink placeholder:text-brandy/40 focus:border-brandy focus:ring-2 focus:ring-tangerine focus:outline-none disabled:opacity-50 dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:placeholder:text-papaya/40"
+							class="mt-1 accent-tangerine"
 						/>
-					</div>
-				</div>
-			{:else}
-				<div class="flex gap-2">
-					<input
-						type="search"
-						bind:value={destQuery}
-						onkeydown={(e) => {
-							if (e.key === 'Enter') {
-								e.preventDefault();
-								doSearch();
-							}
-						}}
-						placeholder="Ketik nama kecamatan tujuan (mis. Gambir, Sukajadi)"
-						disabled={isBusy}
-						class="w-full rounded-[8px_3px_7px_2px] border-2 border-brandy bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-brandy/40 focus:border-brandy focus:ring-2 focus:ring-tangerine focus:outline-none disabled:opacity-50 dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:placeholder:text-papaya/40"
-					/>
-					<button
-						type="button"
-						onclick={doSearch}
-						disabled={searching || isBusy}
-						class="shrink-0 rounded-[8px_3px_7px_2px] border-2 border-brandy bg-tangerine px-5 py-2.5 font-mono text-xs font-bold text-white shadow-[2px_2px_0px_#78290f] transition-all hover:bg-[#e06d00] active:translate-y-0.5 active:shadow-none disabled:opacity-50"
-					>
-						{searching ? 'Mencari...' : 'Cari'}
-					</button>
-				</div>
-
-				<p class="text-xs text-brandy/80 dark:text-papaya/70">
-					Ketik nama kecamatan atau kota tujuan Anda.
-					{#if data.contact}
-						{@const waManual = waLink(
-							data.contact,
-							'Halo admin, kecamatan saya belum terdaftar di pilihan ongkir cho.lazey - CHIBICONXI CATALOGUE. Boleh dibantu hitung ongkir manual?'
-						)}
-						{#if waManual}
-							<a
-								href={waManual}
-								target="_blank"
-								rel="external noopener noreferrer"
-								class="font-bold underline hover:text-tangerine"
-							>
-								Hubungi admin via WhatsApp
-							</a>
-						{:else}
-							Hubungi admin
-						{/if}
-					{:else}
-						Hubungi admin
-					{/if}
-					jika tidak menemukan kecamatannya.
-				</p>
-
-				{#if searchError}
-					<p class="font-mono text-xs font-bold text-crimson">{searchError}</p>
-				{/if}
-
-				{#if hasSearched && !searching && destResults.length === 0 && !searchError && !dest}
-					<div
-						class="rounded-[10px_4px_8px_3px] border-2 border-brandy/40 bg-tangerine/10 p-3.5 text-xs text-brandy dark:border-papaya/30 dark:bg-tangerine/15 dark:text-papaya"
-					>
-						<p class="font-serif text-sm font-bold text-ink dark:text-papaya">
-							Kecamatan tidak ditemukan atau tidak ada yang cocok?
-						</p>
-						<p class="mt-1 leading-relaxed">
-							Pastikan ejaan kecamatan sudah benar atau coba cari berdasarkan nama kota/kabupaten.
-							Jika masih tidak ditemukan, silakan hubungi admin untuk dibantu cek ongkir manual.
-						</p>
-						{#if data.contact}
-							{@const waNotFound = waLink(
-								data.contact,
-								`Halo admin, saya mau checkout tapi kecamatan tujuan "${destQuery}" tidak ditemukan di sistem. Boleh dibantu cek ongkir manual?`
-							)}
-							{#if waNotFound}
-								<div class="mt-2.5">
-									<a
-										href={waNotFound}
-										target="_blank"
-										rel="external noopener noreferrer"
-										class="inline-flex items-center gap-1.5 rounded-[6px_2px_5px_1px] border-2 border-brandy bg-tangerine px-3 py-1.5 font-mono text-xs font-bold text-white shadow-[2px_2px_0px_#78290f] hover:bg-[#e06d00]"
-									>
-										Chat Admin via WhatsApp
-									</a>
-								</div>
-							{/if}
-						{/if}
-					</div>
-				{/if}
-
-				{#if destResults.length > 0}
-					<ul class="space-y-1.5">
-						{#each destResults as d (d.id)}
-							<li>
-								<button
-									type="button"
-									onclick={() => selectDest(d)}
-									disabled={isBusy}
-									class="group flex w-full items-center justify-between rounded-[8px_3px_7px_2px] border-2 border-brandy/40 bg-white/80 p-3 text-left font-sans text-xs font-bold text-ink shadow-[2px_2px_0px_#78290f] transition-all hover:border-brandy hover:bg-brandy/10 active:translate-y-0.5 active:shadow-none disabled:opacity-50 dark:border-papaya/30 dark:bg-ink dark:text-papaya dark:hover:border-papaya dark:hover:bg-papaya/15 dark:hover:text-papaya"
+						<div class="space-y-1">
+							<div class="flex flex-wrap items-center gap-2">
+								<span class="font-headline text-sm font-bold text-ink dark:text-papaya">
+									Mail Order (Kirim Paket via Shopee)
+								</span>
+								<span
+									class="rounded-[4px_2px_4px_2px] border border-forest/40 bg-forest/20 px-2 py-0.5 font-mono text-[10px] font-black text-forest tracking-wider uppercase"
 								>
-									<span>{d.label}</span>
-									<span class="font-mono text-[11px] text-teal transition-colors group-hover:text-tangerine dark:text-teal/90">Pilih & Cek Ongkir →</span>
-								</button>
-							</li>
-						{/each}
-					</ul>
-				{/if}
-
-				{#if dest}
-					<div
-						class="flex items-center justify-between gap-2 rounded-[8px_3px_7px_2px] border-2 border-brandy bg-papaya p-3 shadow-[2px_2px_0px_#78290f] dark:border-papaya/40 dark:bg-ink dark:shadow-[2px_2px_0px_rgba(255,236,209,0.2)]"
-					>
-						<div class="flex items-center gap-2">
-							<MapPin size={16} strokeWidth={2.5} class="text-tangerine shrink-0" />
-							<span class="text-xs text-ink dark:text-papaya"
-								>Tujuan: <strong class="font-bold">{dest.label}</strong></span
-							>
-						</div>
-						<button
-							type="button"
-							onclick={clearDest}
-							disabled={isBusy}
-							class="rounded-[4px_2px_3px_1px] border border-brandy/30 bg-white px-2 py-0.5 font-mono text-[11px] font-bold text-brandy hover:bg-brandy/10 disabled:opacity-50 dark:border-papaya/30 dark:bg-ink dark:text-papaya"
-						>
-							Ganti
-						</button>
-					</div>
-				{/if}
-
-				{#if dest}
-					{#if quoting}
-						<div
-							class="flex items-center gap-2 rounded-[8px_3px_7px_2px] border border-dashed border-brandy/40 bg-papaya/40 p-3 text-xs text-brandy dark:border-papaya/30 dark:bg-ink/40 dark:text-papaya"
-						>
-							<div class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-tangerine border-t-transparent"></div>
-							<span>Menghitung ongkir ke {dest.label}...</span>
-						</div>
-					{:else if quoteError}
-						<div
-							class="rounded-[8px_3px_7px_2px] border-2 border-crimson/40 bg-crimson/10 p-3 text-xs text-crimson"
-						>
-							<p class="font-mono font-bold">{quoteError}</p>
-							<button
-								type="button"
-								onclick={fetchQuote}
-								disabled={isBusy}
-								class="mt-1 font-mono font-bold underline disabled:opacity-50"
-							>
-								Coba lagi
-							</button>
-						</div>
-					{:else}
-						{#each quoteGroups as group (group.courier)}
-							<div class="space-y-1.5 pt-1">
-								<p class="font-mono text-xs font-bold text-brandy/80 dark:text-papaya/70">
-									{group.courierLabel}
-								</p>
-								<div class="grid gap-2 sm:grid-cols-2">
-									{#each group.options as opt (opt.service)}
-										{@const active = isSelected(group, opt)}
-										<label
-											class="flex cursor-pointer items-center justify-between rounded-[8px_3px_7px_2px] border-2 p-3 transition-all duration-150 {active
-												? 'border-brandy bg-tangerine/15 shadow-[2px_2px_0px_#78290f] dark:border-papaya dark:bg-tangerine/20'
-												: 'border-brandy/30 bg-white/70 hover:border-brandy hover:bg-papaya/40 dark:border-papaya/25 dark:bg-ink/70'}"
-										>
-											<div class="flex items-center gap-2.5">
-												<input
-													type="radio"
-													name="shipping"
-													checked={active}
-													onchange={() => selectService(group, opt)}
-													disabled={isBusy}
-													class="accent-tangerine"
-												/>
-												<div>
-													<span class="font-serif text-xs font-bold text-ink dark:text-papaya"
-														>{opt.service}</span
-													>
-													{#if opt.etd && opt.etd !== '-'}
-														<span class="block font-mono text-[10px] text-brandy/70 dark:text-papaya/60"
-															>{opt.etd}</span
-														>
-													{/if}
-												</div>
-											</div>
-											<span class="font-mono text-xs font-bold text-teal dark:text-teal/90"
-												>{formatRupiah(opt.cost)}</span
-											>
-										</label>
-									{/each}
-								</div>
+									Gratis Ongkir di Web (Rp 0)
+								</span>
 							</div>
-						{/each}
-
-						{#if fallbackRate !== null}
-							<label
-								class="flex cursor-pointer items-center justify-between rounded-[8px_3px_7px_2px] border-2 border-brandy bg-brandy/10 p-3 shadow-[2px_2px_0px_#78290f] dark:border-papaya/40 dark:bg-papaya/10"
-							>
-								<div class="flex items-center gap-2.5">
-									<input
-										type="radio"
-										name="shipping"
-										checked={cart.shipping?.kind === 'fallback'}
-										onchange={() =>
-											cart.setShipping({ kind: 'fallback', cost: fallbackRate ?? 0 })}
-										disabled={isBusy}
-										class="accent-tangerine"
-									/>
-									<div>
-										<span class="font-serif text-xs font-bold text-ink dark:text-papaya"
-											>Flat Darurat</span
-										>
-										<span class="block font-mono text-[10px] text-brandy/70 dark:text-papaya/60"
-											>Cek ongkir otomatis gangguan</span
-										>
-									</div>
-								</div>
-								<span class="font-mono text-xs font-bold text-teal dark:text-teal/90"
-									>{formatRupiah(fallbackRate)}</span
-								>
-							</label>
-						{/if}
-
-						{#if needsQuote}
-							<button
-								type="button"
-								onclick={fetchQuote}
-								disabled={isBusy}
-								class="w-full rounded-[8px_3px_7px_2px] border-2 border-brandy bg-papaya py-2 font-mono text-xs font-bold text-ink shadow-[2px_2px_0px_#78290f] transition-all hover:bg-brandy/10 active:translate-y-0.5 active:shadow-none disabled:opacity-50 dark:border-papaya/40 dark:bg-ink dark:text-papaya"
-							>
-								{quotedKey === null
-									? 'Cek Ongkir'
-									: 'Cek Ulang Ongkir (keranjang telah berubah)'}
-							</button>
-						{/if}
-					{/if}
-				{/if}
-
-				{#if showEscalation}
-					<div
-						class="rounded-[10px_4px_8px_3px] border-2 border-brandy bg-tangerine/15 p-4 shadow-[3px_3px_0px_#78290f] dark:border-papaya/30 dark:bg-ink"
-					>
-						<p class="font-serif text-sm font-bold text-ink dark:text-papaya">Masih Kendala?</p>
-						<p class="mt-1 text-xs leading-relaxed text-ink/80 dark:text-papaya/80">
-							Cek ongkir otomatis sedang mengalami gangguan jaringan. Anda dapat menghubungi admin
-							atau melanjutkan dengan tarif flat darurat.
-						</p>
-						<div class="mt-3 flex flex-wrap gap-2">
-							{#if data.contact}
-								{@const wa = waLink(data.contact)}
-								{#if wa}
-									<a
-										href={wa}
-										target="_blank"
-										rel="external noopener noreferrer"
-										class="rounded-[6px_2px_5px_1px] border-2 border-brandy bg-white px-3.5 py-1.5 font-mono text-xs font-bold text-ink shadow-[2px_2px_0px_#78290f] hover:bg-papaya dark:border-papaya/40 dark:bg-ink dark:text-papaya"
-									>
-										Chat Admin via WA
-									</a>
-								{:else}
-									<span
-										class="rounded-[6px_2px_5px_1px] border-2 border-brandy bg-white px-3 py-1.5 font-mono text-xs text-ink dark:border-papaya/40 dark:bg-ink dark:text-papaya"
-									>
-										Hubungi admin: {data.contact}
-									</span>
-								{/if}
-							{/if}
-							<button
-								type="button"
-								onclick={openEmergency}
-								disabled={isBusy}
-								class="rounded-[6px_2px_5px_1px] border-2 border-brandy bg-tangerine px-3.5 py-1.5 font-mono text-xs font-bold text-white shadow-[2px_2px_0px_#78290f] hover:bg-[#e06d00] disabled:opacity-50"
-							>
-								Pakai Ongkir Flat Darurat
-							</button>
+							<p class="font-sans text-xs leading-relaxed text-brandy/80 dark:text-papaya/70">
+								Barang dibayar di website ini. Tautan checkout khusus Shopee (Rp 1 / bebas ongkir Shopee) akan dikirimkan ke WhatsApp/Email Anda untuk keperluan ekspedisi.
+							</p>
 						</div>
 					</div>
-				{/if}
+					<span class="font-mono text-sm font-black text-teal dark:text-teal/90">Rp 0</span>
+				</label>
 
-				<Modal
-					open={modalOpen}
-					title="Pakai ongkir flat darurat?"
-					message={`Cek ongkir otomatis sedang gangguan, jadi tarifnya flat ${formatRupiah(emergencyRate ?? 0)} ke semua tujuan. Bisa lebih mahal atau murah dari tarif kurir asli, tapi order tetap diproses dan invoice dikirim seperti biasa. Lanjut?`}
-					confirmLabel="Ya, pakai flat"
-					onConfirm={confirmEmergency}
-					onCancel={() => (modalOpen = false)}
-				/>
-			{/if}
+				<!-- Opsi 2: Self Pickup Day 1 -->
+				<label
+					class="flex cursor-pointer items-start justify-between gap-3 rounded-[12px_5px_10px_4px] border-2 p-4 transition-all duration-150 {cart.shipping?.kind === 'pickup_day_1'
+						? 'border-brandy bg-tangerine/15 shadow-[3px_3px_0px_#78290f] dark:border-papaya dark:bg-tangerine/25'
+						: 'border-brandy/30 bg-white/70 hover:border-brandy hover:bg-papaya/40 dark:border-papaya/25 dark:bg-ink/70'}"
+				>
+					<div class="flex items-start gap-3">
+						<input
+							type="radio"
+							name="shipping_kind"
+							checked={cart.shipping?.kind === 'pickup_day_1'}
+							onchange={() => selectShippingKind('pickup_day_1')}
+							disabled={isBusy}
+							class="mt-1 accent-tangerine"
+						/>
+						<div class="space-y-1">
+							<div class="flex flex-wrap items-center gap-2">
+								<span class="font-headline text-sm font-bold text-ink dark:text-papaya">
+									Self-Pickup: Chibiconxi Day 1
+								</span>
+								<span
+									class="rounded-[4px_2px_4px_2px] border border-teal/40 bg-teal/20 px-2 py-0.5 font-mono text-[10px] font-black text-teal tracking-wider uppercase"
+								>
+									Ambil di Booth (Rp 0)
+								</span>
+							</div>
+							<p class="font-sans text-xs leading-relaxed text-brandy/80 dark:text-papaya/70">
+								Ambil pesanan langsung di meja booth cho.lazey pada event Chibiconxi hari pertama (Sabtu, 12 Desember 2026).
+							</p>
+						</div>
+					</div>
+					<span class="font-mono text-sm font-black text-teal dark:text-teal/90">Rp 0</span>
+				</label>
+
+				<!-- Opsi 3: Self Pickup Day 2 -->
+				<label
+					class="flex cursor-pointer items-start justify-between gap-3 rounded-[12px_5px_10px_4px] border-2 p-4 transition-all duration-150 {cart.shipping?.kind === 'pickup_day_2'
+						? 'border-brandy bg-tangerine/15 shadow-[3px_3px_0px_#78290f] dark:border-papaya dark:bg-tangerine/25'
+						: 'border-brandy/30 bg-white/70 hover:border-brandy hover:bg-papaya/40 dark:border-papaya/25 dark:bg-ink/70'}"
+				>
+					<div class="flex items-start gap-3">
+						<input
+							type="radio"
+							name="shipping_kind"
+							checked={cart.shipping?.kind === 'pickup_day_2'}
+							onchange={() => selectShippingKind('pickup_day_2')}
+							disabled={isBusy}
+							class="mt-1 accent-tangerine"
+						/>
+						<div class="space-y-1">
+							<div class="flex flex-wrap items-center gap-2">
+								<span class="font-headline text-sm font-bold text-ink dark:text-papaya">
+									Self-Pickup: Chibiconxi Day 2
+								</span>
+								<span
+									class="rounded-[4px_2px_4px_2px] border border-teal/40 bg-teal/20 px-2 py-0.5 font-mono text-[10px] font-black text-teal tracking-wider uppercase"
+								>
+									Ambil di Booth (Rp 0)
+								</span>
+							</div>
+							<p class="font-sans text-xs leading-relaxed text-brandy/80 dark:text-papaya/70">
+								Ambil pesanan langsung di meja booth cho.lazey pada event Chibiconxi hari kedua (Minggu, 13 Desember 2026).
+							</p>
+						</div>
+					</div>
+					<span class="font-mono text-sm font-black text-teal dark:text-teal/90">Rp 0</span>
+				</label>
+			</div>
 		</div>
 
 		<!-- Step 2: Ringkasan Belanja -->
@@ -741,7 +337,7 @@
 					>
 						<ShoppingBag size={16} strokeWidth={2.5} />
 					</div>
-					<h2 class="font-serif text-lg font-bold text-ink dark:text-papaya">Ringkasan Belanja</h2>
+					<h2 class="font-headline text-lg font-bold text-ink dark:text-papaya">Ringkasan Belanja</h2>
 				</div>
 				<button
 					type="button"
@@ -760,9 +356,9 @@
 						class="flex items-start justify-between gap-3 rounded-[10px_4px_8px_3px] border-2 border-brandy/30 bg-white/70 p-3 shadow-[2px_2px_0px_#78290f] dark:border-papaya/25 dark:bg-ink/80 dark:shadow-[2px_2px_0px_rgba(255,236,209,0.15)]"
 					>
 						<div class="flex-1 min-w-0">
-							<span class="font-serif text-sm font-bold text-ink truncate block dark:text-papaya"
-								>{item.name}</span
-							>
+							<span class="font-headline text-sm font-bold text-ink truncate block dark:text-papaya">
+								{item.name}
+							</span>
 							<div class="mt-0.5 flex flex-wrap items-center gap-2">
 								{#if item.variantName}
 									<span
@@ -820,35 +416,49 @@
 					</li>
 				{/each}
 
-				{#if cart.shipping}
+				<!-- Baris Subtotal -->
+				<li
+					class="flex items-center justify-between border-t-2 border-dashed border-brandy/20 pt-3 text-xs font-mono dark:border-papaya/20"
+				>
+					<span class="text-brandy/80 dark:text-papaya/70">Subtotal Barang</span>
+					<span class="font-bold text-ink dark:text-papaya">{formatRupiah(cart.subtotal)}</span>
+				</li>
+
+				<!-- Baris Diskon Promo (Jika Ada) -->
+				{#if cart.discountTotal > 0}
 					<li
-						class="flex items-center justify-between border-t-2 border-dashed border-brandy/20 pt-3 text-sm dark:border-papaya/20"
+						class="flex items-center justify-between text-xs font-mono text-crimson dark:text-red-400"
 					>
-						<div>
-							<span class="font-serif text-xs font-bold text-ink dark:text-papaya"
-								>Ongkir · {shippingLabel(cart.shipping)}</span
-							>
-							{#if cart.shipping.kind === 'quote'}
-								<span class="block font-mono text-[11px] text-brandy/70 dark:text-papaya/60">
-									{cart.shipping.destLabel}{cart.shipping.etd && cart.shipping.etd !== '-'
-										? ` · ${cart.shipping.etd}`
-										: ''}
-								</span>
-							{/if}
-						</div>
-						<span class="font-mono text-xs font-bold text-teal dark:text-teal/90"
-							>{formatRupiah(cart.shipping.cost)}</span
-						>
+						<span class="flex items-center gap-1 font-bold">
+							<Sparkles size={13} />
+							<span>Potongan Diskon Promo</span>
+						</span>
+						<span class="font-bold">-{formatRupiah(cart.discountTotal)}</span>
 					</li>
 				{/if}
 
+				<!-- Baris Opsi Pengiriman -->
+				{#if cart.shipping}
+					<li
+						class="flex items-center justify-between text-xs font-mono dark:border-papaya/20"
+					>
+						<span class="text-brandy/80 dark:text-papaya/70">
+							{shippingLabel(cart.shipping)}
+						</span>
+						<span class="font-bold text-forest">Rp 0</span>
+					</li>
+				{/if}
+
+				<!-- Baris Total Akhir -->
 				<li
 					class="flex items-center justify-between border-t-2 border-brandy pt-3 dark:border-papaya/30"
 				>
-					<span class="font-serif text-base font-bold text-ink dark:text-papaya">Total Akhir</span>
-					<span class="font-mono text-xl font-bold text-teal dark:text-teal/90"
-						>{formatRupiah(cart.total)}</span
-					>
+					<span class="font-headline text-base font-extrabold text-ink dark:text-papaya">
+						Total Pembayaran
+					</span>
+					<span class="font-mono text-xl font-black text-teal dark:text-teal/90">
+						{formatRupiah(cart.total)}
+					</span>
 				</li>
 			</ul>
 		</div>
@@ -867,7 +477,6 @@
 						if (typeof result.data?.accessToken === 'string') {
 							saveInvoiceToHistory(result.data.orderId, result.data.accessToken, cart.total);
 						}
-						// Query ditempel manual (token UUID aman-URL); path tetap via resolve().
 						const dest = `${resolve('/(public)/order/sukses/[orderId]', {
 							orderId: result.data.orderId
 						})}${token}` as ResolvedPathname;
@@ -882,24 +491,26 @@
 		>
 			<input type="hidden" name="items" value={itemsJson} />
 			<input type="hidden" name="shipping" value={shippingJson} />
+			<input type="hidden" name="address" value="" />
 
-			<!-- Honeypot anti-bot: field tersembunyi, manusia tidak mengisinya -->
+			<!-- Honeypot anti-bot -->
 			<div class="hidden" aria-hidden="true">
 				<label for="website">Website</label>
 				<input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
 			</div>
 
 			<div class="border-b-2 border-brandy/20 pb-3 dark:border-papaya/20">
-				<h2 class="font-serif text-lg font-bold text-ink dark:text-papaya">Data Pemesan</h2>
+				<h2 class="font-headline text-lg font-bold text-ink dark:text-papaya">Data Pemesan</h2>
 				<p class="font-handwriting text-xl font-semibold text-teal dark:text-papaya/90">
 					Informasi ini akan tertera pada faktur resmi pesanan Anda.
 				</p>
 			</div>
 
+			<!-- Handle Media Sosial -->
 			<div>
-				<label for="handle" class="block font-serif text-sm font-bold text-ink dark:text-papaya"
-					>Handle Media Sosial</label
-				>
+				<label for="handle" class="block font-headline text-sm font-bold text-ink dark:text-papaya">
+					Handle Media Sosial / Nama Panggilan
+				</label>
 				<div class="mt-1.5 flex">
 					<span
 						class="inline-flex items-center rounded-l-[8px_3px_0px_2px] border-2 border-r-0 border-brandy bg-papaya px-3 font-mono text-sm font-bold text-brandy dark:border-papaya/40 dark:bg-ink dark:text-papaya"
@@ -917,14 +528,15 @@
 					/>
 				</div>
 				<p class="mt-1 font-mono text-[11px] text-brandy/70 dark:text-papaya/60">
-					Akun Instagram/X aktif untuk verifikasi pesanan.
+					Akun Instagram atau X aktif untuk verifikasi pesanan Anda.
 				</p>
 			</div>
 
+			<!-- Email -->
 			<div>
-				<label for="email" class="block font-serif text-sm font-bold text-ink dark:text-papaya"
-					>Alamat Email</label
-				>
+				<label for="email" class="block font-headline text-sm font-bold text-ink dark:text-papaya">
+					Alamat Email Aktif
+				</label>
 				<input
 					id="email"
 					name="email"
@@ -934,21 +546,16 @@
 					disabled={isBusy}
 					class="mt-1.5 w-full rounded-[8px_3px_7px_2px] border-2 border-brandy bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-brandy/40 focus:border-brandy focus:ring-2 focus:ring-tangerine focus:outline-none disabled:opacity-50 dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:placeholder:text-papaya/40"
 				/>
-				{#if data.emailEnabled}
-					<p class="mt-1 font-mono text-[11px] text-brandy/70 dark:text-papaya/60">
-						Invoice PDF dan konfirmasi pesanan otomatis dikirim ke email ini.
-					</p>
-				{:else}
-					<p class="mt-1 font-mono text-[11px] text-brandy/70 dark:text-papaya/60">
-						Tautan & unduhan invoice langsung tersedia di halaman sukses setelah order dibuat.
-					</p>
-				{/if}
+				<p class="mt-1 font-mono text-[11px] text-brandy/70 dark:text-papaya/60">
+					Faktur invoice PDF resmi otomatis dikirimkan ke alamat email ini.
+				</p>
 			</div>
 
+			<!-- WhatsApp -->
 			<div>
-				<label for="phone" class="block font-serif text-sm font-bold text-ink dark:text-papaya"
-					>Nomor WhatsApp</label
-				>
+				<label for="phone" class="block font-headline text-sm font-bold text-ink dark:text-papaya">
+					Nomor WhatsApp Aktif
+				</label>
 				<input
 					id="phone"
 					name="phone"
@@ -959,41 +566,15 @@
 					class="mt-1.5 w-full rounded-[8px_3px_7px_2px] border-2 border-brandy bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-brandy/40 focus:border-brandy focus:ring-2 focus:ring-tangerine focus:outline-none disabled:opacity-50 dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:placeholder:text-papaya/40"
 				/>
 				<p class="mt-1 font-mono text-[11px] text-brandy/70 dark:text-papaya/60">
-					Nomor aktif untuk konfirmasi ketersediaan barang dan info resi.
+					Nomor WhatsApp aktif untuk konfirmasi pesanan dan tautan checkout Shopee (bagi opsi Mail Order).
 				</p>
 			</div>
 
+			<!-- Catatan Tambahan -->
 			<div>
-				<label for="address" class="block font-serif text-sm font-bold text-ink dark:text-papaya"
-					>Alamat Lengkap</label
-				>
-				{#if shippingMethod === 'pickup' && data.pickupEnabled}
-					<input type="hidden" name="address" value="Ambil Sendiri di Toko / Self-Pickup" />
-					<div
-						class="mt-1.5 rounded-[8px_3px_7px_2px] border-2 border-dashed border-forest/40 bg-forest/10 p-3 text-xs text-forest"
-					>
-						Barang akan diambil langsung di toko. Alamat pengiriman kurir tidak diperlukan.
-					</div>
-				{:else}
-					<textarea
-						id="address"
-						name="address"
-						rows="3"
-						required
-						placeholder="Jalan, nomor rumah, RT/RW, kelurahan, kecamatan, kota, kode pos, patokan"
-						disabled={isBusy}
-						class="mt-1.5 w-full rounded-[8px_3px_7px_2px] border-2 border-brandy bg-white px-3.5 py-2.5 text-sm leading-relaxed text-ink placeholder:text-brandy/40 focus:border-brandy focus:ring-2 focus:ring-tangerine focus:outline-none disabled:opacity-50 dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:placeholder:text-papaya/40"
-					></textarea>
-					<p class="mt-1 font-mono text-[11px] text-brandy/70 dark:text-papaya/60">
-						Alamat lengkap beserta patokan rumah untuk kurir ekspedisi.
-					</p>
-				{/if}
-			</div>
-
-			<div>
-				<label for="note" class="block font-serif text-sm font-bold text-ink dark:text-papaya"
-					>Catatan Tambahan (opsional)</label
-				>
+				<label for="note" class="block font-headline text-sm font-bold text-ink dark:text-papaya">
+					Catatan Tambahan (Opsional)
+				</label>
 				<textarea
 					id="note"
 					name="note"
@@ -1009,7 +590,7 @@
 				disabled={isBusy}
 				class="flex w-full items-center justify-center gap-2 rounded-[10px_5px_9px_4px] border-2 border-brandy bg-tangerine px-5 py-3.5 font-mono text-base font-bold text-white shadow-[4px_4px_0px_#78290f] transition-all hover:bg-[#e06d00] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none disabled:cursor-not-allowed disabled:border-brandy/30 disabled:bg-brandy/20 disabled:text-brandy/40 disabled:shadow-none"
 			>
-				<span>{isBusy ? 'Membuat Pesanan...' : 'Buat Pesanan & Dapatkan Invoice'}</span>
+				<span>{isBusy ? 'Memproses Pesanan...' : 'Buat Pesanan & Dapatkan Invoice'}</span>
 				<ArrowRight size={18} strokeWidth={2.5} />
 			</button>
 		</form>
@@ -1039,4 +620,3 @@
 	onConfirm={confirmClearCart}
 	onCancel={() => (confirmClearOpen = false)}
 />
-

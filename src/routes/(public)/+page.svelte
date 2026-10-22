@@ -12,20 +12,20 @@
 
 	const steps = [
 		{
-			title: '1. Pilih yang Kamu Suka',
-			desc: 'Pilih produk merchandise atau stiker pack, atur jumlahnya, dan masukkan ke keranjang belanja.'
+			title: '1. Pilih merch fav kamu!',
+			desc: 'Pilih merch, atur jumlahnya, dan masukkan ke keranjang.'
 		},
 		{
-			title: '2. Isi Data & Alamat Kirim',
-			desc: 'Masukkan handle sosmed, email aktif untuk invoice, alamat lengkap, dan nomor kontak WhatsApp.'
+			title: '2. Isi Data',
+			desc: 'Masukkan handle sosmed, email aktif untuk invoice, dan nomor yang bisa dihubungi.'
 		},
 		{
-			title: '3. Pilih Ongkir Otomatis',
-			desc: 'Cari kecamatanmu, bandingkan tarif kurir (JNE, SiCepat, dll) — total harga langsung terhitung akurat.'
+			title: '3. Pilih pickup/mail order',
+			desc: 'Pilih mail order (kirim langsung ke rumah) atau pick up sendiri di event Chibicon 12-13 Desember.'
 		},
 		{
-			title: '4. Bayar & Konfirmasi',
-			desc: 'Lakukan transfer sesuai 3 digit kode unik atau scan QRIS, lalu kirim buktinya. Nota fisik akan disertakan di paket kiriman!'
+			title: '4. Bayar & konfirmasi',
+			desc: 'Selesaikan pembayaran dengan transfer atau scan QRIS, lalu kirim buktinya.'
 		}
 	];
 </script>
@@ -44,11 +44,6 @@
 		<!-- Event Edition Banner: Pembeda Visual Branch Event Offline -->
 		<div class="flex flex-wrap items-center justify-center gap-2.5">
 			<div
-				class="inline-flex -rotate-2 items-center gap-1.5 rounded-[8px_3px_7px_2px] border-2 border-brandy bg-tangerine px-3.5 py-1.5 font-mono text-xs font-black tracking-wider text-white uppercase shadow-[3px_3px_0px_#78290f]"
-			>
-				<span>CHIBICONXI EDITION</span>
-			</div>
-			<div
 				class="inline-block rotate-1 rounded-xs border-2 border-brandy bg-yellow-200 px-3 py-1 shadow-[2px_2px_0px_#78290f]"
 			>
 				<span class="font-handwriting text-lg font-bold tracking-wide text-brandy">
@@ -61,15 +56,15 @@
 		<h1
 			class="font-headline text-3xl leading-tight font-extrabold text-ink sm:text-5xl dark:text-papaya"
 		>
-			Another web commis <br />
-			<span class="text-teal dark:text-tangerine">from {ownerName}</span>
+			ChibiconXI Catalogue<br />
+			<span class="text-teal dark:text-tangerine">@{storeName}</span>
 		</h1>
 
 		<!-- Subtitle: Edisi Khusus Pameran -->
 		<p
 			class="mx-auto max-w-lg font-sans text-sm leading-relaxed text-brandy/80 sm:text-base dark:text-papaya/70"
 		>
-			<strong class="font-bold text-ink dark:text-papaya">Katalog Khusus Pameran Offline:</strong>
+			<strong class="font-bold text-ink dark:text-papaya">BATCH I</strong>
 		</p>
 	</div>
 
@@ -80,7 +75,7 @@
 			class="flex w-full -rotate-1 transform-gpu items-center justify-center gap-2.5 rounded-[14px_6px_12px_8px] border-2 border-brandy bg-tangerine px-7 py-3.5 text-base font-bold text-white shadow-[4px_4px_0px_#78290f] transition-all duration-150 backface-hidden hover:-translate-x-0.5 hover:-translate-y-0.5 hover:rotate-0 hover:shadow-[5px_5px_0px_#78290f] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none sm:w-auto"
 		>
 			<ShoppingBag size={18} strokeWidth={2.75} />
-			<span>Mulai Belanja</span>
+			<span>Mulai Order</span>
 			<ArrowRight size={16} strokeWidth={2.75} class="ml-1" />
 		</a>
 
@@ -111,7 +106,7 @@
 			<h2
 				class="inline-block -rotate-1 rounded-[6px_2px_5px_1px] border-2 border-brandy bg-papaya px-3.5 py-1 font-mono text-xs font-bold tracking-widest text-brandy uppercase shadow-[2px_2px_0px_#78290f] dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[2px_2px_0px_rgba(255,236,209,0.2)]"
 			>
-				Cara Pemesanan Mudah
+				How to Order
 			</h2>
 			<span class="h-0.5 w-8 bg-brandy/30 dark:bg-papaya/30"></span>
 		</div>
