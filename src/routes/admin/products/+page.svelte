@@ -1,44 +1,39 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
+	import { formatRupiah } from '$lib/utils/currency';
 	import { handleFormResult } from '$lib/utils/handle-form-result';
-	import ListSkeleton from '$lib/components/ui/ListSkeleton.svelte';
-	import BusyOverlay from '$lib/components/ui/BusyOverlay.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
+	import BusyOverlay from '$lib/components/ui/BusyOverlay.svelte';
 	import {
 		Plus,
 		Pencil,
 		Trash2,
 		ChevronUp,
 		ChevronDown,
-		X,
-		ChevronRight,
-		Image as ImageIcon,
-		Eye,
 		Search,
-		FileSpreadsheet
+		FileSpreadsheet,
+		Package
 	} from '@lucide/svelte';
-	import { processAndWatermarkImage } from '$lib/utils/image-watermark';
-	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
-	let expandedCategoryId = $state<string | null>(null);
-
-	$effect(() => {
-		if (expandedCategoryId === null && data.categoriesWithProducts.length > 0) {
-			expandedCategoryId = data.categoriesWithProducts[0].id;
-		}
-	});
 
 	let searchQuery = $state('');
 	let selectedCategoryFilter = $state<'all' | string>('all');
 	let selectedStockFilter = $state<'all' | 'in_stock' | 'out_of_stock'>('all');
+	let isBusy = $state(false);
 
-	const hasActiveFilter = $derived(
-		searchQuery.trim() !== '' || selectedCategoryFilter !== 'all' || selectedStockFilter !== 'all'
-	);
+	// Modal Hapus
+	let deleteModalOpen = $state(false);
+	let productToDelete = $state<{ id: string; name: string } | null>(null);
 
+	function openDeleteModal(prod: { id: string; name: string }) {
+		productToDelete = prod;
+		deleteModalOpen = true;
+	}
+
+	// Filter Produk Reaktif
 	const filteredCategories = $derived.by(() => {
 		const q = searchQuery.trim().toLowerCase();
 
@@ -50,1343 +45,377 @@
 				return true;
 			})
 			.map((cat) => {
-				const matchingProducts = cat.products.filter((p) => {
-					// 1. Text filter
-					const matchesName =
-						!q ||
-						p.name.toLowerCase().includes(q) ||
-						(p.description && p.description.toLowerCase().includes(q));
-					if (!matchesName) return false;
+				let prods = cat.products;
 
-					// 2. Stock filter
-					if (selectedStockFilter === 'all') return true;
-					const isOutOfStock =
-						p.variants.length > 0
-							? p.variants.reduce((sum, v) => sum + v.stock, 0) <= 0
-							: p.trackStock && p.stock <= 0;
+				if (q) {
+					prods = prods.filter(
+						(p) =>
+							p.name.toLowerCase().includes(q) ||
+							(p.description && p.description.toLowerCase().includes(q))
+					);
+				}
 
-					if (selectedStockFilter === 'out_of_stock') {
-						return isOutOfStock;
-					}
-					if (selectedStockFilter === 'in_stock') {
-						return !isOutOfStock;
-					}
-					return true;
-				});
+				if (selectedStockFilter === 'in_stock') {
+					prods = prods.filter((p) => {
+						if (p.variants && p.variants.length > 0) {
+							return p.variants.some((v) => v.stock > 0);
+						}
+						return !p.trackStock || p.stock > 0;
+					});
+				} else if (selectedStockFilter === 'out_of_stock') {
+					prods = prods.filter((p) => {
+						if (p.variants && p.variants.length > 0) {
+							return p.variants.every((v) => v.stock <= 0);
+						}
+						return p.trackStock && p.stock <= 0;
+					});
+				}
 
 				return {
 					...cat,
-					products: matchingProducts,
-					totalOriginalProducts: cat.products.length
+					products: prods
 				};
 			})
-			.filter((cat) => {
-				if (hasActiveFilter) {
-					return cat.products.length > 0;
-				}
-				return true;
-			});
+			.filter((cat) => cat.products.length > 0 || (searchQuery === '' && selectedCategoryFilter === cat.id));
 	});
-
-	$effect(() => {
-		if (hasActiveFilter && filteredCategories.length > 0) {
-			if (!filteredCategories.some((c) => c.id === expandedCategoryId)) {
-				expandedCategoryId = filteredCategories[0].id;
-			}
-		}
-	});
-
-	function resetFilters() {
-		searchQuery = '';
-		selectedCategoryFilter = 'all';
-		selectedStockFilter = 'all';
-	}
-
-	let creatingInCategoryId = $state<string | null>(null);
-	let editingId = $state<string | null>(null);
-	let deletingId = $state<string | null>(null);
-
-	let isBusy = $state(false);
-	let processingId = $state<string | null>(null);
-
-	// state lokal untuk toggle trackStock di form create/edit (mengatur visibility field stock)
-	let createTrackStock = $state(false);
-	let editTrackStock = $state<Record<string, boolean>>({});
-
-	interface VariantFormItem {
-		id?: string;
-		name: string;
-		stock: number;
-		trackStock?: boolean;
-	}
-
-	let createDescription = $state('');
-	let createHasVariants = $state(false);
-	let createVariants = $state<VariantFormItem[]>([]);
-	let createNameInput = $state<Record<string, string>>({});
-	let editNameInput = $state<Record<string, string>>({});
-
-	function findDuplicateProductName(name: string, excludeId?: string) {
-		const trimmed = name.trim().toLowerCase();
-		if (!trimmed) return null;
-		for (const cat of data.categoriesWithProducts) {
-			for (const p of cat.products) {
-				if (excludeId && p.id === excludeId) continue;
-				if (p.name.trim().toLowerCase() === trimmed) {
-					return { productName: p.name, categoryName: cat.name };
-				}
-			}
-		}
-		return null;
-	}
-
-	let editDescription = $state<Record<string, string>>({});
-	let editHasVariants = $state<Record<string, boolean>>({});
-	let editVariants = $state<Record<string, VariantFormItem[]>>({});
-
-	function addCreateVariant() {
-		createVariants = [...createVariants, { name: '', stock: 0 }];
-	}
-
-	function removeCreateVariant(idx: number) {
-		createVariants = createVariants.filter((_, i) => i !== idx);
-	}
-
-	function addEditVariant(productId: string) {
-		editVariants[productId] = [...(editVariants[productId] ?? []), { name: '', stock: 0 }];
-	}
-
-	function removeEditVariant(productId: string, idx: number) {
-		editVariants[productId] = (editVariants[productId] ?? []).filter((_, i) => i !== idx);
-	}
-
-	// state untuk kelola gambar create & edit
-	let createNewFiles = $state<File[]>([]);
-	let createPreviews = $state<string[]>([]);
-	let editExistingImages = $state<Record<string, string[]>>({});
-	let editNewFiles = $state<Record<string, File[]>>({});
-	let editNewPreviews = $state<Record<string, string[]>>({});
-	let isWatermarking = $state(false);
-
-	function toggleCategory(id: string) {
-		expandedCategoryId = expandedCategoryId === id ? null : id;
-	}
-
-	function startCreate(categoryId: string) {
-		creatingInCategoryId = categoryId;
-		createNameInput[categoryId] = '';
-		createTrackStock = false;
-		createDescription = '';
-		createHasVariants = false;
-		createVariants = [];
-		createNewFiles = [];
-		createPreviews = [];
-	}
-
-	function cancelCreate() {
-		creatingInCategoryId = null;
-		createNameInput = {};
-		createNewFiles = [];
-		createPreviews = [];
-		createVariants = [];
-		createDescription = '';
-	}
-
-	function startEdit(product: {
-		id: string;
-		name: string;
-		trackStock: boolean;
-		stock: number;
-		description?: string | null;
-		imageUrls?: string[] | null;
-		variants?: { id?: string; name: string; stock: number }[];
-	}) {
-		editingId = product.id;
-		editNameInput[product.id] = product.name;
-		editTrackStock[product.id] = product.trackStock;
-		editDescription[product.id] = product.description ?? '';
-		editExistingImages[product.id] = [...(product.imageUrls ?? [])];
-		editNewFiles[product.id] = [];
-		editNewPreviews[product.id] = [];
-		const vars = (product.variants ?? []).map((v) => ({ id: v.id, name: v.name, stock: v.stock }));
-		editVariants[product.id] = vars;
-		editHasVariants[product.id] = vars.length > 0;
-	}
-
-	function cancelEdit() {
-		editingId = null;
-	}
-
-	async function handleCreateFiles(e: Event) {
-		const input = e.currentTarget as HTMLInputElement;
-		if (!input.files || input.files.length === 0) return;
-		const remaining = 4 - createNewFiles.length;
-		if (remaining <= 0) {
-			toast.error('Maksimal 4 foto per produk.');
-			input.value = '';
-			return;
-		}
-		isWatermarking = true;
-		try {
-			const files = Array.from(input.files).slice(0, remaining);
-			for (const f of files) {
-				const wm = await processAndWatermarkImage(f, data.storeName);
-				createNewFiles = [...createNewFiles, wm];
-				createPreviews = [...createPreviews, URL.createObjectURL(wm)];
-			}
-		} catch {
-			toast.error('Gagal memproses watermark foto.');
-		} finally {
-			isWatermarking = false;
-			input.value = '';
-		}
-	}
-
-	let inspectingPhoto = $state<{
-		url: string;
-		source: 'create' | 'edit-new' | 'edit-existing';
-		index: number;
-		productId?: string;
-	} | null>(null);
-
-	function openInspect(
-		url: string,
-		source: 'create' | 'edit-new' | 'edit-existing',
-		index: number,
-		productId?: string
-	) {
-		inspectingPhoto = { url, source, index, productId };
-	}
-
-	function deleteFromInspect() {
-		if (!inspectingPhoto) return;
-		const { source, index, productId } = inspectingPhoto;
-		if (source === 'create') {
-			removeCreatePreview(index);
-		} else if (source === 'edit-existing' && productId) {
-			removeEditExisting(productId, index);
-		} else if (source === 'edit-new' && productId) {
-			removeEditNew(productId, index);
-		}
-		inspectingPhoto = null;
-	}
-
-	function removeCreatePreview(index: number) {
-		const targetUrl = createPreviews[index];
-		if (targetUrl?.startsWith('blob:')) {
-			URL.revokeObjectURL(targetUrl);
-		}
-		createNewFiles = createNewFiles.filter((_, i) => i !== index);
-		createPreviews = createPreviews.filter((_, i) => i !== index);
-	}
-
-	async function handleEditFiles(productId: string, e: Event) {
-		const input = e.currentTarget as HTMLInputElement;
-		if (!input.files || input.files.length === 0) return;
-		const currentCount =
-			(editExistingImages[productId]?.length ?? 0) + (editNewFiles[productId]?.length ?? 0);
-		const remaining = 4 - currentCount;
-		if (remaining <= 0) {
-			toast.error('Maksimal 4 foto per produk.');
-			input.value = '';
-			return;
-		}
-		isWatermarking = true;
-		try {
-			const files = Array.from(input.files).slice(0, remaining);
-			for (const f of files) {
-				const wm = await processAndWatermarkImage(f, data.storeName);
-				editNewFiles[productId] = [...(editNewFiles[productId] ?? []), wm];
-				editNewPreviews[productId] = [
-					...(editNewPreviews[productId] ?? []),
-					URL.createObjectURL(wm)
-				];
-			}
-		} catch {
-			toast.error('Gagal memproses watermark foto.');
-		} finally {
-			isWatermarking = false;
-			input.value = '';
-		}
-	}
-
-	function removeEditExisting(productId: string, index: number) {
-		editExistingImages[productId] = editExistingImages[productId].filter((_, i) => i !== index);
-	}
-
-	function removeEditNew(productId: string, index: number) {
-		const targetUrl = editNewPreviews[productId]?.[index];
-		if (targetUrl?.startsWith('blob:')) {
-			URL.revokeObjectURL(targetUrl);
-		}
-		editNewFiles[productId] = (editNewFiles[productId] ?? []).filter((_, i) => i !== index);
-		editNewPreviews[productId] = (editNewPreviews[productId] ?? []).filter((_, i) => i !== index);
-	}
-
-	function confirmDelete(id: string) {
-		deletingId = id;
-	}
-
-	function cancelDelete() {
-		deletingId = null;
-	}
 </script>
 
-<div class="mx-auto max-w-3xl space-y-4">
-	<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+<BusyOverlay active={isBusy}>
+<div class="space-y-6 pb-20">
+	<!-- Top Bar / Action Header -->
+	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-neutral-200 pb-5 dark:border-neutral-800">
 		<div>
-			<h1 class="text-xl font-semibold">Products</h1>
-			<p class="text-xs text-neutral-500">Urutkan tampilan dengan tombol panah di tiap baris.</p>
+			<h1 class="font-serif text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+				Manajemen Produk
+			</h1>
+			<p class="text-xs text-neutral-500">
+				Kelola katalog barang, foto ber-watermark, varian ukuran/warna, dan pembaruan stok.
+			</p>
 		</div>
-		<div>
+
+		<div class="flex flex-wrap items-center gap-2.5">
 			<a
 				href={resolve('/admin/products/import')}
-				class="inline-flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-3.5 py-2 text-xs font-semibold text-neutral-800 shadow-xs transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
+				class="inline-flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3.5 py-2 text-xs font-semibold text-neutral-700 shadow-xs transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
 			>
-				<FileSpreadsheet size={15} class="text-teal" />
-				<span>Import Produk via CSV / Excel</span>
+				<FileSpreadsheet size={15} />
+				<span>Impor Spreadsheet</span>
+			</a>
+
+			<a
+				href={resolve('/admin/products/new')}
+				class="inline-flex items-center gap-1.5 rounded-lg bg-neutral-900 px-4 py-2 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-neutral-800 dark:bg-papaya dark:text-ink dark:hover:bg-papaya/90"
+			>
+				<Plus size={16} />
+				<span>Tambah Produk</span>
 			</a>
 		</div>
 	</div>
 
-	{#if data.categoriesWithProducts && data.categoriesWithProducts.length > 0}
-		<!-- Filter & Search Controls -->
-		<div
-			class="flex flex-col gap-2 rounded-xl border border-neutral-200 bg-white p-3 sm:flex-row sm:items-center dark:border-neutral-800 dark:bg-neutral-900/50"
-		>
-			<div class="relative flex-1">
-				<Search size={16} class="absolute top-1/2 left-3 -translate-y-1/2 text-neutral-400" />
-				<input
-					type="text"
-					bind:value={searchQuery}
-					placeholder="Cari produk berdasarkan nama..."
-					class="w-full rounded-lg border border-neutral-300 bg-white py-1.5 pr-8 pl-9 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:focus:border-white"
-				/>
-				{#if searchQuery}
-					<button
-						type="button"
-						onclick={() => (searchQuery = '')}
-						class="absolute top-1/2 right-2.5 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
-					>
-						<X size={14} />
-					</button>
-				{/if}
-			</div>
-
-			<div class="flex items-center gap-2">
-				<select
-					bind:value={selectedCategoryFilter}
-					class="rounded-lg border border-neutral-300 bg-white px-2.5 py-1.5 text-xs text-neutral-900 focus:border-neutral-900 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:focus:border-white"
-				>
-					<option value="all">Semua Kategori</option>
-					{#each data.categoriesWithProducts as cat (cat.id)}
-						<option value={cat.id}>{cat.name}</option>
-					{/each}
-				</select>
-
-				<select
-					bind:value={selectedStockFilter}
-					class="rounded-lg border border-neutral-300 bg-white px-2.5 py-1.5 text-xs text-neutral-900 focus:border-neutral-900 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:focus:border-white"
-				>
-					<option value="all">Semua Stok</option>
-					<option value="in_stock">Tersedia</option>
-					<option value="out_of_stock">Habis</option>
-				</select>
-
-				{#if hasActiveFilter}
-					<button
-						type="button"
-						onclick={resetFilters}
-						class="rounded-lg border border-neutral-300 px-2.5 py-1.5 text-xs font-medium text-neutral-600 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
-					>
-						Reset
-					</button>
-				{/if}
-			</div>
+	<!-- Filter & Search Controls -->
+	<div class="flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-4 shadow-xs md:flex-row md:items-center md:justify-between dark:border-neutral-800 dark:bg-neutral-900">
+		<div class="relative flex-1 max-w-md">
+			<Search size={15} class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+			<input
+				type="search"
+				bind:value={searchQuery}
+				placeholder="Cari nama produk atau deskripsi..."
+				class="w-full rounded-lg border border-neutral-300 bg-neutral-50 py-1.5 pr-3 pl-9 text-xs text-neutral-900 focus:border-brandy focus:bg-white focus:outline-none dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
+			/>
 		</div>
-	{/if}
 
-	{#if !data.categoriesWithProducts}
-		<ListSkeleton rows={3} />
-	{:else if data.categoriesWithProducts.length === 0}
-		<p class="py-8 text-center text-sm text-neutral-500">
-			Belum ada kategori. Buat kategori dulu di halaman Categories.
-		</p>
+		<div class="flex flex-wrap items-center gap-2">
+			<!-- Filter Kategori -->
+			<select
+				bind:value={selectedCategoryFilter}
+				class="rounded-lg border border-neutral-300 bg-white px-2.5 py-1.5 text-xs text-neutral-800 focus:border-brandy focus:outline-none dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-200"
+			>
+				<option value="all">Semua Kategori ({data.categoriesWithProducts.length})</option>
+				{#each data.categoriesWithProducts as cat (cat.id)}
+					<option value={cat.id}>{cat.name} ({cat.products.length})</option>
+				{/each}
+			</select>
+
+			<!-- Filter Stok -->
+			<select
+				bind:value={selectedStockFilter}
+				class="rounded-lg border border-neutral-300 bg-white px-2.5 py-1.5 text-xs text-neutral-800 focus:border-brandy focus:outline-none dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-200"
+			>
+				<option value="all">Semua Status Stok</option>
+				<option value="in_stock">Tersedia (Ready)</option>
+				<option value="out_of_stock">Stok Habis</option>
+			</select>
+		</div>
+	</div>
+
+	<!-- Empty State: Belum Ada Produk -->
+	{#if data.categoriesWithProducts.length === 0}
+		<div class="rounded-2xl border-2 border-dashed border-neutral-300 p-12 text-center dark:border-neutral-700">
+			<Package size={36} class="mx-auto text-neutral-400" />
+			<h2 class="mt-3 font-serif text-lg font-bold text-neutral-800 dark:text-neutral-200">
+				Kategori Belum Dibuat
+			</h2>
+			<p class="mt-1 text-xs text-neutral-500">
+				Sebelum menambah produk, buat kategori produk terlebih dahulu di menu Kategori.
+			</p>
+			<a
+				href={resolve('/admin/categories')}
+				class="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-neutral-900 px-4 py-2 text-xs font-semibold text-white dark:bg-papaya dark:text-ink"
+			>
+				<span>Ke Menu Kategori</span>
+			</a>
+		</div>
 	{:else if filteredCategories.length === 0}
-		<div
-			class="rounded-xl border border-dashed border-neutral-300 p-8 text-center dark:border-neutral-700"
-		>
-			<p class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-				Tidak ada produk yang cocok
+		<div class="rounded-2xl border border-neutral-200 bg-white p-8 text-center dark:border-neutral-800 dark:bg-neutral-900">
+			<p class="font-serif text-base font-bold text-neutral-800 dark:text-neutral-200">
+				Tidak Ada Produk yang Cocok
 			</p>
 			<p class="mt-1 text-xs text-neutral-500">
-				Coba ubah kata kunci pencarian atau filter yang aktif.
+				Coba ubah kata kunci pencarian atau reset filter kategori/stok.
 			</p>
 			<button
 				type="button"
-				onclick={resetFilters}
-				class="mt-3 inline-flex items-center gap-1 rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200"
+				onclick={() => {
+					searchQuery = '';
+					selectedCategoryFilter = 'all';
+					selectedStockFilter = 'all';
+				}}
+				class="mt-3 text-xs font-semibold text-brandy hover:underline dark:text-papaya"
 			>
 				Reset Filter
 			</button>
 		</div>
-	{:else}
-		<div class="space-y-3">
-			{#each filteredCategories as category (category.id)}
-				<div class="rounded-xl border border-neutral-200 dark:border-neutral-800">
-					<button
-						onclick={() => toggleCategory(category.id)}
-						class="flex w-full items-center justify-between p-4 text-left"
-					>
-						<div class="flex items-center gap-2">
-							<ChevronRight
-								size={16}
-								class="transition-transform {expandedCategoryId === category.id ? 'rotate-90' : ''}"
-							/>
-							<span class="font-medium">{category.name}</span>
-							{#if hasActiveFilter && category.products.length !== category.totalOriginalProducts}
-								<span class="text-xs text-neutral-500">
-									({category.products.length} dari {category.totalOriginalProducts} produk)
-								</span>
-							{:else}
-								<span class="text-xs text-neutral-500">({category.products.length} produk)</span>
-							{/if}
-						</div>
-					</button>
-
-					{#if expandedCategoryId === category.id}
-						<div class="space-y-2 border-t border-neutral-200 p-4 dark:border-neutral-800">
-							<button
-								onclick={() => startCreate(category.id)}
-								disabled={isBusy}
-								class="flex items-center gap-2 rounded-lg bg-neutral-900 px-3 py-2 text-sm text-white
-                       hover:bg-neutral-800 disabled:opacity-50
-                       dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
-							>
-								<Plus size={16} />
-								Produk Baru
-							</button>
-
-							{#if creatingInCategoryId === category.id}
-								<form
-									method="POST"
-									action="?/create"
-									enctype="multipart/form-data"
-									use:enhance={({ formData }) => {
-										isBusy = true;
-										formData.delete('images');
-										for (const f of createNewFiles) {
-											formData.append('images', f);
-										}
-										if (createHasVariants) {
-											const validVars = createVariants.filter((v) => v.name.trim() !== '');
-											formData.set('variants', JSON.stringify(validVars));
-											formData.set('trackStock', 'false');
-										} else {
-											formData.set('variants', '[]');
-										}
-										return async ({ result, update }) => {
-											handleFormResult(result, { success: 'Produk berhasil ditambahkan.' });
-											if (result.type === 'success') {
-												creatingInCategoryId = null;
-												createNewFiles = [];
-												createPreviews = [];
-											}
-											await update({ reset: result.type === 'success' });
-											isBusy = false;
-										};
-									}}
-									class="space-y-3 rounded-lg border border-neutral-200 p-3 dark:border-neutral-800"
-								>
-									<input type="hidden" name="categoryId" value={category.id} />
-									<input type="hidden" name="sortOrder" value={category.products.length} />
-
-									<div>
-										<label for="create-name-{category.id}" class="block text-sm font-medium"
-											>Nama Produk</label
-										>
-										<input
-											id="create-name-{category.id}"
-											name="name"
-											bind:value={createNameInput[category.id]}
-											required
-											disabled={isBusy}
-											placeholder="Contoh: Stiker Gintoki"
-											class="mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm text-neutral-900
-                             disabled:opacity-50 {findDuplicateProductName(
-												createNameInput[category.id] || ''
-											)
-												? 'border-amber-400 bg-amber-50/40 text-amber-900 focus:border-amber-500 dark:border-amber-500/60 dark:bg-amber-950/20 dark:text-amber-200'
-												: 'border-neutral-300 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100'}"
-										/>
-										{#if findDuplicateProductName(createNameInput[category.id] || '')}
-											{@const dup = findDuplicateProductName(createNameInput[category.id] || '')}
-											<p class="mt-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
-												Nama produk ini sudah terdaftar di kategori "{dup?.categoryName}". Silakan
-												gunakan nama lain agar tidak duplikat.
-											</p>
-										{/if}
-									</div>
-
-									<div class="grid grid-cols-2 gap-3">
-										<div>
-											<label for="create-price-{category.id}" class="block text-sm font-medium"
-												>Harga (Rp)</label
-											>
-											<input
-												id="create-price-{category.id}"
-												name="priceInt"
-												type="number"
-												min="0"
-												required
-												disabled={isBusy}
-												placeholder="0"
-												class="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900
-                                 disabled:opacity-50
-                                 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-											/>
-										</div>
-
-										<div>
-											<label for="create-weight-{category.id}" class="block text-sm font-medium"
-												>Berat (gram)</label
-											>
-											<input
-												id="create-weight-{category.id}"
-												name="weightGrams"
-												type="number"
-												min="0"
-												value="0"
-												required
-												disabled={isBusy}
-												class="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900
-                                 disabled:opacity-50
-                                 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-											/>
-										</div>
-									</div>
-
-									<div>
-										<div class="flex items-center justify-between">
-											<label for="create-desc-{category.id}" class="block text-sm font-medium"
-												>Deskripsi Produk</label
-											>
-											<span class="text-xs text-neutral-400">{createDescription.length}/1000</span>
-										</div>
-										<textarea
-											id="create-desc-{category.id}"
-											name="description"
-											bind:value={createDescription}
-											maxlength="1000"
-											rows="3"
-											disabled={isBusy}
-											placeholder="Tuliskan spesifikasi produk, bahan, ukuran, petunjuk pemakaian, dll..."
-											class="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900
-                             disabled:opacity-50
-                             dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-										></textarea>
-									</div>
-
-									<div
-										class="rounded-lg border border-neutral-200 bg-neutral-50/60 p-3 dark:border-neutral-800 dark:bg-neutral-900/40"
-									>
-										<label class="flex items-center gap-2 text-sm font-medium">
-											<input type="checkbox" bind:checked={createHasVariants} disabled={isBusy} />
-											Produk memiliki varian? (ukuran/warna/rasa)
-										</label>
-
-										{#if createHasVariants}
-											<div
-												class="mt-3 space-y-2 border-t border-neutral-200 pt-3 dark:border-neutral-800"
-											>
-												<p class="text-xs text-neutral-500">
-													Kelola stok terpisah untuk tiap varian. Harga tiap varian sama dengan
-													harga produk.
-												</p>
-
-												{#if createVariants.length === 0}
-													<p class="text-xs text-amber-600 italic dark:text-amber-400">
-														Belum ada varian. Klik tombol di bawah untuk menambah varian.
-													</p>
-												{/if}
-
-												{#each createVariants as variant, vIdx (vIdx)}
-													<div class="flex items-center gap-2">
-														<input
-															type="text"
-															bind:value={variant.name}
-															placeholder="Nama varian (mis. Merah, XL)"
-															disabled={isBusy}
-															class="flex-1 rounded-lg border border-neutral-300 bg-white px-2.5 py-1.5 text-xs text-neutral-900
-                                           dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-														/>
-														<div class="flex items-center gap-1">
-															<span class="text-xs text-neutral-400">Stok:</span>
-															<input
-																type="number"
-																min="0"
-																bind:value={variant.stock}
-																disabled={isBusy}
-																class="w-20 rounded-lg border border-neutral-300 bg-white px-2 py-1.5 text-xs text-neutral-900
-                                               dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-															/>
-														</div>
-														<button
-															type="button"
-															onclick={() => removeCreateVariant(vIdx)}
-															disabled={isBusy}
-															class="rounded p-1 text-neutral-400 hover:text-red-600 dark:hover:text-red-400"
-															title="Hapus varian"
-														>
-															<X size={14} />
-														</button>
-													</div>
-												{/each}
-
-												<button
-													type="button"
-													onclick={addCreateVariant}
-													disabled={isBusy}
-													class="inline-flex items-center gap-1 rounded border border-dashed border-neutral-300 px-2.5 py-1 text-xs font-medium text-neutral-600 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
-												>
-													<Plus size={12} />
-													Tambah Varian
-												</button>
-											</div>
-										{:else}
-											<div class="mt-2 space-y-2">
-												<label class="flex items-center gap-2 text-sm">
-													<input
-														type="checkbox"
-														name="trackStock"
-														bind:checked={createTrackStock}
-														disabled={isBusy}
-													/>
-													Lacak Stok
-												</label>
-
-												{#if createTrackStock}
-													<div>
-														<label
-															for="create-stock-{category.id}"
-															class="block text-xs font-medium">Jumlah Stok</label
-														>
-														<input
-															id="create-stock-{category.id}"
-															name="stock"
-															type="number"
-															min="0"
-															value="0"
-															disabled={isBusy}
-															class="mt-1 w-32 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm text-neutral-900
-                                             disabled:opacity-50
-                                             dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-														/>
-													</div>
-												{/if}
-											</div>
-										{/if}
-									</div>
-
-									<label class="flex items-center gap-2 text-sm">
-										<input type="checkbox" name="active" checked disabled={isBusy} />
-										Aktif (tampil di halaman order)
-									</label>
-
-									<div>
-										<span class="block text-sm font-medium">Foto Produk (Maks. 4)</span>
-										<p class="text-xs text-neutral-500">
-											Otomatis di-watermark @{data.storeName} & dikompresi ke WebP.
-										</p>
-
-										{#if createPreviews.length > 0}
-											<div class="mt-2 flex flex-wrap gap-2">
-												{#each createPreviews as prev, idx (prev)}
-													<div
-														class="group relative h-16 w-16 overflow-hidden rounded-lg border border-neutral-300 dark:border-neutral-700"
-													>
-														<button
-															type="button"
-															onclick={() => openInspect(prev, 'create', idx)}
-															class="relative h-full w-full cursor-pointer focus:outline-none"
-															title="Klik untuk periksa watermark"
-														>
-															<img src={prev} alt="Preview" class="h-full w-full object-cover" />
-															<div
-																class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100"
-															>
-																<Eye size={16} class="text-white drop-shadow" />
-															</div>
-														</button>
-														<button
-															type="button"
-															onclick={() => removeCreatePreview(idx)}
-															class="absolute top-0.5 right-0.5 rounded-full bg-black/70 p-1 text-white hover:bg-black"
-															title="Hapus foto"
-														>
-															<X size={10} />
-														</button>
-													</div>
-												{/each}
-											</div>
-										{/if}
-
-										{#if createPreviews.length < 4}
-											<div class="mt-2">
-												<label
-													class="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-white/10"
-												>
-													<Plus size={14} />
-													<span>{isWatermarking ? 'Memproses Watermark...' : 'Pilih Foto'}</span>
-													<input
-														type="file"
-														accept="image/png,image/jpeg,image/webp"
-														multiple
-														onchange={handleCreateFiles}
-														disabled={isBusy || isWatermarking}
-														class="hidden"
-													/>
-												</label>
-											</div>
-										{/if}
-									</div>
-
-									<div class="flex gap-2">
-										<button
-											type="submit"
-											disabled={isBusy}
-											class="rounded-lg bg-neutral-900 px-4 py-2 text-sm text-white disabled:opacity-50 dark:bg-white dark:text-neutral-900"
-										>
-											{isBusy ? 'Menyimpan...' : 'Simpan'}
-										</button>
-										<button
-											type="button"
-											disabled={isBusy}
-											onclick={cancelCreate}
-											class="rounded-lg border border-neutral-300 px-4 py-2 text-sm disabled:opacity-50 dark:border-neutral-700"
-										>
-											Batal
-										</button>
-									</div>
-								</form>
-							{/if}
-
-							{#if category.products.length === 0}
-								<p class="py-4 text-center text-sm text-neutral-500">
-									Belum ada produk di kategori ini.
-								</p>
-							{:else}
-								{#each category.products as product, index (product.id)}
-									<BusyOverlay active={processingId === product.id}>
-										<div class="rounded-lg border border-neutral-200 p-3 dark:border-neutral-800">
-											{#if editingId === product.id}
-												<form
-													method="POST"
-													action="?/update"
-													enctype="multipart/form-data"
-													use:enhance={({ formData }) => {
-														isBusy = true;
-														processingId = product.id;
-														formData.delete('images');
-														for (const f of editNewFiles[product.id] ?? []) {
-															formData.append('images', f);
-														}
-														formData.set(
-															'existingImages',
-															JSON.stringify(editExistingImages[product.id] ?? [])
-														);
-														formData.set('oldImages', JSON.stringify(product.imageUrls ?? []));
-														if (editHasVariants[product.id]) {
-															const validVars = (editVariants[product.id] ?? []).filter(
-																(v) => v.name.trim() !== ''
-															);
-															formData.set('variants', JSON.stringify(validVars));
-															formData.set('trackStock', 'false');
-														} else {
-															formData.set('variants', '[]');
-														}
-														return async ({ result, update }) => {
-															handleFormResult(result, { success: 'Produk berhasil diperbarui.' });
-															if (result.type === 'success') {
-																editingId = null;
-															}
-															await update();
-															isBusy = false;
-															processingId = null;
-														};
-													}}
-													class="space-y-3"
-												>
-													<input type="hidden" name="id" value={product.id} />
-													<input type="hidden" name="categoryId" value={category.id} />
-													<input type="hidden" name="sortOrder" value={product.sortOrder} />
-
-													<div>
-														<label for="edit-name-{product.id}" class="block text-sm font-medium"
-															>Nama Produk</label
-														>
-														<input
-															id="edit-name-{product.id}"
-															name="name"
-															bind:value={editNameInput[product.id]}
-															required
-															disabled={isBusy}
-															class="mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm text-neutral-900
-                                     disabled:opacity-50 {findDuplicateProductName(
-																editNameInput[product.id] ?? product.name,
-																product.id
-															)
-																? 'border-amber-400 bg-amber-50/40 text-amber-900 focus:border-amber-500 dark:border-amber-500/60 dark:bg-amber-950/20 dark:text-amber-200'
-																: 'border-neutral-300 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100'}"
-														/>
-														{#if findDuplicateProductName(editNameInput[product.id] ?? product.name, product.id)}
-															{@const dup = findDuplicateProductName(
-																editNameInput[product.id] ?? product.name,
-																product.id
-															)}
-															<p
-																class="mt-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400"
-															>
-																Nama produk ini sudah digunakan di kategori "{dup?.categoryName}".
-																Silakan gunakan nama lain agar tidak duplikat.
-															</p>
-														{/if}
-													</div>
-
-													<div class="grid grid-cols-2 gap-3">
-														<div>
-															<label for="edit-price-{product.id}" class="block text-sm font-medium"
-																>Harga (Rp)</label
-															>
-															<input
-																id="edit-price-{product.id}"
-																name="priceInt"
-																type="number"
-																min="0"
-																value={product.priceInt}
-																required
-																disabled={isBusy}
-																class="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900
-                                         disabled:opacity-50
-                                         dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-															/>
-														</div>
-
-														<div>
-															<label
-																for="edit-weight-{product.id}"
-																class="block text-sm font-medium">Berat (gram)</label
-															>
-															<input
-																id="edit-weight-{product.id}"
-																name="weightGrams"
-																type="number"
-																min="0"
-																value={product.weightGrams}
-																required
-																disabled={isBusy}
-																class="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900
-                                         disabled:opacity-50
-                                         dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-															/>
-														</div>
-													</div>
-
-													<div>
-														<div class="flex items-center justify-between">
-															<label for="edit-desc-{product.id}" class="block text-sm font-medium"
-																>Deskripsi Produk</label
-															>
-															<span class="text-xs text-neutral-400"
-																>{(editDescription[product.id] ?? '').length}/1000</span
-															>
-														</div>
-														<textarea
-															id="edit-desc-{product.id}"
-															name="description"
-															bind:value={editDescription[product.id]}
-															maxlength="1000"
-															rows="3"
-															disabled={isBusy}
-															placeholder="Tuliskan spesifikasi produk, bahan, ukuran, petunjuk pemakaian, dll..."
-															class="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900
-                                disabled:opacity-50
-                                dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-														></textarea>
-													</div>
-
-													<div
-														class="rounded-lg border border-neutral-200 bg-neutral-50/60 p-3 dark:border-neutral-800 dark:bg-neutral-900/40"
-													>
-														<label class="flex items-center gap-2 text-sm font-medium">
-															<input
-																type="checkbox"
-																bind:checked={editHasVariants[product.id]}
-																disabled={isBusy}
-															/>
-															Produk memiliki varian? (ukuran/warna/rasa)
-														</label>
-
-														{#if editHasVariants[product.id]}
-															<div
-																class="mt-3 space-y-2 border-t border-neutral-200 pt-3 dark:border-neutral-800"
-															>
-																<p class="text-xs text-neutral-500">
-																	Kelola stok terpisah untuk tiap varian. Harga tiap varian sama
-																	dengan harga produk.
-																</p>
-
-																{#if (editVariants[product.id]?.length ?? 0) === 0}
-																	<p class="text-xs text-amber-600 italic dark:text-amber-400">
-																		Belum ada varian. Klik tombol di bawah untuk menambah varian.
-																	</p>
-																{/if}
-
-																{#each editVariants[product.id] ?? [] as variant, vIdx (vIdx)}
-																	<div class="flex items-center gap-2">
-																		<input
-																			type="text"
-																			bind:value={variant.name}
-																			placeholder="Nama varian (mis. Merah, XL)"
-																			disabled={isBusy}
-																			class="flex-1 rounded-lg border border-neutral-300 bg-white px-2.5 py-1.5 text-xs text-neutral-900
-                                               dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-																		/>
-																		<div class="flex items-center gap-1">
-																			<span class="text-xs text-neutral-400">Stok:</span>
-																			<input
-																				type="number"
-																				min="0"
-																				bind:value={variant.stock}
-																				disabled={isBusy}
-																				class="w-20 rounded-lg border border-neutral-300 bg-white px-2 py-1.5 text-xs text-neutral-900
-                                                   dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-																			/>
-																		</div>
-																		<button
-																			type="button"
-																			onclick={() => removeEditVariant(product.id, vIdx)}
-																			disabled={isBusy}
-																			class="rounded p-1 text-neutral-400 hover:text-red-600 dark:hover:text-red-400"
-																			title="Hapus varian"
-																		>
-																			<X size={14} />
-																		</button>
-																	</div>
-																{/each}
-
-																<button
-																	type="button"
-																	onclick={() => addEditVariant(product.id)}
-																	disabled={isBusy}
-																	class="inline-flex items-center gap-1 rounded border border-dashed border-neutral-300 px-2.5 py-1 text-xs font-medium text-neutral-600 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
-																>
-																	<Plus size={12} />
-																	Tambah Varian
-																</button>
-															</div>
-														{:else}
-															<div class="mt-2 space-y-2">
-																<label class="flex items-center gap-2 text-sm">
-																	<input
-																		type="checkbox"
-																		name="trackStock"
-																		bind:checked={editTrackStock[product.id]}
-																		disabled={isBusy}
-																	/>
-																	Lacak Stok
-																</label>
-
-																{#if editTrackStock[product.id]}
-																	<div>
-																		<label
-																			for="edit-stock-{product.id}"
-																			class="block text-xs font-medium">Jumlah Stok</label
-																		>
-																		<input
-																			id="edit-stock-{product.id}"
-																			name="stock"
-																			type="number"
-																			min="0"
-																			value={product.stock}
-																			disabled={isBusy}
-																			class="mt-1 w-32 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm text-neutral-900
-                                                 disabled:opacity-50
-                                                 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-																		/>
-																	</div>
-																{/if}
-															</div>
-														{/if}
-													</div>
-
-													<label class="flex items-center gap-2 text-sm">
-														<input
-															type="checkbox"
-															name="active"
-															checked={product.active}
-															disabled={isBusy}
-														/>
-														Aktif (tampil di halaman order)
-													</label>
-
-													<div>
-														<span class="block text-sm font-medium">Foto Produk (Maks. 4)</span>
-														<p class="text-xs text-neutral-500">
-															Otomatis di-watermark @{data.storeName} & dikompresi ke WebP.
-														</p>
-
-														{#if (editExistingImages[product.id]?.length ?? 0) + (editNewPreviews[product.id]?.length ?? 0) > 0}
-															<div class="mt-2 flex flex-wrap gap-2">
-																{#each editExistingImages[product.id] ?? [] as existingUrl, idx (existingUrl)}
-																	<div
-																		class="group relative h-16 w-16 overflow-hidden rounded-lg border border-neutral-300 dark:border-neutral-700"
-																	>
-																		<button
-																			type="button"
-																			onclick={() =>
-																				openInspect(existingUrl, 'edit-existing', idx, product.id)}
-																			class="relative h-full w-full cursor-pointer focus:outline-none"
-																			title="Klik untuk periksa foto"
-																		>
-																			<img
-																				src={existingUrl}
-																				alt="Foto produk"
-																				class="h-full w-full object-cover"
-																			/>
-																			<div
-																				class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100"
-																			>
-																				<Eye size={16} class="text-white drop-shadow" />
-																			</div>
-																		</button>
-																		<button
-																			type="button"
-																			onclick={() => removeEditExisting(product.id, idx)}
-																			class="absolute top-0.5 right-0.5 rounded-full bg-red-600/80 p-1 text-white hover:bg-red-700"
-																			title="Hapus foto ini"
-																		>
-																			<X size={10} />
-																		</button>
-																	</div>
-																{/each}
-
-																{#each editNewPreviews[product.id] ?? [] as newPrev, idx (newPrev)}
-																	<div
-																		class="group relative h-16 w-16 overflow-hidden rounded-lg border border-emerald-400 dark:border-emerald-600"
-																	>
-																		<button
-																			type="button"
-																			onclick={() =>
-																				openInspect(newPrev, 'edit-new', idx, product.id)}
-																			class="relative h-full w-full cursor-pointer focus:outline-none"
-																			title="Klik untuk periksa watermark"
-																		>
-																			<img
-																				src={newPrev}
-																				alt="Foto baru"
-																				class="h-full w-full object-cover"
-																			/>
-																			<div
-																				class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100"
-																			>
-																				<Eye size={16} class="text-white drop-shadow" />
-																			</div>
-																		</button>
-																		<button
-																			type="button"
-																			onclick={() => removeEditNew(product.id, idx)}
-																			class="absolute top-0.5 right-0.5 rounded-full bg-black/70 p-1 text-white hover:bg-black"
-																			title="Batal upload"
-																		>
-																			<X size={10} />
-																		</button>
-																	</div>
-																{/each}
-															</div>
-														{/if}
-
-														{#if (editExistingImages[product.id]?.length ?? 0) + (editNewPreviews[product.id]?.length ?? 0) < 4}
-															<div class="mt-2">
-																<label
-																	class="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-white/10"
-																>
-																	<Plus size={14} />
-																	<span
-																		>{isWatermarking
-																			? 'Memproses Watermark...'
-																			: 'Tambah Foto'}</span
-																	>
-																	<input
-																		type="file"
-																		accept="image/png,image/jpeg,image/webp"
-																		multiple
-																		onchange={(e) => handleEditFiles(product.id, e)}
-																		disabled={isBusy || isWatermarking}
-																		class="hidden"
-																	/>
-																</label>
-															</div>
-														{/if}
-													</div>
-
-													<div class="flex gap-2">
-														<button
-															type="submit"
-															disabled={isBusy}
-															class="rounded-lg bg-neutral-900 px-4 py-2 text-sm text-white disabled:opacity-50 dark:bg-white dark:text-neutral-900"
-														>
-															{isBusy ? 'Menyimpan...' : 'Simpan'}
-														</button>
-														<button
-															type="button"
-															disabled={isBusy}
-															onclick={cancelEdit}
-															class="rounded-lg border border-neutral-300 px-4 py-2 text-sm disabled:opacity-50 dark:border-neutral-700"
-														>
-															Batal
-														</button>
-													</div>
-												</form>
-											{:else}
-												<div class="flex items-center justify-between">
-													<div class="flex items-center gap-3">
-														{#if product.imageUrls && product.imageUrls.length > 0}
-															<img
-																src={product.imageUrls[0]}
-																alt={product.name}
-																class="h-10 w-10 shrink-0 rounded-lg border border-neutral-200 object-cover dark:border-neutral-800"
-																loading="lazy"
-															/>
-														{:else}
-															<div
-																class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-400 dark:bg-neutral-800"
-															>
-																<ImageIcon size={18} />
-															</div>
-														{/if}
-														<div>
-															<p class="text-sm font-medium">
-																{product.name}
-																{#if !product.active}
-																	<span
-																		class="ml-1 rounded bg-neutral-100 px-1.5 py-0.5 text-xs text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300"
-																	>
-																		Nonaktif
-																	</span>
-																{/if}
-																{#if product.imageUrls && product.imageUrls.length > 1}
-																	<span class="ml-1 text-xs text-neutral-400">
-																		({product.imageUrls.length} foto)
-																	</span>
-																{/if}
-															</p>
-															<p class="text-xs text-neutral-500">
-																Rp {product.priceInt.toLocaleString('id-ID')}
-																{#if product.variants && product.variants.length > 0}
-																	· <span class="font-medium text-emerald-600 dark:text-emerald-400"
-																		>{product.variants.length} Varian</span
-																	>
-																	(Total stok: {product.variants.reduce(
-																		(sum, v) => sum + v.stock,
-																		0
-																	)})
-																{:else if product.trackStock}
-																	· Stok: {product.stock}
-																{/if}
-															</p>
-														</div>
-													</div>
-
-													<div class="flex items-center gap-1">
-														<form
-															method="POST"
-															action="?/reorder"
-															use:enhance={() => {
-																isBusy = true;
-																processingId = product.id;
-																return async ({ result, update }) => {
-																	handleFormResult(result, {
-																		success: 'Urutan produk berhasil diubah.'
-																	});
-																	await update();
-																	isBusy = false;
-																	processingId = null;
-																};
-															}}
-														>
-															<input type="hidden" name="id" value={product.id} />
-															<input type="hidden" name="direction" value="up" />
-															<button
-																type="submit"
-																disabled={isBusy || hasActiveFilter || index === 0}
-																title={hasActiveFilter
-																	? 'Reset filter untuk mengubah urutan produk'
-																	: undefined}
-																class="rounded p-1.5 hover:bg-neutral-100 disabled:opacity-30 dark:hover:bg-white/10"
-															>
-																<ChevronUp size={16} />
-															</button>
-														</form>
-
-														<form
-															method="POST"
-															action="?/reorder"
-															use:enhance={() => {
-																isBusy = true;
-																processingId = product.id;
-																return async ({ result, update }) => {
-																	handleFormResult(result, {
-																		success: 'Urutan produk berhasil diubah.'
-																	});
-																	await update();
-																	isBusy = false;
-																	processingId = null;
-																};
-															}}
-														>
-															<input type="hidden" name="id" value={product.id} />
-															<input type="hidden" name="direction" value="down" />
-															<button
-																type="submit"
-																disabled={isBusy ||
-																	hasActiveFilter ||
-																	index === category.products.length - 1}
-																title={hasActiveFilter
-																	? 'Reset filter untuk mengubah urutan produk'
-																	: undefined}
-																class="rounded p-1.5 hover:bg-neutral-100 disabled:opacity-30 dark:hover:bg-white/10"
-															>
-																<ChevronDown size={16} />
-															</button>
-														</form>
-
-														<button
-															onclick={() => startEdit(product)}
-															disabled={isBusy}
-															class="rounded p-1.5 hover:bg-neutral-100 disabled:opacity-30 dark:hover:bg-white/10"
-														>
-															<Pencil size={16} />
-														</button>
-
-														<button
-															onclick={() => confirmDelete(product.id)}
-															disabled={isBusy}
-															class="rounded p-1.5 text-red-600 hover:bg-red-50 disabled:opacity-30 dark:hover:bg-red-900/20"
-														>
-															<Trash2 size={16} />
-														</button>
-													</div>
-												</div>
-
-												{#if deletingId === product.id}
-													<div
-														class="mt-3 flex items-center justify-between rounded-lg bg-red-50 p-3 text-sm dark:bg-red-900/20"
-													>
-														<span>Hapus "{product.name}"?</span>
-														<div class="flex gap-2">
-															<form
-																method="POST"
-																action="?/delete"
-																use:enhance={() => {
-																	isBusy = true;
-																	processingId = product.id;
-																	return async ({ result, update }) => {
-																		handleFormResult(result, {
-																			success: 'Produk berhasil dihapus.'
-																		});
-																		if (result.type === 'success') {
-																			deletingId = null;
-																		}
-																		await update();
-																		isBusy = false;
-																		processingId = null;
-																	};
-																}}
-															>
-																<input type="hidden" name="id" value={product.id} />
-																<button
-																	type="submit"
-																	disabled={isBusy}
-																	class="rounded bg-red-600 px-3 py-1.5 text-white disabled:opacity-50"
-																>
-																	{isBusy ? 'Menghapus...' : 'Ya, Hapus'}
-																</button>
-															</form>
-															<button
-																onclick={cancelDelete}
-																disabled={isBusy}
-																class="rounded border border-neutral-300 px-3 py-1.5 disabled:opacity-50 dark:border-neutral-700"
-															>
-																<X size={14} />
-															</button>
-														</div>
-													</div>
-												{/if}
-											{/if}
-										</div>
-									</BusyOverlay>
-								{/each}
-							{/if}
-						</div>
-					{/if}
-				</div>
-			{/each}
-		</div>
 	{/if}
 
-	{#if inspectingPhoto}
+	<!-- Daftar Produk per Kategori -->
+	<div class="space-y-8">
+		{#each filteredCategories as category (category.id)}
+			<div class="space-y-3">
+				<!-- Category Header Bar -->
+				<div class="flex items-center justify-between border-b border-neutral-200 pb-2 dark:border-neutral-800">
+					<div class="flex items-center gap-2">
+						<span class="rounded bg-neutral-100 px-2 py-0.5 font-mono text-[11px] font-bold text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
+							{category.products.length} item
+						</span>
+						<h2 class="font-serif text-base font-bold text-neutral-900 dark:text-neutral-100">
+							{category.name}
+						</h2>
+					</div>
+
+					<a
+						href="{resolve('/admin/products/new')}?category={category.id}"
+						class="text-xs font-medium text-brandy hover:underline dark:text-papaya"
+					>
+						+ Tambah di kategori ini
+					</a>
+				</div>
+
+				{#if category.products.length === 0}
+					<div class="rounded-lg border border-dashed border-neutral-200 p-6 text-center text-xs text-neutral-400 dark:border-neutral-800">
+						Belum ada produk di kategori ini.
+					</div>
+				{:else}
+					<!-- Grid Table / Cards -->
+					<div class="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-xs dark:border-neutral-800 dark:bg-neutral-900">
+						<div class="divide-y divide-neutral-200 dark:divide-neutral-800">
+							{#each category.products as prod, idx (prod.id)}
+								{@const hasVariants = prod.variants && prod.variants.length > 0}
+								{@const totalStock = hasVariants
+									? prod.variants.reduce((s, v) => s + v.stock, 0)
+									: prod.stock}
+								{@const isOutOfStock = hasVariants
+									? totalStock <= 0
+									: prod.trackStock && prod.stock <= 0}
+
+								<div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between transition-colors hover:bg-neutral-50/60 dark:hover:bg-neutral-800/40">
+									<!-- Left: Image & Info -->
+									<div class="flex items-start gap-3.5 flex-1 min-w-0">
+										{#if prod.imageUrls && prod.imageUrls.length > 0}
+											<img
+												src={prod.imageUrls[0]}
+												alt={prod.name}
+												class="h-14 w-14 shrink-0 rounded-lg border border-neutral-200 object-cover dark:border-neutral-800"
+											/>
+										{:else}
+											<div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-neutral-200 bg-neutral-100 text-neutral-400 dark:border-neutral-800 dark:bg-neutral-950">
+												<Package size={20} />
+											</div>
+										{/if}
+
+										<div class="min-w-0 flex-1">
+											<div class="flex items-center gap-2">
+												<h3 class="font-serif text-sm font-bold text-neutral-900 truncate dark:text-neutral-100">
+													{prod.name}
+												</h3>
+												{#if !prod.active}
+													<span class="rounded bg-neutral-200 px-1.5 py-0.5 font-mono text-[10px] text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
+														Nonaktif
+													</span>
+												{/if}
+											</div>
+
+											<div class="mt-1 flex flex-wrap items-center gap-2 text-xs">
+												<span class="font-mono font-bold text-neutral-800 dark:text-neutral-200">
+													{formatRupiah(prod.priceInt)}
+												</span>
+
+												<span class="text-neutral-300 dark:text-neutral-700">•</span>
+
+												{#if hasVariants}
+													<span class="rounded-full bg-blue-50 px-2 py-0.5 font-mono text-[11px] font-semibold text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+														{prod.variants.length} Varian ({totalStock} stok total)
+													</span>
+												{:else if prod.trackStock}
+													<span
+														class="rounded-full px-2 py-0.5 font-mono text-[11px] font-semibold {isOutOfStock
+															? 'bg-crimson/10 text-crimson dark:bg-crimson/20'
+															: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'}"
+													>
+														{isOutOfStock ? 'Stok Habis' : `Stok: ${prod.stock}`}
+													</span>
+												{:else}
+													<span class="font-mono text-[11px] text-neutral-400">
+														Stok tidak dilacak
+													</span>
+												{/if}
+											</div>
+
+											{#if prod.description}
+												<p class="mt-1 line-clamp-1 text-xs text-neutral-500">
+													{prod.description}
+												</p>
+											{/if}
+										</div>
+									</div>
+
+									<!-- Right: Reorder & Actions -->
+									<div class="flex items-center justify-end gap-1.5 shrink-0 self-end sm:self-center">
+										<!-- Reorder Buttons -->
+										<div class="flex items-center rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950">
+											<form
+												method="POST"
+												action="?/reorder"
+												use:enhance={() => {
+													isBusy = true;
+													return async ({ result }) => {
+														isBusy = false;
+														handleFormResult(result, {
+															failure: 'Gagal mengubah urutan produk.'
+														});
+													};
+												}}
+											>
+												<input type="hidden" name="id" value={prod.id} />
+												<input type="hidden" name="direction" value="up" />
+												<button
+													type="submit"
+													disabled={isBusy || idx === 0}
+													class="p-1 text-neutral-500 hover:text-neutral-900 disabled:opacity-30 dark:hover:text-neutral-100"
+													aria-label="Geser ke atas"
+												>
+													<ChevronUp size={14} />
+												</button>
+											</form>
+											<form
+												method="POST"
+												action="?/reorder"
+												use:enhance={() => {
+													isBusy = true;
+													return async ({ result }) => {
+														isBusy = false;
+														handleFormResult(result, {
+															failure: 'Gagal mengubah urutan produk.'
+														});
+													};
+												}}
+											>
+												<input type="hidden" name="id" value={prod.id} />
+												<input type="hidden" name="direction" value="down" />
+												<button
+													type="submit"
+													disabled={isBusy || idx === category.products.length - 1}
+													class="p-1 text-neutral-500 hover:text-neutral-900 disabled:opacity-30 dark:hover:text-neutral-100"
+													aria-label="Geser ke bawah"
+												>
+													<ChevronDown size={14} />
+												</button>
+											</form>
+										</div>
+
+										<!-- Edit Link -->
+										<a
+											href={resolve('/admin/products/[id]/edit', { id: prod.id })}
+											class="inline-flex items-center gap-1 rounded-lg border border-neutral-300 bg-white px-2.5 py-1.5 text-xs font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
+										>
+											<Pencil size={13} />
+											<span>Edit</span>
+										</a>
+
+										<!-- Delete Button -->
+										<button
+											type="button"
+											onclick={() => openDeleteModal({ id: prod.id, name: prod.name })}
+											class="rounded-lg p-1.5 text-neutral-400 hover:bg-crimson/10 hover:text-crimson"
+											aria-label="Hapus produk"
+										>
+											<Trash2 size={15} />
+										</button>
+									</div>
+								</div>
+							{/each}
+						</div>
+					</div>
+				{/if}
+			</div>
+		{/each}
+	</div>
+
+	<!-- Modal Konfirmasi Hapus Produk -->
+	{#if deleteModalOpen && productToDelete}
 		<Modal
-			open={inspectingPhoto !== null}
-			title="Preview Foto Produk"
+			open={deleteModalOpen}
+			title="Konfirmasi Hapus Produk"
 			hideActions={true}
-			onCancel={() => (inspectingPhoto = null)}
+			onCancel={() => (deleteModalOpen = false)}
 		>
-			<div class="mt-3 space-y-3">
-				<div
-					class="relative overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900"
-				>
-					<img
-						src={inspectingPhoto.url}
-						alt="Preview foto detail"
-						class="max-h-[60vh] w-full object-contain"
-					/>
-				</div>
+			<div class="space-y-4">
+				<p class="text-sm text-neutral-600 dark:text-neutral-300">
+					Apakah Anda yakin ingin menghapus produk <strong>"{productToDelete.name}"</strong>? Foto produk di server penyimpanan juga akan dibersihkan.
+				</p>
 
-				<div class="flex items-center justify-between text-xs text-neutral-500">
-					<span>
-						{#if inspectingPhoto.source === 'create' || inspectingPhoto.source === 'edit-new'}
-							<span
-								class="inline-flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400"
-							>
-								✓ Watermark: @{data.storeName}
-							</span>
-						{:else}
-							<span>Foto tersimpan</span>
-						{/if}
-					</span>
-					<span>Foto #{inspectingPhoto.index + 1}</span>
-				</div>
-
-				<div
-					class="flex justify-end gap-2 border-t border-neutral-200 pt-3 dark:border-neutral-800"
+				<form
+					method="POST"
+					action="?/delete"
+					use:enhance={() => {
+						isBusy = true;
+						return async ({ result }) => {
+							isBusy = false;
+							deleteModalOpen = false;
+							handleFormResult(result, {
+								success: 'Produk berhasil dihapus.'
+							});
+						};
+					}}
+					class="flex items-center justify-end gap-2 pt-2"
 				>
+					<input type="hidden" name="id" value={productToDelete.id} />
 					<button
 						type="button"
-						onclick={deleteFromInspect}
-						class="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-900/50"
+						onclick={() => (deleteModalOpen = false)}
+						class="rounded-lg border border-neutral-300 px-3.5 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300"
 					>
-						Hapus Foto Ini
+						Batal
 					</button>
 					<button
-						type="button"
-						onclick={() => (inspectingPhoto = null)}
-						class="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-white/10"
+						type="submit"
+						disabled={isBusy}
+						class="rounded-lg bg-crimson px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-crimson/90 disabled:opacity-50"
 					>
-						Tutup
+						{isBusy ? 'Menghapus...' : 'Ya, Hapus Produk'}
 					</button>
-				</div>
+				</form>
 			</div>
 		</Modal>
 	{/if}
 </div>
+</BusyOverlay>

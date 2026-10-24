@@ -9,9 +9,11 @@ const INVOICE_LABELS: Record<string, string> = {
 };
 
 const PAYMENT_LABELS: Record<string, string> = {
-	PENDING: 'Belum bayar',
-	CONFIRMED: 'Lunas',
-	CANCELLED: 'Dibatalkan'
+	PENDING: 'Menunggu Bukti Bayar',
+	WAITING_VERIFICATION: 'Menunggu Verifikasi',
+	CONFIRMED: 'Lunas & Sah',
+	CANCELLED: 'Dibatalkan',
+	EXPIRED: 'Kedaluwarsa'
 };
 
 export function invoiceStatusLabel(status: string): string {

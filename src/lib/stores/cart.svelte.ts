@@ -255,12 +255,12 @@ function createCart() {
 	const subtotal = $derived(items.reduce((sum, i) => sum + i.price * i.qty, 0));
 	const discountTotal = $derived.by(() => {
 		if (!promoRules || promoRules.length === 0) return 0;
-		const qtyPerProduct = new Map<string, number>();
+		const qtyPerProduct: Record<string, number> = {};
 		for (const item of items) {
-			qtyPerProduct.set(item.productId, (qtyPerProduct.get(item.productId) || 0) + item.qty);
+			qtyPerProduct[item.productId] = (qtyPerProduct[item.productId] || 0) + item.qty;
 		}
 		let totalDiscount = 0;
-		for (const [prodId, qty] of qtyPerProduct.entries()) {
+		for (const [prodId, qty] of Object.entries(qtyPerProduct)) {
 			const rules = promoRules.filter((r) => r.productId === prodId);
 			for (const rule of rules) {
 				if (rule.minQty > 0 && qty >= rule.minQty && rule.discountAmount > 0) {

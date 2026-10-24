@@ -72,11 +72,6 @@ function para(
 	}
 }
 
-function rightText(ctx: Ctx, text: string, size: number, font: PDFFont, color = BLACK) {
-	const w = font.widthOfTextAtSize(text, size);
-	ctx.page.drawText(text, { x: PAGE_W - RM - w, y: ctx.y - size, font, size, color });
-}
-
 function rule(ctx: Ctx, thickness = 1, color = BLACK) {
 	ensure(ctx, 10);
 	ctx.page.drawRectangle({ x: LM, y: ctx.y - 4, width: CONTENT_W, height: thickness, color });
@@ -347,13 +342,6 @@ export async function renderInvoicePdf(data: InvoiceData): Promise<Uint8Array> {
 			}
 		}
 
-		if (settings.proofContact) {
-			ensure(ctx, 14);
-			para(ctx, `Konfirmasi transfer ke: ${settings.proofContact}${settings.instagram ? ` (Instagram: ${settings.instagram})` : ''}`, {
-				size: 9,
-				color: GRAY_DARK
-			});
-		}
 		if (settings.paymentNote) {
 			ensure(ctx, 14);
 			para(ctx, settings.paymentNote, { size: 8, color: GRAY_DARK });
@@ -362,7 +350,7 @@ export async function renderInvoicePdf(data: InvoiceData): Promise<Uint8Array> {
 
 	// ── 6. Footer Penutup ──
 	{
-		ensure(ctx, 30);
+		ensure(ctx, 35);
 		ctx.y -= 12;
 		rule(ctx, 0.5, BORDER_LIGHT);
 		const closing = `Terima kasih atas pesanan Anda di ${settings.storeName || 'toko kami'}!`;
@@ -375,11 +363,25 @@ export async function renderInvoicePdf(data: InvoiceData): Promise<Uint8Array> {
 			color: GRAY_DARK
 		});
 
+		let yOffset = 20;
+		if (settings.proofContact || settings.instagram) {
+			const support = `Bantuan Pesanan: ${settings.proofContact || ''}${settings.proofContact && settings.instagram ? ' | ' : ''}${settings.instagram ? `Instagram: @${settings.instagram.replace(/^@/, '')}` : ''}`;
+			const sw = regular.widthOfTextAtSize(support, 8);
+			ctx.page.drawText(support, {
+				x: LM + (CONTENT_W - sw) / 2,
+				y: ctx.y - yOffset,
+				font: regular,
+				size: 8,
+				color: GRAY_DARK
+			});
+			yOffset += 10;
+		}
+
 		const autoNote = 'Dokumen ini dibuat otomatis oleh cho.lazey - CHIBICONXI CATALOGUE';
 		const aw = regular.widthOfTextAtSize(autoNote, 7);
 		ctx.page.drawText(autoNote, {
 			x: LM + (CONTENT_W - aw) / 2,
-			y: ctx.y - 20,
+			y: ctx.y - yOffset,
 			font: regular,
 			size: 7,
 			color: BORDER_LIGHT

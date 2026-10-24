@@ -12,9 +12,8 @@ import {
 } from '$lib/server/db/schema';
 import { eq, asc, and, gte, lte, inArray, sql, count, desc, ilike, or, sum } from 'drizzle-orm';
 import { generateOrderId, generateAccessToken } from '$lib/utils/order-id';
-import { calculateCourier } from '$lib/server/shipping/client';
 import { SHIPPING_COURIERS } from '$lib/server/shipping/couriers';
-import { getSettings } from '$lib/server/db/queries/settings';
+import { ORDER_HOLD_TIMEOUT_MINUTES } from '$lib/constants';
 import { logger } from '$lib/server/logger';
 
 export class OrderError extends Error {}
@@ -150,9 +149,9 @@ export async function createOrder(input: CreateOrderInput) {
 			}
 
 			// ── Ongkir & Mode Pengiriman (3 opsi event offline + fallback) ──
-			let shippingPrice = 0;
-			let shippingType = 'MAIL_ORDER';
-			let shipLabel: string | null = null;
+			let shippingPrice: number;
+			let shippingType: string;
+			let shipLabel: string | null;
 
 			if (input.shipping?.kind === 'mail_order') {
 				shippingPrice = 0;
@@ -259,6 +258,8 @@ export async function createOrder(input: CreateOrderInput) {
 				}
 			}
 
+			const expiresAt = new Date(Date.now() + ORDER_HOLD_TIMEOUT_MINUTES * 60 * 1000);
+
 			const [order] = await tx
 				.insert(orders)
 				.values({
@@ -275,11 +276,12 @@ export async function createOrder(input: CreateOrderInput) {
 					shippingType,
 					shippingLabel: shipLabel,
 					invoiceStatus: 'PENDING',
-					paymentStatus: 'PENDING'
+					paymentStatus: 'PENDING',
+					expiresAt
 				})
 				.returning();
 
-			logger.info('order.inserted', { orderId: order.orderId, total: order.total });
+			logger.info('order.inserted', { orderId: order.orderId, total: order.total, expiresAt });
 
 			await tx
 				.insert(orderItems)
@@ -287,9 +289,72 @@ export async function createOrder(input: CreateOrderInput) {
 
 			logger.info('order.items-inserted', { orderId: order.orderId, count: lineItems.length });
 
-			return { orderId: order.orderId, accessToken: order.accessToken };
+			return { orderId: order.orderId, accessToken: order.accessToken, expiresAt: order.expiresAt };
 		})
 	);
+}
+
+export async function submitPaymentProof(
+	orderId: string,
+	accessToken: string,
+	payload: {
+		proofUrl: string;
+		proofPath: string;
+		paymentMethod: string;
+	}
+) {
+	return db.transaction(async (tx) => {
+		const order = await tx.query.orders.findFirst({
+			where: and(eq(orders.orderId, orderId), eq(orders.accessToken, accessToken))
+		});
+
+		if (!order) {
+			throw new OrderError('Pesanan tidak ditemukan.');
+		}
+
+		if (
+			order.paymentStatus === 'EXPIRED' ||
+			(order.expiresAt && new Date() > order.expiresAt && order.paymentStatus === 'PENDING')
+		) {
+			throw new OrderError('Batas waktu pembayaran pesanan ini telah habis. Silakan buat pesanan baru.');
+		}
+
+		if (order.paymentStatus === 'CONFIRMED') {
+			return order;
+		}
+
+		const [updated] = await tx
+			.update(orders)
+			.set({
+				paymentProofUrl: payload.proofUrl,
+				paymentProofPath: payload.proofPath,
+				paymentMethod: payload.paymentMethod,
+				paymentProofUploadedAt: new Date(),
+				paymentStatus: 'WAITING_VERIFICATION'
+			})
+			.where(eq(orders.id, order.id))
+			.returning();
+
+		return updated;
+	});
+}
+
+export async function verifyPaymentProof(orderId: string, isValid: boolean) {
+	return db.transaction(async (tx) => {
+		const order = await tx.query.orders.findFirst({
+			where: eq(orders.orderId, orderId)
+		});
+		if (!order) throw new OrderError('Pesanan tidak ditemukan.');
+
+		const nextStatus = isValid ? 'CONFIRMED' : 'PENDING';
+		const [updated] = await tx
+			.update(orders)
+			.set({ paymentStatus: nextStatus })
+			.where(eq(orders.id, order.id))
+			.returning();
+
+		return updated;
+	});
 }
 
 export async function getOrderByToken(orderId: string, accessToken: string) {
@@ -303,6 +368,16 @@ export async function getOrderByToken(orderId: string, accessToken: string) {
 	});
 
 	if (!order) return null;
+
+	// Deteksi otomatis apakah pesanan pending telah melewati batas kedaluwarsa
+	if (
+		order.paymentStatus === 'PENDING' &&
+		order.expiresAt &&
+		new Date() > order.expiresAt
+	) {
+		await expireOrderAndRollbackStock(order.orderId);
+		order.paymentStatus = 'EXPIRED';
+	}
 
 	const settings = (await db.query.storeSettings.findFirst({
 		where: eq(storeSettings.id, 1)
@@ -333,8 +408,79 @@ export async function getOrderByToken(orderId: string, accessToken: string) {
 	};
 }
 
+export async function expireOrderAndRollbackStock(orderId: string) {
+	return db.transaction(async (tx) => {
+		const order = await tx.query.orders.findFirst({
+			where: eq(orders.orderId, orderId),
+			with: {
+				items: true
+			}
+		});
+
+		if (!order) return null;
+
+		// Jika sudah EXPIRED, CANCELLED, atau CONFIRMED, jangan rollback ganda
+		if (
+			order.paymentStatus === 'EXPIRED' ||
+			order.paymentStatus === 'CANCELLED' ||
+			order.paymentStatus === 'CONFIRMED'
+		) {
+			return order;
+		}
+
+		// Update status pesanan ke EXPIRED
+		await tx
+			.update(orders)
+			.set({
+				paymentStatus: 'EXPIRED',
+				updatedAt: new Date()
+			})
+			.where(eq(orders.id, order.id));
+
+		// Rollback stok tiap item ke inventaris
+		for (const item of order.items) {
+			if (!item.productId) continue;
+
+			const product = await tx.query.products.findFirst({
+				where: eq(products.id, item.productId),
+				with: {
+					variants: true
+				}
+			});
+
+			if (!product) continue;
+
+			if (item.variantNameSnapshot) {
+				const variant = product.variants.find((v) => v.name === item.variantNameSnapshot);
+				const shouldTrack = product.trackStock && variant?.trackStock !== false;
+				if (shouldTrack && variant) {
+					await tx
+						.update(productVariants)
+						.set({ stock: sql`${productVariants.stock} + ${item.qty}` })
+						.where(eq(productVariants.id, variant.id));
+				}
+			} else if (product.trackStock) {
+				await tx
+					.update(products)
+					.set({ stock: sql`${products.stock} + ${item.qty}` })
+					.where(eq(products.id, product.id));
+			}
+		}
+
+		logger.info('order.expired.stock-rollbacked', {
+			orderId: order.orderId,
+			itemCount: order.items.length
+		});
+
+		return {
+			...order,
+			paymentStatus: 'EXPIRED' as const
+		};
+	});
+}
+
 export async function getOrderById(orderId: string) {
-	return db.query.orders.findFirst({
+	const order = await db.query.orders.findFirst({
 		where: eq(orders.orderId, orderId),
 		with: {
 			items: {
@@ -342,6 +488,20 @@ export async function getOrderById(orderId: string) {
 			}
 		}
 	});
+
+	if (!order) return null;
+
+	// Deteksi otomatis jika waktu pembayaran sudah kedaluwarsa saat admin membuka detail
+	if (
+		order.paymentStatus === 'PENDING' &&
+		order.expiresAt &&
+		new Date() > order.expiresAt
+	) {
+		await expireOrderAndRollbackStock(order.orderId);
+		order.paymentStatus = 'EXPIRED';
+	}
+
+	return order;
 }
 
 export async function updateOrderInvoiceResult(
@@ -361,8 +521,37 @@ export async function updateOrderInvoiceResult(
 
 export async function updateOrderPaymentStatus(
 	orderId: string,
-	paymentStatus: 'PENDING' | 'CONFIRMED' | 'CANCELLED'
+	paymentStatus: 'PENDING' | 'WAITING_VERIFICATION' | 'CONFIRMED' | 'CANCELLED' | 'EXPIRED'
 ) {
+	if (paymentStatus === 'CANCELLED') {
+		await expireOrderAndRollbackStock(orderId);
+		await db
+			.update(orders)
+			.set({ paymentStatus: 'CANCELLED', updatedAt: new Date() })
+			.where(eq(orders.orderId, orderId));
+		return;
+	}
+
+	// Jika admin menolak bukti bayar dan mengembalikan status ke PENDING,
+	// perpanjang batas waktu kedaluwarsa 30 menit ke depan dan kosongkan foto bukti lama
+	// agar pembeli memiliki waktu untuk mentransfer dan mengunggah ulang bukti baru.
+	// Catatan: paymentProofUploadedAt TIDAK di-null kan agar sistem tetap mencatat bahwa
+	// pesanan ini berstatus unggah ulang (re-upload).
+	if (paymentStatus === 'PENDING') {
+		const newExpiresAt = new Date(Date.now() + 30 * 60 * 1000);
+		await db
+			.update(orders)
+			.set({
+				paymentStatus: 'PENDING',
+				expiresAt: newExpiresAt,
+				paymentProofUrl: null,
+				paymentProofPath: null,
+				updatedAt: new Date()
+			})
+			.where(eq(orders.orderId, orderId));
+		return;
+	}
+
 	await db
 		.update(orders)
 		.set({ paymentStatus, updatedAt: new Date() })

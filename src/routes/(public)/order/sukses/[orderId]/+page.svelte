@@ -31,10 +31,14 @@
 	// URL absolut hanya ada di browser — SSR pakai teks tanpa link.
 	const waHref = $derived.by(() => {
 		if (!data.contact) return null;
-		let text = `Halo, saya order ${data.orderId}, minta link invoice.`;
+		let text = data.isReupload
+			? `Halo Kak! Saya sudah mengunggah ulang bukti pembayaran untuk pesanan #${data.orderId}. Mohon bantuannya untuk diverifikasi ya kak. Terima kasih!`
+			: `Halo Kak! Saya sudah menyelesaikan pesanan #${data.orderId} dan mengunggah bukti pembayaran. Mohon bantuannya untuk diverifikasi ya. Terima kasih!`;
 		if (browser && invoiceHref) {
 			const absolute = new URL(invoiceHref, window.location.origin).href;
-			text = `Halo, saya order ${data.orderId}, link invoice saya: ${absolute}`;
+			text = data.isReupload
+				? `Halo Kak! Saya sudah mengunggah ulang bukti pembayaran untuk pesanan #${data.orderId}. Mohon bantuannya untuk diverifikasi ya kak. Tautan faktur: ${absolute}`
+				: `Halo Kak! Saya sudah menyelesaikan pesanan #${data.orderId} dan mengunggah bukti pembayaran. Mohon bantuannya untuk diverifikasi ya kak. Tautan faktur: ${absolute}`;
 		}
 		return waLink(data.contact, text);
 	});
@@ -44,18 +48,22 @@
 	<!-- Rubber Stamp / Status Tag -->
 	<div class="space-y-3">
 		<div
-			class="inline-block -rotate-2 rounded-[6px_2px_5px_1px] border-2 border-forest bg-forest/15 px-4 py-1.5 font-mono text-xs font-bold tracking-widest text-forest uppercase shadow-[2px_2px_0px_#2b9348]"
+			class="inline-block -rotate-2 rounded-[6px_2px_5px_1px] border-2 px-4 py-1.5 font-mono text-xs font-bold tracking-widest uppercase {data.isReupload
+				? 'border-teal bg-teal/15 text-teal shadow-[2px_2px_0px_#14b8a6]'
+				: 'border-forest bg-forest/15 text-forest shadow-[2px_2px_0px_#2b9348]'}"
 		>
-			PESANAN BERHASIL DIBUAT
+			{data.isReupload ? 'BUKTI PEMBAYARAN DIPERBARUI' : 'PESANAN BERHASIL DIBUAT'}
 		</div>
 
 		<h1
 			class="font-serif text-3xl font-bold tracking-normal text-ink md:text-4xl dark:text-papaya"
 		>
-			Hore, Order Terkirim!
+			{data.isReupload ? 'Bukti Transfer Berhasil Dikirim Ulang!' : 'Hore, Order Terkirim!'}
 		</h1>
 		<p class="font-handwriting text-2xl font-semibold leading-snug text-teal md:text-3xl dark:text-papaya/90">
-			Terima kasih banyak sudah memesan di toko kami.
+			{data.isReupload
+				? 'Terima kasih! Bukti transfer terbaru Anda telah kami terima dan masuk kembali ke antrean verifikasi admin.'
+				: 'Terima kasih banyak sudah memesan di toko kami.'}
 		</p>
 	</div>
 

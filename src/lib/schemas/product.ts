@@ -8,6 +8,7 @@ export const productSchema = z.object({
 	trackStock: z.coerce.boolean().default(false),
 	stock: z.coerce.number().int().min(0).default(0),
 	active: z.coerce.boolean().default(true),
+	sortOrder: z.coerce.number().int().default(0),
 	description: z.string().trim().max(1000, 'Deskripsi maksimal 1000 karakter').optional().nullable(),
 	imageUrls: z.array(z.string().url()).max(4).default([]),
 	variants: z

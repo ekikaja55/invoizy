@@ -6,10 +6,10 @@ import type { ProductInput } from '$lib/schemas/product';
 
 export async function listProductsGroupedByCategory() {
 	return db.query.categories.findMany({
-		orderBy: [asc(categories.sortOrder)],
+		orderBy: [asc(categories.sortOrder), asc(categories.name)],
 		with: {
 			products: {
-				orderBy: [asc(products.sortOrder)],
+				orderBy: [asc(products.sortOrder), asc(products.createdAt)],
 				with: {
 					variants: {
 						orderBy: [asc(productVariants.sortOrder), asc(productVariants.createdAt)]

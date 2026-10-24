@@ -251,7 +251,13 @@ export async function markInvoiceSent(orderId: string): Promise<void> {
 	await updateOrderInvoiceResult(orderId, { invoiceStatus: 'SENT', error: null });
 }
 
-const PAYMENT_STATUSES = ['PENDING', 'CONFIRMED', 'CANCELLED'] as const;
+const PAYMENT_STATUSES = [
+	'PENDING',
+	'WAITING_VERIFICATION',
+	'CONFIRMED',
+	'CANCELLED',
+	'EXPIRED'
+] as const;
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 
 /** Admin: update status pembayaran manual. */

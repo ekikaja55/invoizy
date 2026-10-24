@@ -22,6 +22,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
 		from: url.searchParams.get('from'),
 		order: {
 			orderId: result.order.orderId,
+			accessToken: result.order.accessToken,
 			handle: result.order.handle,
 			email: result.order.email,
 			note: result.order.note,
@@ -32,7 +33,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
 			total: result.order.total,
 			shippingType: result.order.shippingType ?? 'MAIL_ORDER',
 			shippingLabel: result.order.shippingLabel,
-			paymentStatus: result.order.paymentStatus as 'PENDING' | 'CONFIRMED' | 'CANCELLED',
+			paymentStatus: result.order.paymentStatus as 'PENDING' | 'WAITING_VERIFICATION' | 'CONFIRMED' | 'CANCELLED' | 'EXPIRED',
 			createdAt: result.order.createdAt.toISOString(),
 			items: result.order.items.map((i) => ({
 				id: i.id,

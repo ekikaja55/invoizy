@@ -14,7 +14,9 @@
 	<MobileFab items={adminNavItems} {isAdmin} />
 	<NavigatingOverlay />
 
-	<main class="px-4 py-8 md:pl-64">
-		{@render children()}
+	<main class="min-w-0 w-full px-4 py-8 sm:px-6 md:pl-72 md:pr-8 lg:pl-72 lg:pr-8">
+		<div class="mx-auto w-full max-w-7xl min-w-0">
+			{@render children()}
+		</div>
 	</main>
 </div>

@@ -31,7 +31,13 @@ export const invoiceStatusEnum = pgEnum('invoice_status', [
 	'FAILED'
 ]);
 
-export const paymentStatusEnum = pgEnum('payment_status', ['PENDING', 'CONFIRMED', 'CANCELLED']);
+export const paymentStatusEnum = pgEnum('payment_status', [
+	'PENDING',
+	'WAITING_VERIFICATION',
+	'CONFIRMED',
+	'CANCELLED',
+	'EXPIRED'
+]);
 
 export const paymentMethodTypeEnum = pgEnum('payment_method_type', ['bank', 'va', 'other']);
 
@@ -211,6 +217,11 @@ export const orders = pgTable('orders', {
 
 	invoiceUrl: text('invoice_url'),
 	pdfFilePath: text('pdf_file_path'),
+	paymentProofUrl: text('payment_proof_url'),
+	paymentProofPath: text('payment_proof_path'),
+	paymentProofUploadedAt: timestamp('payment_proof_uploaded_at', { withTimezone: true }),
+	paymentMethod: text('payment_method'),
+	expiresAt: timestamp('expires_at', { withTimezone: true }),
 	error: text('error'),
 
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

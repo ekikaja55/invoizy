@@ -4,6 +4,7 @@ import InvoiceDocument from './InvoiceDocument.svelte';
 export interface InvoiceData {
 	order: {
 		orderId: string;
+		accessToken?: string;
 		handle: string;
 		email: string;
 		note: string;
@@ -15,7 +16,7 @@ export interface InvoiceData {
 		shippingType?: string;
 		shippingLabel: string | null;
 		createdAt: string | Date;
-		paymentStatus?: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
+		paymentStatus?: 'PENDING' | 'WAITING_VERIFICATION' | 'CONFIRMED' | 'CANCELLED' | 'EXPIRED';
 		items: {
 			id?: string;
 			nameSnapshot: string;

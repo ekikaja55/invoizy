@@ -60,6 +60,29 @@ export async function deleteProductImage(pathOrUrl: string) {
 	await supabaseAdmin.storage.from('products').remove([path]);
 }
 
+export async function uploadPaymentProof(
+	orderId: string,
+	file: File
+): Promise<{ url: string; path: string }> {
+	const ext = file.name.split('.').pop() || 'jpg';
+	const path = `proofs/${orderId}-${Date.now()}.${ext}`;
+
+	const { error } = await supabaseAdmin.storage
+		.from('invoices')
+		.upload(path, file, { upsert: true, contentType: file.type || 'image/jpeg' });
+
+	if (error) {
+		throw new Error(`Gagal upload bukti transfer: ${error.message}`);
+	}
+
+	const { data } = supabaseAdmin.storage.from('invoices').getPublicUrl(path);
+	return { url: data.publicUrl, path };
+}
+
+export async function deletePaymentProof(path: string) {
+	await supabaseAdmin.storage.from('invoices').remove([path]);
+}
+
 export async function uploadInvoicePdf(
 	orderId: string,
 	pdf: Uint8Array

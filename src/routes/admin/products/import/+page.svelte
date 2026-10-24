@@ -270,6 +270,9 @@
 						stock: r.stock,
 						trackStock: r.trackStock
 					});
+					// Akumulasikan stok varian tambahan ke total stok produk induk
+					p.stock += r.stock;
+					p.trackStock = p.trackStock || r.trackStock;
 				}
 			}
 		}

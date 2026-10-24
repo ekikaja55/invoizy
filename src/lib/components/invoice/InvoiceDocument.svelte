@@ -1,7 +1,9 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
+	import type { ResolvedPathname } from '$app/types';
 	import { formatRupiah } from '$lib/utils/currency';
 	import type { InvoiceData } from './index';
-	import { Copy, Check } from '@lucide/svelte';
+	import { Copy, Check, UploadCloud } from '@lucide/svelte';
 
 	interface Props extends InvoiceData {
 		mode: 'web' | 'pdf';
@@ -16,6 +18,12 @@
 		new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(
 			new Date(order.createdAt)
 		)
+	);
+
+	const payHref = $derived(
+		order.accessToken
+			? (`${resolve('/(public)/order/bayar/[orderId]', { orderId: order.orderId })}?token=${order.accessToken}&reupload=true` as ResolvedPathname)
+			: null
 	);
 
 	let copiedAccount = $state<string | null>(null);
@@ -79,6 +87,18 @@
 						class="inline-block -rotate-6 rounded-[8px_3px_7px_2px] border-[3px] border-double border-forest bg-forest/15 px-4 py-1.5 font-mono text-xs sm:text-sm font-black tracking-widest text-forest uppercase shadow-[2px_2px_0px_#2b9348] print:border-black print:text-black print:shadow-none"
 					>
 						★ LUNAS / PAID ★
+					</div>
+				{:else if order.paymentStatus === 'WAITING_VERIFICATION'}
+					<div
+						class="inline-block -rotate-3 rounded-[8px_3px_7px_2px] border-[3px] border-dashed border-teal bg-teal/15 px-4 py-1.5 font-mono text-xs sm:text-sm font-black tracking-widest text-teal uppercase shadow-[2px_2px_0px_#008080] print:border-black print:text-black print:shadow-none"
+					>
+						MENUNGGU VERIFIKASI
+					</div>
+				{:else if order.paymentStatus === 'EXPIRED'}
+					<div
+						class="inline-block rotate-3 rounded-[8px_3px_7px_2px] border-[3px] border-dashed border-crimson bg-crimson/15 px-4 py-1.5 font-mono text-xs sm:text-sm font-black tracking-widest text-crimson uppercase shadow-[2px_2px_0px_#c1121f] print:border-black print:text-black print:shadow-none"
+					>
+						KEDALUARSA / EXPIRED
 					</div>
 				{:else if order.paymentStatus === 'CANCELLED'}
 					<div
@@ -289,26 +309,22 @@
 				</div>
 			{/if}
 
-			<!-- Catatan Toko & Konfirmasi Pembayaran -->
+			<!-- Catatan Toko -->
 			{#if settings.paymentNote}
 				<p class="font-sans text-xs leading-relaxed text-brandy/90 dark:text-papaya/80 print:text-black">
 					{settings.paymentNote}
 				</p>
 			{/if}
 
-			{#if settings.proofContact}
-				<div
-					class="rounded-[10px_4px_8px_3px] border-2 border-brandy bg-tangerine/15 p-3.5 text-xs text-brandy dark:border-papaya/30 dark:bg-tangerine/20 dark:text-papaya print:border-black print:bg-transparent print:text-black"
-				>
-					<p class="font-serif font-bold text-ink dark:text-papaya print:text-black">
-						Sudah melakukan pembayaran?
-					</p>
-					<p class="mt-0.5">
-						Kirimkan bukti transfer Anda ke kontak: <strong class="font-mono text-teal dark:text-tangerine print:text-black">{settings.proofContact}</strong>
-						{#if settings.instagram}
-							<span> atau DM Instagram <strong>{settings.instagram}</strong></span>
-						{/if}
-					</p>
+			{#if mode === 'web' && order.paymentStatus === 'PENDING' && payHref}
+				<div class="no-print pt-2">
+					<a
+						href={payHref}
+						class="inline-flex w-full items-center justify-center gap-2 rounded-[10px_5px_9px_4px] border-2 border-brandy bg-tangerine px-5 py-3 font-mono text-sm font-bold text-white shadow-[3px_3px_0px_#78290f] transition-all hover:bg-[#e06d00] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none"
+					>
+						<UploadCloud size={18} strokeWidth={2.5} />
+						<span>Unggah Bukti Transfer Sekarang</span>
+					</a>
 				</div>
 			{/if}
 		</div>
@@ -318,6 +334,20 @@
 			<p class="font-handwriting text-2xl sm:text-3xl font-semibold leading-snug text-teal dark:text-papaya/90 print:text-black">
 				Terima kasih banyak sudah memesan di {settings.storeName || 'toko kami'}!
 			</p>
+			{#if settings.proofContact || settings.instagram}
+				<p class="font-sans text-xs text-brandy/80 dark:text-papaya/70 print:text-gray-600">
+					Butuh bantuan seputar pesanan? Hubungi
+					{#if settings.proofContact}
+						<strong class="font-mono text-ink dark:text-papaya print:text-black">{settings.proofContact}</strong>
+					{/if}
+					{#if settings.proofContact && settings.instagram}
+						<span> / </span>
+					{/if}
+					{#if settings.instagram}
+						<span>DM Instagram <strong class="font-mono text-ink dark:text-papaya print:text-black">@{settings.instagram.replace(/^@/, '')}</strong></span>
+					{/if}
+				</p>
+			{/if}
 			<p class="font-mono text-[10px] text-brandy/60 dark:text-papaya/50 tracking-widest uppercase print:text-gray-500">
 				Faktur elektronik ini dibuat otomatis oleh cho.lazey - CHIBICONXI CATALOGUE
 			</p>

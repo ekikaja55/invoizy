@@ -25,6 +25,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
 		token,
 		customerEmail,
 		contact: settings?.proofContact || settings?.instagram || '',
-		emailEnabled: privateEnv.EMAIL_ENABLED !== 'false'
+		emailEnabled: privateEnv.EMAIL_ENABLED !== 'false',
+		isReupload: url.searchParams.get('reupload') === 'true'
 	};
 };

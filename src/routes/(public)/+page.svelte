@@ -6,7 +6,6 @@
 	let { data }: { data: PageData } = $props();
 
 	const storeName = $derived(data.settings?.storeName || 'cho.lazey - CHIBICONXI CATALOGUE');
-	const ownerName = $derived(data.settings?.instagram || 'cho.lazey - CHIBICONXI CATALOGUE');
 
 	const isLogin = $derived(Boolean(data.user));
 
@@ -38,13 +37,13 @@
 	/>
 </svelte:head>
 
-<div class="mx-auto max-w-2xl space-y-12 overflow-x-clip px-4 py-12 text-center">
+<div class="space-y-12 overflow-x-clip py-6 text-left max-w-3xl">
 	<!-- Hero Section -->
 	<div class="space-y-4">
 		<!-- Event Edition Banner: Pembeda Visual Branch Event Offline -->
-		<div class="flex flex-wrap items-center justify-center gap-2.5">
+		<div class="flex flex-wrap items-center justify-start gap-2.5">
 			<div
-				class="inline-block rotate-1 rounded-xs border-2 border-brandy bg-yellow-200 px-3 py-1 shadow-[2px_2px_0px_#78290f]"
+				class="inline-block -rotate-1 rounded-xs border-2 border-brandy bg-yellow-200 px-3 py-1 shadow-[2px_2px_0px_#78290f]"
 			>
 				<span class="font-handwriting text-lg font-bold tracking-wide text-brandy">
 					from sketch to life
@@ -52,7 +51,7 @@
 			</div>
 		</div>
 
-		<!-- Main Headline: Fraunces Serif Lega -->
+		<!-- Main Headline: Fraunces Serif Lega Rata Kiri -->
 		<h1
 			class="font-headline text-3xl leading-tight font-extrabold text-ink sm:text-5xl dark:text-papaya"
 		>
@@ -62,17 +61,17 @@
 
 		<!-- Subtitle: Edisi Khusus Pameran -->
 		<p
-			class="mx-auto max-w-lg font-sans text-sm leading-relaxed text-brandy/80 sm:text-base dark:text-papaya/70"
+			class="font-sans text-sm leading-relaxed text-brandy/80 sm:text-base dark:text-papaya/70"
 		>
 			<strong class="font-bold text-ink dark:text-papaya">BATCH I</strong>
 		</p>
 	</div>
 
-	<!-- Action Buttons: Tactile Buttons with Stroke-Spidol Icons & Dynamic Tilt -->
-	<div class="flex flex-col items-center justify-center gap-4 sm:flex-row">
+	<!-- Action Buttons: Tactile Buttons Rata Kiri -->
+	<div class="flex flex-col items-stretch sm:items-center justify-start gap-4 sm:flex-row">
 		<a
 			href={resolve('/order')}
-			class="flex w-full -rotate-1 transform-gpu items-center justify-center gap-2.5 rounded-[14px_6px_12px_8px] border-2 border-brandy bg-tangerine px-7 py-3.5 text-base font-bold text-white shadow-[4px_4px_0px_#78290f] transition-all duration-150 backface-hidden hover:-translate-x-0.5 hover:-translate-y-0.5 hover:rotate-0 hover:shadow-[5px_5px_0px_#78290f] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none sm:w-auto"
+			class="flex -rotate-1 transform-gpu items-center justify-center gap-2.5 rounded-[14px_6px_12px_8px] border-2 border-brandy bg-tangerine px-7 py-3.5 text-base font-bold text-white shadow-[4px_4px_0px_#78290f] transition-all duration-150 backface-hidden hover:-translate-x-0.5 hover:-translate-y-0.5 hover:rotate-0 hover:shadow-[5px_5px_0px_#78290f] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none sm:w-auto"
 		>
 			<ShoppingBag size={18} strokeWidth={2.75} />
 			<span>Mulai Order</span>
@@ -81,7 +80,7 @@
 
 		<a
 			href={resolve('/order/riwayat')}
-			class="flex w-full rotate-1 transform-gpu items-center justify-center gap-2.5 rounded-[8px_14px_6px_12px] border-2 border-brandy bg-white px-6 py-3.5 text-base font-bold text-ink shadow-[4px_4px_0px_#78290f] transition-all duration-150 backface-hidden hover:-translate-x-0.5 hover:-translate-y-0.5 hover:rotate-0 hover:bg-papaya/40 active:shadow-none sm:w-auto dark:bg-ink dark:text-papaya"
+			class="flex rotate-1 transform-gpu items-center justify-center gap-2.5 rounded-[8px_14px_6px_12px] border-2 border-brandy bg-white px-6 py-3.5 text-base font-bold text-ink shadow-[4px_4px_0px_#78290f] transition-all duration-150 backface-hidden hover:-translate-x-0.5 hover:-translate-y-0.5 hover:rotate-0 hover:bg-papaya/40 active:shadow-none sm:w-auto dark:bg-ink dark:text-papaya"
 		>
 			<ReceiptText size={18} strokeWidth={2.75} class="text-teal dark:text-tangerine" />
 			<span>Riwayat Pesanan</span>
@@ -101,14 +100,13 @@
 
 	<!-- Bento Section: Cara Order -->
 	<div class="space-y-6 text-left">
-		<div class="flex items-center justify-center gap-3">
-			<span class="h-0.5 w-8 bg-brandy/30 dark:bg-papaya/30"></span>
+		<div class="flex items-center justify-start gap-3">
 			<h2
 				class="inline-block -rotate-1 rounded-[6px_2px_5px_1px] border-2 border-brandy bg-papaya px-3.5 py-1 font-mono text-xs font-bold tracking-widest text-brandy uppercase shadow-[2px_2px_0px_#78290f] dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[2px_2px_0px_rgba(255,236,209,0.2)]"
 			>
 				How to Order
 			</h2>
-			<span class="h-0.5 w-8 bg-brandy/30 dark:bg-papaya/30"></span>
+			<span class="h-0.5 flex-1 max-w-xs border-t-2 border-dashed border-brandy/30 dark:border-papaya/30"></span>
 		</div>
 
 		<ol class="space-y-5">

@@ -11,3 +11,6 @@ bun.lockb
 
 # Personal notes (jangan di-lint)
 notes/
+
+# Root markdown docs
+/*.md

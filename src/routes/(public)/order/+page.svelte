@@ -1,16 +1,46 @@
 <script lang="ts">
-	import { SvelteMap } from 'svelte/reactivity';
+	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 	import { untrack } from 'svelte';
 	import { cart } from '$lib/stores/cart.svelte';
 	import { resolve } from '$app/paths';
 	import { formatRupiah } from '$lib/utils/currency';
-	import { ArrowRight, PackageX, Layers, Search, X, Sparkles, Tag } from '@lucide/svelte';
+	import { ArrowRight, ArrowUp, PackageX, Layers, Search, X, Sparkles, ChevronDown, ChevronUp } from '@lucide/svelte';
 	import type { PageData } from './$types';
+
+	interface PromoItem {
+		name: string;
+		minQty: number;
+		discountAmount: number;
+	}
 
 	let { data }: { data: PageData } = $props();
 
 	let searchQuery = $state('');
 	let selectedCategoryId = $state<string | null>(null);
+	let showBackToTop = $state(false);
+
+	const INITIAL_CATEGORY_LIMIT = 6;
+	const expandedCategories = new SvelteSet<string>();
+
+	function toggleCategoryExpand(categoryId: string) {
+		if (expandedCategories.has(categoryId)) {
+			expandedCategories.delete(categoryId);
+		} else {
+			expandedCategories.add(categoryId);
+		}
+	}
+
+	function handleScroll() {
+		if (typeof window !== 'undefined') {
+			showBackToTop = window.scrollY > 400;
+		}
+	}
+
+	function scrollToTop() {
+		if (typeof window !== 'undefined') {
+			window.scrollTo({ top: 0, behavior: 'smooth' });
+		}
+	}
 
 	// Sinkronkan cart tersimpan dengan katalog terbaru sekali saat halaman dimuat
 	$effect(() => {
@@ -36,8 +66,9 @@
 					stock: product.stock,
 					variants: product.variants
 				});
-				if ('promos' in product && Array.isArray((product as any).promos)) {
-					for (const promo of (product as any).promos) {
+				const prodWithPromos = product as typeof product & { promos?: PromoItem[] };
+				if (Array.isArray(prodWithPromos.promos)) {
+					for (const promo of prodWithPromos.promos) {
 						promoRules.push({
 							productId: product.id,
 							name: promo.name,
@@ -129,8 +160,29 @@
 				{/if}
 			</div>
 
-			<!-- Category Pills (Washi Index Tabs) -->
-			<div class="flex items-center justify-start gap-2.5 overflow-x-auto pt-1 pb-1 sm:justify-center">
+			<!-- Category Filter: Mobile Dropdown Selector & Desktop Flex-Wrap Tabs -->
+			<div class="block sm:hidden">
+				<div class="relative">
+					<select
+						bind:value={selectedCategoryId}
+						class="w-full appearance-none rounded-[8px_3px_7px_2px] border-2 border-brandy bg-papaya px-4 py-2.5 pr-10 font-mono text-xs font-bold text-ink shadow-[2px_2px_0px_#78290f] focus:border-brandy focus:outline-none dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[2px_2px_0px_rgba(255,236,209,0.2)]"
+					>
+						<option value={null}>
+							Semua Kategori ({data.productCategories.reduce((s, c) => s + c.products.length, 0)})
+						</option>
+						{#each data.productCategories as cat (cat.id)}
+							<option value={cat.id}>{cat.name} ({cat.products.length})</option>
+						{/each}
+					</select>
+					<ChevronDown
+						size={16}
+						strokeWidth={2.5}
+						class="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-brandy dark:text-papaya"
+					/>
+				</div>
+			</div>
+
+			<div class="hidden sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-2.5 pt-1 pb-1">
 				<button
 					type="button"
 					onclick={() => (selectedCategoryId = null)}
@@ -206,6 +258,13 @@
 	{/if}
 
 	{#each filteredCategories as category, categoryIdx (category.id)}
+		{@const isSearching = searchQuery.trim().length > 0}
+		{@const isExpanded = expandedCategories.has(category.id)}
+		{@const visibleProducts = isSearching || isExpanded
+			? category.products
+			: category.products.slice(0, INITIAL_CATEGORY_LIMIT)}
+		{@const hasMore = !isSearching && category.products.length > INITIAL_CATEGORY_LIMIT}
+
 		<section class="space-y-4">
 			<!-- Category Divider / Washi Index -->
 			<div class="flex items-center gap-3">
@@ -218,14 +277,17 @@
 					<h2 class="font-serif text-lg font-bold text-ink dark:text-papaya">
 						{category.name}
 					</h2>
+					<span class="font-mono text-xs text-brandy/70 dark:text-papaya/70">
+						({category.products.length})
+					</span>
 				</div>
 				<div
 					class="h-0.5 flex-1 border-t-[3px] border-dashed border-brandy/50 dark:border-papaya/45"
 				></div>
 			</div>
 
-			<div class="grid gap-7 sm:gap-8 sm:grid-cols-2">
-				{#each category.products as product, productIdx (product.id)}
+			<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+				{#each visibleProducts as product, productIdx (product.id)}
 					{@const hasVariants = Boolean(product.variants && product.variants.length > 0)}
 					{@const totalVariantStock = hasVariants
 						? (product.variants ?? []).reduce((s, v) => s + v.stock, 0)
@@ -233,6 +295,7 @@
 					{@const outOfStock = hasVariants
 						? totalVariantStock <= 0
 						: product.trackStock && product.stock <= 0}
+					{@const pPromos = (product as typeof product & { promos?: PromoItem[] }).promos}
 					<!-- Micro-tilt berseling 1.2deg yang melurus saat hover -->
 					{@const tiltClass = productIdx % 2 === 0 ? '-rotate-[1.2deg]' : 'rotate-[1.2deg]'}
 
@@ -282,8 +345,8 @@
 								{formatRupiah(product.priceInt)}
 							</p>
 
-							{#if 'promos' in product && Array.isArray((product as any).promos) && (product as any).promos.length > 0}
-								{@const activePromo = (product as any).promos[0]}
+							{#if Array.isArray(pPromos) && pPromos.length > 0}
+								{@const activePromo = pPromos[0]}
 								<div class="mt-2 inline-flex items-center gap-1.5 rounded-[6px_2px_5px_1px] border border-tangerine/60 bg-tangerine/15 px-2.5 py-1 text-xs font-bold text-brandy shadow-[1px_1px_0px_#78290f] dark:border-tangerine/40 dark:bg-tangerine/20 dark:text-papaya">
 									<Sparkles size={13} strokeWidth={2.5} class="shrink-0 text-tangerine" />
 									<span>Beli ≥{activePromo.minQty} Diskon {formatRupiah(activePromo.discountAmount)}</span>
@@ -350,7 +413,39 @@
 					</div>
 				{/each}
 			</div>
+
+			{#if hasMore}
+				<div class="pt-2 text-center">
+					<button
+						type="button"
+						onclick={() => toggleCategoryExpand(category.id)}
+						class="inline-flex items-center gap-2 rounded-[8px_3px_7px_2px] border-2 border-brandy bg-papaya px-5 py-2.5 font-mono text-xs font-bold text-brandy shadow-[3px_3px_0px_#78290f] transition-all hover:bg-tangerine hover:text-white active:translate-y-0.5 active:shadow-none dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[3px_3px_0px_rgba(255,236,209,0.2)] dark:hover:bg-papaya dark:hover:text-ink"
+					>
+						{#if isExpanded}
+							<ChevronUp size={15} strokeWidth={2.5} />
+							<span>Ciutkan Katalog {category.name}</span>
+						{:else}
+							<ChevronDown size={15} strokeWidth={2.5} />
+							<span>Lihat Semua ({category.products.length} Produk)</span>
+						{/if}
+					</button>
+				</div>
+			{/if}
 		</section>
 	{/each}
+
+	<!-- Floating Back to Top Button (Scrapbook Stamped Button) -->
+	{#if showBackToTop}
+		<button
+			type="button"
+			onclick={scrollToTop}
+			class="fixed right-5 bottom-24 z-30 flex h-11 w-11 items-center justify-center rounded-full border-2 border-brandy bg-papaya text-brandy shadow-[3px_3px_0px_#78290f] transition-all duration-150 hover:-translate-y-0.5 hover:bg-tangerine hover:text-white active:translate-y-0.5 active:shadow-none dark:border-papaya dark:bg-ink dark:text-papaya dark:shadow-[3px_3px_0px_rgba(255,236,209,0.25)]"
+			aria-label="Kembali ke atas halaman"
+		>
+			<ArrowUp size={18} strokeWidth={2.5} />
+		</button>
+	{/if}
 </div>
+
+<svelte:window onscroll={handleScroll} />
 

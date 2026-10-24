@@ -10,7 +10,6 @@ import {
 	type CheckoutShipping
 } from '$lib/schemas/order';
 import { checkOrderSubmitRateLimit } from '$lib/server/ratelimit';
-import { processNewInvoice } from '$lib/server/invoice/process';
 import { logger } from '$lib/server/logger';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -79,7 +78,7 @@ export const actions: Actions = {
 		logger.info('order.submit', { items: items.length, hasShipping: shipping !== null });
 
 		try {
-			const { orderId, accessToken } = await createOrder({
+			const { orderId, accessToken, expiresAt } = await createOrder({
 				handle: parsed.data.handle,
 				email: parsed.data.email,
 				note: parsed.data.note ?? '',
@@ -89,15 +88,7 @@ export const actions: Actions = {
 				shipping
 			});
 
-			// Trigger invoice sinkron (best practice Fase 4): order tetap sukses
-			// walau PDF/email gagal — status dicatat FAILED untuk retry admin.
-			try {
-				await processNewInvoice(orderId, accessToken);
-			} catch (err) {
-				logger.error('order.invoice-failed', { orderId, error: err });
-			}
-
-			return { success: true, orderId, accessToken };
+			return { success: true, orderId, accessToken, expiresAt };
 		} catch (err) {
 			if (err instanceof OrderError) {
 				return fail(400, { error: err.message });

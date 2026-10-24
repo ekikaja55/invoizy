@@ -32,6 +32,13 @@ export interface NavItem {
 // Prefix nama file unduhan (CSV + PDF + lampiran email) — ganti di satu tempat.
 export const FILE_PREFIX = 'invoizy';
 
+/**
+ * Batas waktu pembayaran (Hold Timeout).
+ * Saat ini disetel 1 menit untuk keperluan testing lokal user.
+ * Ganti ke 30 untuk produksi/event sesungguhnya.
+ */
+export const ORDER_HOLD_TIMEOUT_MINUTES = 30;
+
 // Kontak darurat untuk halaman error (server gangguan / DB mati).
 // Sengaja konstanta kode (bukan env/DB): halaman error tidak boleh bergantung
 // pada hal yang bisa gagal, dan ganti env Vercel pun butuh redeploy juga.

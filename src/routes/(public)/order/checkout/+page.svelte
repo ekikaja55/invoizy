@@ -2,31 +2,47 @@
 	import { SvelteMap } from 'svelte/reactivity';
 	import { untrack } from 'svelte';
 	import { enhance } from '$app/forms';
-	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { cart, shippingLabel, type CartProduct } from '$lib/stores/cart.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
 	import { toast } from 'svelte-sonner';
 	import { handleFormResult } from '$lib/utils/handle-form-result';
 	import { formatRupiah } from '$lib/utils/currency';
-	import type { ResolvedPathname } from '$app/types';
 	import {
 		ShoppingBag,
 		Trash2,
 		Plus,
 		Minus,
 		Truck,
-		Store,
 		ArrowRight,
 		ArrowLeft,
-		Check,
-		Sparkles,
-		Calendar
+		Sparkles
 	} from '@lucide/svelte';
 	import type { PageData } from './$types';
 
+	interface PromoItem {
+		name: string;
+		minQty: number;
+		discountAmount: number;
+	}
+
 	let { data }: { data: PageData } = $props();
 	let isBusy = $state(false);
+
+	$effect(() => {
+		if (typeof document !== 'undefined') {
+			if (isBusy) {
+				document.body.style.overflow = 'hidden';
+			} else {
+				document.body.style.overflow = '';
+			}
+		}
+		return () => {
+			if (typeof document !== 'undefined') {
+				document.body.style.overflow = '';
+			}
+		};
+	});
 
 	let itemToDelete = $state<CartProduct | null>(null);
 	let confirmClearOpen = $state(false);
@@ -114,8 +130,9 @@
 					stock: product.stock,
 					variants: product.variants
 				});
-				if ('promos' in product && Array.isArray((product as any).promos)) {
-					for (const promo of (product as any).promos) {
+				const prodWithPromos = product as typeof product & { promos?: PromoItem[] };
+				if (Array.isArray(prodWithPromos.promos)) {
+					for (const promo of prodWithPromos.promos) {
 						promoRules.push({
 							productId: product.id,
 							name: promo.name,
@@ -477,10 +494,10 @@
 						if (typeof result.data?.accessToken === 'string') {
 							saveInvoiceToHistory(result.data.orderId, result.data.accessToken, cart.total);
 						}
-						const dest = `${resolve('/(public)/order/sukses/[orderId]', {
-							orderId: result.data.orderId
-						})}${token}` as ResolvedPathname;
-						goto(dest, { replaceState: true });
+						// Catatan: cart.clear() dilakukan saat tiba di halaman pembayaran
+						// agar tidak terjadi kedipan (flicker) "Keranjang Masih Kosong" sebelum redirect.
+						const dest = `/order/bayar/${result.data.orderId}${token}`;
+						window.location.href = dest;
 						return;
 					}
 					handleFormResult(result, { failure: 'Gagal membuat pesanan.' });
@@ -590,12 +607,37 @@
 				disabled={isBusy}
 				class="flex w-full items-center justify-center gap-2 rounded-[10px_5px_9px_4px] border-2 border-brandy bg-tangerine px-5 py-3.5 font-mono text-base font-bold text-white shadow-[4px_4px_0px_#78290f] transition-all hover:bg-[#e06d00] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none disabled:cursor-not-allowed disabled:border-brandy/30 disabled:bg-brandy/20 disabled:text-brandy/40 disabled:shadow-none"
 			>
-				<span>{isBusy ? 'Memproses Pesanan...' : 'Buat Pesanan & Dapatkan Invoice'}</span>
+				<span>{isBusy ? 'Memproses Pesanan...' : 'Lanjut ke Pembayaran & Bukti Transfer'}</span>
 				<ArrowRight size={18} strokeWidth={2.5} />
 			</button>
 		</form>
 	{/if}
 </div>
+
+{#if isBusy}
+	<div
+		class="fixed inset-0 z-[999] flex flex-col items-center justify-center bg-black/60 backdrop-blur-xs p-4 text-center select-none"
+		role="dialog"
+		aria-modal="true"
+		aria-label="Memproses pesanan"
+	>
+		<div
+			class="-rotate-1 rounded-[16px_8px_14px_6px] border-2 border-brandy bg-papaya p-6 shadow-[6px_6px_0px_#78290f] max-w-sm w-full space-y-4 dark:border-papaya/40 dark:bg-ink dark:shadow-[6px_6px_0px_rgba(255,236,209,0.3)]"
+		>
+			<div
+				class="mx-auto h-10 w-10 animate-spin rounded-full border-3 border-brandy/30 border-t-tangerine"
+			></div>
+			<div class="space-y-1">
+				<p class="font-headline text-lg font-bold text-ink dark:text-papaya">
+					Memproses Pesanan...
+				</p>
+				<p class="font-sans text-xs text-brandy/80 dark:text-papaya/70">
+					Sedang mengunci stok dan menyiapkan rincian pembayaran. Mohon tunggu sebentar.
+				</p>
+			</div>
+		</div>
+	</div>
+{/if}
 
 <!-- Modal Konfirmasi Hapus 1 Item -->
 <Modal

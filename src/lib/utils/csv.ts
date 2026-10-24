@@ -128,23 +128,31 @@ export function parseProductCsv(text: string): { rows: ParsedCsvProduct[]; error
 	const rows: ParsedCsvProduct[] = [];
 	const errors: string[] = [];
 
-	// Deteksi letak indeks kolom
-	const nameIdx = headers.indexOf('name');
-	const descIdx = headers.indexOf('description');
-	const catIdx = headers.indexOf('category');
-	const varIdx = headers.indexOf('variantname');
-	const priceIdx = headers.indexOf('price');
-	const stockIdx = headers.indexOf('stock');
-	const trackIdx = headers.indexOf('trackstock');
+	// Deteksi letak indeks kolom fleksibel (mendukung header Inggris & Indonesia)
+	const findColIdx = (aliases: string[]) => {
+		for (const alias of aliases) {
+			const idx = headers.findIndex((h) => h === alias || h.startsWith(alias));
+			if (idx !== -1) return idx;
+		}
+		return -1;
+	};
 
-	const isDetailedFormat = nameIdx !== -1 || varIdx !== -1 || catIdx !== -1;
+	const nameIdx = findColIdx(['name', 'nama', 'nama produk', 'product name']);
+	const descIdx = findColIdx(['description', 'deskripsi', 'keterangan']);
+	const catIdx = findColIdx(['category', 'kategori']);
+	const varIdx = findColIdx(['variantname', 'variant', 'varian', 'nama varian']);
+	const priceIdx = findColIdx(['price', 'harga', 'harga (rp)', 'harga rp']);
+	const stockIdx = findColIdx(['stock', 'stok', 'jumlah stok', 'qty']);
+	const trackIdx = findColIdx(['trackstock', 'lacak stok', 'lacak stok (ya/tidak)', 'kelola stok']);
+
+	const isDetailedFormat = nameIdx !== -1 || catIdx !== -1 || priceIdx !== -1;
 
 	if (isDetailedFormat) {
 		for (let i = 1; i < raw.length; i++) {
 			const r = raw[i];
 			if (!r.some((c) => c !== '')) continue; // Lewati baris kosong
 
-			const name = (nameIdx >= 0 ? r[nameIdx] : r[0]) || '';
+			const name = (nameIdx >= 0 ? r[nameIdx] : r[1] || r[0]) || '';
 			if (!name.trim()) {
 				errors.push(`Baris #${i + 1}: Kolom nama produk kosong.`);
 				continue;
@@ -156,12 +164,14 @@ export function parseProductCsv(text: string): { rows: ParsedCsvProduct[]; error
 			const rawStock = (stockIdx >= 0 ? r[stockIdx] : '0').replace(/\D/g, '');
 			const stock = parseInt(rawStock || '0', 10);
 
-			const rawTrack = trackIdx >= 0 ? r[trackIdx]?.trim().toLowerCase() : 'true';
+			const rawTrack = trackIdx >= 0 ? r[trackIdx]?.trim().toLowerCase() : '';
 			const trackStock =
-				rawTrack !== 'false' &&
-				rawTrack !== 'tidak' &&
-				rawTrack !== 'no' &&
-				rawTrack !== '0';
+				rawTrack === ''
+					? stock > 0
+					: rawTrack !== 'false' &&
+						rawTrack !== 'tidak' &&
+						rawTrack !== 'no' &&
+						rawTrack !== '0';
 
 			rows.push({
 				name: name.trim(),
@@ -169,8 +179,8 @@ export function parseProductCsv(text: string): { rows: ParsedCsvProduct[]; error
 				category: (catIdx >= 0 ? r[catIdx] : 'Merchandise') || 'Merchandise',
 				variantName: (varIdx >= 0 ? r[varIdx] : '') || '',
 				price,
-				stock: trackStock ? stock : 0,
-				trackStock
+				stock: trackStock ? stock : stock > 0 ? stock : 0,
+				trackStock: trackStock || stock > 0
 			});
 		}
 	} else {
@@ -189,15 +199,17 @@ export function parseProductCsv(text: string): { rows: ParsedCsvProduct[]; error
 			const rawPrice = (r[2] || '0').replace(/\D/g, '');
 			const price = parseInt(rawPrice || '0', 10);
 
-			const rawTrack = (r[3] || 'ya').trim().toLowerCase();
-			const trackStock =
-				rawTrack === 'ya' ||
-				rawTrack === 'true' ||
-				rawTrack === '1' ||
-				rawTrack === 'yes';
-
+			const rawTrack = (r[3] || '').trim().toLowerCase();
 			const rawStock = (r[4] || '0').replace(/\D/g, '');
 			const stock = parseInt(rawStock || '0', 10);
+
+			const trackStock =
+				rawTrack === ''
+					? stock > 0
+					: rawTrack === 'ya' ||
+						rawTrack === 'true' ||
+						rawTrack === '1' ||
+						rawTrack === 'yes';
 
 			const description = r[5]?.trim() || '';
 			const variantText = r[6]?.trim() || '';
@@ -207,14 +219,15 @@ export function parseProductCsv(text: string): { rows: ParsedCsvProduct[]; error
 				for (const vStr of variants) {
 					const match = vStr.match(/^(.*?)\s*\((\d+)\)$/);
 					if (match) {
+						const vStock = parseInt(match[2], 10);
 						rows.push({
 							name,
 							description,
 							category,
 							variantName: match[1].trim(),
 							price,
-							stock: trackStock ? parseInt(match[2], 10) : 0,
-							trackStock
+							stock: vStock,
+							trackStock: trackStock || vStock > 0
 						});
 					} else {
 						rows.push({
@@ -223,8 +236,8 @@ export function parseProductCsv(text: string): { rows: ParsedCsvProduct[]; error
 							category,
 							variantName: vStr,
 							price,
-							stock: trackStock ? stock : 0,
-							trackStock
+							stock,
+							trackStock: trackStock || stock > 0
 						});
 					}
 				}
@@ -235,8 +248,8 @@ export function parseProductCsv(text: string): { rows: ParsedCsvProduct[]; error
 					category,
 					variantName: '',
 					price,
-					stock: trackStock ? stock : 0,
-					trackStock
+					stock,
+					trackStock: trackStock || stock > 0
 				});
 			}
 		}
