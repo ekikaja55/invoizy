@@ -164,24 +164,27 @@ export async function reorderProduct(id: string, direction: 'up' | 'down') {
 
 	const siblings = await db.query.products.findMany({
 		where: eq(products.categoryId, product.categoryId),
-		orderBy: [asc(products.sortOrder)]
+		orderBy: [asc(products.sortOrder), asc(products.createdAt), asc(products.id)]
 	});
 
 	const index = siblings.findIndex((p) => p.id === id);
+	if (index === -1) return;
+
 	const swapIndex = direction === 'up' ? index - 1 : index + 1;
 	if (swapIndex < 0 || swapIndex >= siblings.length) return;
 
-	const current = siblings[index];
-	const swapWith = siblings[swapIndex];
+	const updated = [...siblings];
+	const [moved] = updated.splice(index, 1);
+	updated.splice(swapIndex, 0, moved);
 
 	await db.transaction(async (tx) => {
-		await tx
-			.update(products)
-			.set({ sortOrder: swapWith.sortOrder })
-			.where(eq(products.id, current.id));
-		await tx
-			.update(products)
-			.set({ sortOrder: current.sortOrder })
-			.where(eq(products.id, swapWith.id));
+		for (let i = 0; i < updated.length; i++) {
+			if (updated[i].sortOrder !== i) {
+				await tx
+					.update(products)
+					.set({ sortOrder: i })
+					.where(eq(products.id, updated[i].id));
+			}
+		}
 	});
 }

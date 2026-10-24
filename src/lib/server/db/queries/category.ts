@@ -25,7 +25,9 @@ export async function deleteCategory(id: string) {
 }
 
 export async function reorderCategory(id: string, direction: 'up' | 'down') {
-	const all = await db.query.categories.findMany({ orderBy: [asc(categories.sortOrder)] });
+	const all = await db.query.categories.findMany({
+		orderBy: [asc(categories.sortOrder), asc(categories.name), asc(categories.id)]
+	});
 	const index = all.findIndex((c) => c.id === id);
 
 	if (index === -1) return;
@@ -33,17 +35,18 @@ export async function reorderCategory(id: string, direction: 'up' | 'down') {
 	const swapIndex = direction === 'up' ? index - 1 : index + 1;
 	if (swapIndex < 0 || swapIndex >= all.length) return;
 
-	const current = all[index];
-	const swapWith = all[swapIndex];
+	const updated = [...all];
+	const [moved] = updated.splice(index, 1);
+	updated.splice(swapIndex, 0, moved);
 
 	await db.transaction(async (tx) => {
-		await tx
-			.update(categories)
-			.set({ sortOrder: swapWith.sortOrder })
-			.where(eq(categories.id, current.id));
-		await tx
-			.update(categories)
-			.set({ sortOrder: current.sortOrder })
-			.where(eq(categories.id, swapWith.id));
+		for (let i = 0; i < updated.length; i++) {
+			if (updated[i].sortOrder !== i) {
+				await tx
+					.update(categories)
+					.set({ sortOrder: i })
+					.where(eq(categories.id, updated[i].id));
+			}
+		}
 	});
 }

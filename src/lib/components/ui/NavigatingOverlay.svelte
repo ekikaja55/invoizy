@@ -6,13 +6,34 @@
 	}
 
 	let { message }: Props = $props();
+
+	$effect(() => {
+		if (navigating.to !== null) {
+			const prevBodyOverflow = document.body.style.overflow;
+			const prevHtmlOverflow = document.documentElement.style.overflow;
+			document.body.style.overflow = 'hidden';
+			document.documentElement.style.overflow = 'hidden';
+			return () => {
+				document.body.style.overflow = prevBodyOverflow;
+				document.documentElement.style.overflow = prevHtmlOverflow;
+			};
+		}
+	});
+
+	function preventScroll(e: Event) {
+		e.preventDefault();
+	}
 </script>
 
 {#if navigating.to !== null}
 	<div
 		class="fixed inset-0 z-[999] flex items-center justify-center
-           bg-white/50 backdrop-blur-sm
+           bg-white/50 backdrop-blur-sm touch-none select-none overscroll-none
            dark:bg-black/50"
+		role="status"
+		aria-live="polite"
+		onwheel={preventScroll}
+		ontouchmove={preventScroll}
 	>
 		<div class="flex flex-col items-center gap-3">
 			<div

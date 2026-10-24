@@ -65,6 +65,7 @@
 	"dependencies": {
 		"@lucide/svelte": "^1.48.0",
 		"@supabase/supabase-js": "^2.117.2",
+		"@thisux/sveltednd": "^0.8.0",
 		"@upstash/ratelimit": "^2.2.0",
 		"@upstash/redis": "^1.39.0",
 		"mode-watcher": "^1.1.0",

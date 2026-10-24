@@ -8,7 +8,8 @@
 	import InvoiceDocument from '$lib/components/invoice/InvoiceDocument.svelte';
 	import { formatRupiah } from '$lib/utils/currency';
 	import { invoiceStatusLabel, paymentStatusLabel } from '$lib/utils/status-label';
-	import { mockInvoice, mockStatuses, mockTableOrders } from './mock-data';
+	import { mockInvoice, mockStatuses, mockTableOrders, mockReorderProducts, type MockReorderProduct } from './mock-data';
+	import { draggable, droppable, type DragDropState } from '@thisux/sveltednd';
 	import {
 		Plus,
 		Minus,
@@ -19,7 +20,14 @@
 		CheckCircle,
 		AlertTriangle,
 		XCircle,
-		Sparkles
+		Sparkles,
+		GripVertical,
+		RotateCcw,
+		ArrowUpDown,
+		ChevronUp,
+		ChevronDown,
+		MousePointer,
+		Smartphone
 	} from '@lucide/svelte';
 
 	// State interaktif untuk testing
@@ -28,8 +36,74 @@
 	let testStock = $state(15);
 	let testCopied = $state(false);
 	let testRefreshing = $state(false);
-	let activeTab = $state<'components' | 'invoice'>('components');
+	let activeTab = $state<'components' | 'invoice' | 'reorder-dnd'>('components');
 	let testPage = $state(1);
+
+	// State untuk simulasi Reorder
+	let dndList = $state<MockReorderProduct[]>([...mockReorderProducts]);
+	let selectList = $state<MockReorderProduct[]>([...mockReorderProducts]);
+	let lastActionLog = $state<string>(
+		'Silakan uji seret kartu di Varian 1 (@thisux/sveltednd) atau ganti nomor dropdown di Varian 2 (Direct Select).'
+	);
+
+	function resetLists() {
+		dndList = [...mockReorderProducts];
+		selectList = [...mockReorderProducts];
+		lastActionLog = 'Semua urutan simulasi dikembalikan ke susunan awal (#1 s.d #10).';
+		toast.success('Urutan simulasi berhasil di-reset.');
+	}
+
+	// Varian 1: @thisux/sveltednd handler
+	function handleSvelteDndDrop(state: DragDropState, targetItem: MockReorderProduct) {
+		const source = state.draggedItem as MockReorderProduct | undefined;
+		if (!source || source.id === targetItem.id) return;
+
+		const fromIndex = dndList.findIndex((p) => p.id === source.id);
+		let toIndex = dndList.findIndex((p) => p.id === targetItem.id);
+		if (fromIndex === -1 || toIndex === -1) return;
+
+		if (state.dropPosition === 'after' && fromIndex > toIndex) {
+			toIndex += 1;
+		} else if (state.dropPosition === 'before' && fromIndex < toIndex) {
+			toIndex -= 1;
+		}
+
+		const updated = [...dndList];
+		const [moved] = updated.splice(fromIndex, 1);
+		updated.splice(toIndex, 0, moved);
+
+		dndList = updated;
+		lastActionLog = `[@thisux/sveltednd] Berhasil memindahkan "${moved.name.slice(0, 24)}..." dari #${fromIndex + 1} ke #${toIndex + 1}.`;
+		toast.success(`[DnD] Dipindahkan dari #${fromIndex + 1} ke #${toIndex + 1}`);
+	}
+
+	// Varian 2: Direct Select (Dropdown Nomor Urut)
+	function onDirectSelect(productId: string, newTargetIdx: number) {
+		const currentIdx = selectList.findIndex((p) => p.id === productId);
+		if (currentIdx === -1 || currentIdx === newTargetIdx) return;
+
+		const updated = [...selectList];
+		const [moved] = updated.splice(currentIdx, 1);
+		updated.splice(newTargetIdx, 0, moved);
+
+		selectList = updated;
+		lastActionLog = `[Direct Select] 1 Klik instan: melompat dari posisi #${currentIdx + 1} langsung ke #${newTargetIdx + 1}.`;
+		toast.success(`[Direct Select] Lompat dari #${currentIdx + 1} ke #${newTargetIdx + 1}`);
+	}
+
+	function onStepMove(productId: string, direction: 'up' | 'down') {
+		const currentIdx = selectList.findIndex((p) => p.id === productId);
+		if (currentIdx === -1) return;
+		const targetIdx = direction === 'up' ? currentIdx - 1 : currentIdx + 1;
+		if (targetIdx < 0 || targetIdx >= selectList.length) return;
+
+		const updated = [...selectList];
+		const [moved] = updated.splice(currentIdx, 1);
+		updated.splice(targetIdx, 0, moved);
+
+		selectList = updated;
+		lastActionLog = `[Stepper Panah] Digeser 1 langkah ke #${targetIdx + 1}.`;
+	}
 
 	function triggerToast(type: 'success' | 'error' | 'warning' | 'info') {
 		switch (type) {
@@ -111,7 +185,7 @@
 		</div>
 
 		<!-- Nav Tabs -->
-		<div class="mx-auto mt-3 flex max-w-5xl gap-2">
+		<div class="mx-auto mt-3 flex flex-wrap max-w-5xl gap-2">
 			<button
 				type="button"
 				onclick={() => (activeTab = 'components')}
@@ -131,6 +205,16 @@
 					: 'border-2 border-transparent text-ink/80 hover:bg-brandy/10 dark:text-papaya/80 dark:hover:bg-papaya/10'}"
 			>
 				Invoice Document Preview
+			</button>
+			<button
+				type="button"
+				onclick={() => (activeTab = 'reorder-dnd')}
+				class="rounded-[7px_5px_8px_4px] px-3.5 py-1.5 text-xs font-bold transition-all {activeTab ===
+				'reorder-dnd'
+					? 'border-2 border-brandy bg-tangerine text-white shadow-[2px_2px_0px_#78290f]'
+					: 'border-2 border-transparent text-ink/80 hover:bg-brandy/10 dark:text-papaya/80 dark:hover:bg-papaya/10'}"
+			>
+				Eksperimen Reorder: DnD vs Select
 			</button>
 		</div>
 	</header>
@@ -791,7 +875,7 @@
 					</div>
 				</section>
 			</div>
-		{:else}
+		{:else if activeTab === 'invoice'}
 			<!-- TAB 2: INVOICE DOCUMENT PREVIEW -->
 			<div class="space-y-4">
 				<div
@@ -822,6 +906,258 @@
 						qrisCodes={mockInvoice.qrisCodes}
 						mode="web"
 					/>
+				</div>
+			</div>
+		{:else if activeTab === 'reorder-dnd'}
+			<!-- TAB 3: EKSPERIMEN REORDER DND VS SELECT -->
+			<div class="space-y-6">
+				<!-- Header Lab & Control Panel -->
+				<div
+					class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-xl border-2 border-brandy bg-white p-5 shadow-[4px_4px_0px_#78290f] dark:border-papaya/30 dark:bg-ink dark:shadow-[4px_4px_0px_rgba(255,236,209,0.15)]"
+				>
+					<div class="space-y-1">
+						<div class="flex items-center gap-2">
+							<span
+								class="inline-block -rotate-1 rounded-xs border-2 border-brandy bg-tangerine px-2 py-0.5 text-[11px] font-black uppercase text-white shadow-[1px_1px_0px_#78290f]"
+							>
+								UX BENCHMARK
+							</span>
+							<h2 class="font-headline text-lg font-bold text-ink dark:text-papaya">
+								Laboratorium Urutan Produk: Drag-and-Drop vs Direct Select
+							</h2>
+						</div>
+						<p class="text-xs text-brandy/80 dark:text-papaya/70 leading-relaxed max-w-2xl">
+							Simulasi skenario riil: <strong>Pindahkan produk #7 ke urutan #2</strong>.
+							Uji kenyamanan gerak seret (gesture) di desktop & layar sentuh HP pada Varian 1, lalu bandingkan dengan kecepatan 1-klik pada Varian 2.
+						</p>
+					</div>
+
+					<div class="flex items-center gap-2.5 shrink-0">
+						<button
+							type="button"
+							onclick={resetLists}
+							class="inline-flex items-center gap-1.5 rounded-[8px_3px_7px_2px] border-2 border-brandy bg-papaya px-3 py-2 font-mono text-xs font-bold text-ink shadow-[2px_2px_0px_#78290f] transition-all hover:bg-brandy/10 active:translate-y-0.5 dark:border-papaya/40 dark:bg-ink dark:text-papaya"
+						>
+							<RotateCcw size={13} />
+							<span>Reset ke Awal</span>
+						</button>
+					</div>
+				</div>
+
+				<!-- Live Interaction Log Banner -->
+				<div
+					class="flex items-center gap-3 rounded-lg border-2 border-brandy/40 bg-papaya/60 p-3 font-mono text-xs text-brandy shadow-[2px_2px_0px_#78290f] dark:border-papaya/30 dark:bg-ink/60 dark:text-papaya"
+				>
+					<span class="rounded bg-brandy px-1.5 py-0.5 text-[10px] font-bold text-white uppercase dark:bg-papaya dark:text-ink">
+						LOG AKTIVITAS
+					</span>
+					<p class="truncate flex-1 font-medium">{lastActionLog}</p>
+				</div>
+
+				<!-- Grid Side-by-Side Comparison -->
+				<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+					<!-- VARIAN 1: DRAG AND DROP (DND) -->
+					<div
+						class="rounded-xl border-2 border-brandy bg-white p-4 shadow-[4px_4px_0px_#78290f] space-y-3 dark:border-papaya/30 dark:bg-ink"
+					>
+						<div class="flex items-center justify-between border-b-2 border-dashed border-brandy/20 pb-3 dark:border-papaya/20">
+							<div>
+								<div class="flex items-center gap-2">
+									<h3 class="font-headline text-base font-bold text-ink dark:text-papaya">
+										Varian 1: Drag-and-Drop (DnD)
+									</h3>
+									<span class="rounded bg-teal/15 px-2 py-0.5 font-mono text-[10px] font-bold text-teal dark:text-teal/90">
+										Gesture
+									</span>
+								</div>
+								<p class="text-[11px] text-brandy/70 dark:text-papaya/60">
+									Desktop: seret kartu langsung. Mobile HP: tekan & tahan ikon titik 6.
+								</p>
+							</div>
+							<div class="flex items-center gap-1.5 text-xs text-brandy/70 dark:text-papaya/60">
+								<MousePointer size={14} class="hidden sm:inline" />
+								<Smartphone size={14} class="inline sm:hidden" />
+							</div>
+						</div>
+
+						<!-- List Kartu DnD (@thisux/sveltednd) -->
+						<div class="space-y-2">
+							{#each dndList as item, index (item.id)}
+								<div
+									use:draggable={{
+										container: 'test-dnd-list',
+										dragData: item,
+										handle: '.drag-handle'
+									}}
+									use:droppable={{
+										container: 'test-dnd-list',
+										callbacks: {
+											onDrop: (state) => handleSvelteDndDrop(state, item)
+										}
+									}}
+									class="flex items-center gap-3 rounded-lg border-2 border-brandy/30 bg-papaya/20 p-2.5 transition-all select-none hover:border-brandy dark:border-papaya/20 dark:bg-ink/40"
+								>
+									<!-- Drag Handle (Memisahkan Drag vs Scroll di Mobile Touch) -->
+									<button
+										type="button"
+										class="drag-handle touch-none flex h-8 w-8 shrink-0 cursor-grab items-center justify-center rounded border border-brandy/30 bg-white text-brandy/60 hover:bg-papaya hover:text-ink active:cursor-grabbing dark:border-papaya/30 dark:bg-ink dark:text-papaya/60"
+										aria-label="Seret untuk memindahkan urutan"
+										title="Pegang titik 6 untuk memindahkan"
+									>
+										<GripVertical size={16} />
+									</button>
+
+									<!-- Badge Nomor Urut -->
+									<span
+										class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-mono text-xs font-black {index === 1
+											? 'bg-forest text-white'
+											: index === 6
+												? 'bg-tangerine text-white'
+												: 'bg-brandy/10 text-brandy dark:bg-papaya/10 dark:text-papaya'}"
+									>
+										{index + 1}
+									</span>
+
+									<!-- Info Produk -->
+									<div class="min-w-0 flex-1">
+										<p class="font-serif text-xs font-bold text-ink dark:text-papaya truncate">
+											{item.name}
+										</p>
+										<p class="font-mono text-[10px] text-brandy/70 dark:text-papaya/60">
+											{formatRupiah(item.price)} • Stok: {item.stock}
+										</p>
+									</div>
+
+									{#if index === 6}
+										<span class="rounded bg-tangerine/20 px-1.5 py-0.5 font-mono text-[9px] font-bold text-tangerine">
+											TARGET #7
+										</span>
+									{:else if index === 1}
+										<span class="rounded bg-forest/20 px-1.5 py-0.5 font-mono text-[9px] font-bold text-forest">
+											TUJUAN #2
+										</span>
+									{/if}
+								</div>
+							{/each}
+						</div>
+					</div>
+
+					<!-- VARIAN 2: DIRECT SELECT + STEPPER -->
+					<div
+						class="rounded-xl border-2 border-brandy bg-white p-4 shadow-[4px_4px_0px_#78290f] space-y-3 dark:border-papaya/30 dark:bg-ink"
+					>
+						<div class="flex items-center justify-between border-b-2 border-dashed border-brandy/20 pb-3 dark:border-papaya/20">
+							<div>
+								<div class="flex items-center gap-2">
+									<h3 class="font-headline text-base font-bold text-ink dark:text-papaya">
+										Varian 2: Direct Position Select
+									</h3>
+									<span class="rounded bg-forest/15 px-2 py-0.5 font-mono text-[10px] font-bold text-forest dark:text-forest">
+										1-Klik Cepat
+									</span>
+								</div>
+								<p class="text-[11px] text-brandy/70 dark:text-papaya/60">
+									Ubah nomor di dropdown untuk loncat langsung, atau klik panah untuk geser ±1.
+								</p>
+							</div>
+							<ArrowUpDown size={16} class="text-brandy/60 dark:text-papaya/60" />
+						</div>
+
+						<!-- List Kartu Direct Select -->
+						<div class="space-y-2">
+							{#each selectList as item, index (item.id)}
+								<div
+									class="flex items-center gap-2.5 rounded-lg border-2 border-brandy/30 bg-papaya/20 p-2.5 transition-all hover:border-brandy dark:border-papaya/20 dark:bg-ink/40"
+								>
+									<!-- Direct Selector Dropdown -->
+									<div class="flex items-center gap-1 shrink-0">
+										<label for="pos-select-{item.id}" class="sr-only">Posisi Urutan {item.name}</label>
+										<select
+											id="pos-select-{item.id}"
+											value={index + 1}
+											onchange={(e) => onDirectSelect(item.id, Number(e.currentTarget.value) - 1)}
+											class="h-8 rounded border-2 border-brandy bg-white px-1.5 font-mono text-xs font-black text-ink shadow-[1px_1px_0px_#78290f] focus:outline-none dark:border-papaya/40 dark:bg-ink dark:text-papaya"
+										>
+											{#each selectList as optItem, optIdx (optItem.id)}
+												<option value={optIdx + 1}>#{optIdx + 1}</option>
+											{/each}
+										</select>
+
+										<!-- Stepper Micro Buttons -->
+										<div class="flex flex-col">
+											<button
+												type="button"
+												disabled={index === 0}
+												onclick={() => onStepMove(item.id, 'up')}
+												class="flex h-4 w-4 items-center justify-center rounded-t border border-brandy/40 bg-white text-neutral-600 hover:bg-neutral-100 disabled:opacity-20 dark:border-papaya/30 dark:bg-ink dark:text-papaya"
+												aria-label="Naik satu urutan"
+											>
+												<ChevronUp size={10} />
+											</button>
+											<button
+												type="button"
+												disabled={index === selectList.length - 1}
+												onclick={() => onStepMove(item.id, 'down')}
+												class="flex h-4 w-4 items-center justify-center rounded-b border-x border-b border-brandy/40 bg-white text-neutral-600 hover:bg-neutral-100 disabled:opacity-20 dark:border-papaya/30 dark:bg-ink dark:text-papaya"
+												aria-label="Turun satu urutan"
+											>
+												<ChevronDown size={10} />
+											</button>
+										</div>
+									</div>
+
+									<!-- Info Produk -->
+									<div class="min-w-0 flex-1 pl-1">
+										<p class="font-serif text-xs font-bold text-ink dark:text-papaya truncate">
+											{item.name}
+										</p>
+										<p class="font-mono text-[10px] text-brandy/70 dark:text-papaya/60">
+											{formatRupiah(item.price)} • Stok: {item.stock}
+										</p>
+									</div>
+
+									{#if index === 6}
+										<span class="rounded bg-tangerine/20 px-1.5 py-0.5 font-mono text-[9px] font-bold text-tangerine">
+											TARGET #7
+										</span>
+									{:else if index === 1}
+										<span class="rounded bg-forest/20 px-1.5 py-0.5 font-mono text-[9px] font-bold text-forest">
+											TUJUAN #2
+										</span>
+									{/if}
+								</div>
+							{/each}
+						</div>
+					</div>
+				</div>
+
+				<!-- Panduan & Checklist Evaluasi untuk Anda -->
+				<div
+					class="rounded-xl border-2 border-brandy/50 bg-papaya/40 p-5 shadow-[4px_4px_0px_#78290f] dark:border-papaya/30 dark:bg-ink/50 space-y-3 text-xs leading-relaxed"
+				>
+					<h4 class="font-headline text-sm font-bold text-ink dark:text-papaya">
+						Panduan Uji Coba Lapangan untuk Admin:
+					</h4>
+					<div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-brandy/90 dark:text-papaya/80">
+						<div class="rounded-lg border border-brandy/30 bg-white p-3 dark:border-papaya/20 dark:bg-ink">
+							<p class="font-bold text-ink dark:text-papaya">1. Tes Laptop / Desktop:</p>
+							<p class="mt-1 text-[11px]">
+								Buka mouse Anda. Seret item #7 di Varian 1 ke #2. Rasakan apakah gesture tariknya memuaskan atau ada delay visual.
+							</p>
+						</div>
+						<div class="rounded-lg border border-brandy/30 bg-white p-3 dark:border-papaya/20 dark:bg-ink">
+							<p class="font-bold text-ink dark:text-papaya">2. Tes Smartphone / HP:</p>
+							<p class="mt-1 text-[11px]">
+								Buka halaman ini lewat browser HP. Coba scroll halaman ke bawah melewati daftar Varian 1. Lalu coba sentuh ikon titik 6 untuk memindahkan produk.
+							</p>
+						</div>
+						<div class="rounded-lg border border-brandy/30 bg-white p-3 dark:border-papaya/20 dark:bg-ink">
+							<p class="font-bold text-ink dark:text-papaya">3. Tes Efisiensi Waktu:</p>
+							<p class="mt-1 text-[11px]">
+								Di Varian 2, cukup buka dropdown pada item #7 dan klik angka 2. Bandingkan tenaga tangan & konsentrasi yang dibutuhkan dibanding Varian 1.
+							</p>
+						</div>
+					</div>
 				</div>
 			</div>
 		{/if}

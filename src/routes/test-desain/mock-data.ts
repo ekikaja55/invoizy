@@ -130,3 +130,23 @@ export const mockTableOrders = [
 		itemQty: 2
 	}
 ] as const;
+
+export interface MockReorderProduct {
+	id: string;
+	name: string;
+	price: number;
+	stock: number;
+}
+
+export const mockReorderProducts: MockReorderProduct[] = [
+	{ id: 'prod-01', name: '1. Gantungan Kunci Akrilik Hologram Karakter A', price: 35000, stock: 24 },
+	{ id: 'prod-02', name: '2. Sticker Pack Vinyl Waterproof Set Chibi A6', price: 25000, stock: 50 },
+	{ id: 'prod-03', name: '3. Art Print Poster Tebal 260gsm Ukuran A4', price: 30000, stock: 15 },
+	{ id: 'prod-04', name: '4. Standee Akrilik Double Sided 15cm', price: 65000, stock: 8 },
+	{ id: 'prod-05', name: '5. Enamel Pin Logam Edisi Terbatas Chibicon', price: 45000, stock: 12 },
+	{ id: 'prod-06', name: '6. Tote Bag Canvas Sablon Serat Organik', price: 75000, stock: 10 },
+	{ id: 'prod-07', name: '7. Buku Sketsa Hardcover Kertas Khusus Ilustrasi', price: 55000, stock: 18 },
+	{ id: 'prod-08', name: '8. Washi Tape Masking Foil Gold 15mm', price: 28000, stock: 30 },
+	{ id: 'prod-09', name: '9. Grip Tok / Phone Holder Karakter Kucing', price: 22000, stock: 40 },
+	{ id: 'prod-10', name: '10. Bookmark Magnetik Set 3 Pcs Bertema Kopi', price: 18000, stock: 25 }
+];

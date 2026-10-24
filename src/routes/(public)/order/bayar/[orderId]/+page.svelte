@@ -13,7 +13,8 @@
 		UploadCloud,
 		Send,
 		Check,
-		ShoppingBag
+		ShoppingBag,
+		Download
 	} from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
@@ -26,6 +27,49 @@
 	let previewUrl = $state<string | null>(null);
 	let copiedIndex = $state<number | null>(null);
 	let fileInputEl = $state<HTMLInputElement | null>(null);
+	let isDownloadingQris = $state(false);
+
+	$effect(() => {
+		if (isBusy) {
+			const prevBodyOverflow = document.body.style.overflow;
+			const prevHtmlOverflow = document.documentElement.style.overflow;
+			document.body.style.overflow = 'hidden';
+			document.documentElement.style.overflow = 'hidden';
+			return () => {
+				document.body.style.overflow = prevBodyOverflow;
+				document.documentElement.style.overflow = prevHtmlOverflow;
+			};
+		}
+	});
+
+	function preventScroll(e: Event) {
+		e.preventDefault();
+	}
+
+	async function downloadQris(url: string) {
+		if (isDownloadingQris) return;
+		isDownloadingQris = true;
+		const toastId = toast.loading('Mengunduh kode QRIS...');
+		try {
+			const res = await fetch(url);
+			if (!res.ok) throw new Error('Gagal mengunduh file gambar');
+			const blob = await res.blob();
+			const blobUrl = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = blobUrl;
+			a.download = 'cholazey-qris.png';
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			URL.revokeObjectURL(blobUrl);
+			toast.success('Kode QRIS berhasil diunduh!', { id: toastId });
+		} catch {
+			toast.error('Gagal mengunduh QRIS langsung, membuka gambar...', { id: toastId });
+			window.open(url, '_blank');
+		} finally {
+			isDownloadingQris = false;
+		}
+	}
 
 	// Bersihkan keranjang belanja saat pembeli telah tiba di halaman pembayaran pesanan ini
 	onMount(() => {
@@ -228,6 +272,17 @@
 								<p class="mt-2 font-mono text-xs font-semibold text-brandy dark:text-papaya">
 									{qris.label}
 								</p>
+								<div class="mt-2">
+									<button
+										type="button"
+										onclick={() => downloadQris(qris.imageUrl)}
+										disabled={isDownloadingQris}
+										class="inline-flex items-center gap-1.5 rounded-[6px_2px_5px_1px] border border-neutral-300 bg-neutral-50 px-3 py-1.5 font-mono text-xs font-semibold text-neutral-700 transition-colors hover:bg-neutral-100 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
+									>
+										<Download size={14} />
+										<span>{isDownloadingQris ? 'Mengunduh...' : 'Unduh QRIS'}</span>
+									</button>
+								</div>
 							</div>
 						{/each}
 						<p class="text-center font-sans text-xs text-neutral-500">
@@ -330,11 +385,10 @@
 					disabled={isBusy}
 					class="mt-1 w-full rounded-[8px_3px_7px_2px] border-2 border-brandy bg-white px-3.5 py-2 font-sans text-xs text-ink focus:border-brandy focus:outline-none dark:border-papaya/40 dark:bg-ink dark:text-papaya"
 				>
-					<option value="QRIS">QRIS Statis Toko</option>
+					<option value="QRIS">QRIS Toko</option>
 					{#each data.paymentMethods as m (m.id)}
 						<option value={`Transfer Bank ${m.label}`}>Transfer Bank {m.label} ({m.accountNumber})</option>
 					{/each}
-					<option value="Transfer Bank Lain">Transfer Antar Bank Lainnya</option>
 				</select>
 			</div>
 
@@ -414,9 +468,12 @@
 
 {#if isBusy}
 	<div
-		class="fixed inset-0 z-[999] flex flex-col items-center justify-center bg-black/60 backdrop-blur-xs p-4 text-center select-none"
+		class="fixed inset-0 z-[999] flex flex-col items-center justify-center bg-black/60 backdrop-blur-xs p-4 text-center select-none touch-none overscroll-none"
 		role="dialog"
 		aria-modal="true"
+		tabindex="-1"
+		onwheel={preventScroll}
+		ontouchmove={preventScroll}
 	>
 		<div
 			class="-rotate-1 rounded-[16px_8px_14px_6px] border-2 border-brandy bg-papaya p-6 shadow-[6px_6px_0px_#78290f] max-w-sm w-full space-y-4 dark:border-papaya/40 dark:bg-ink dark:shadow-[6px_6px_0px_rgba(255,236,209,0.3)]"

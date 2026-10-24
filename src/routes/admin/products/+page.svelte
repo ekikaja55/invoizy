@@ -297,11 +297,12 @@
 												action="?/reorder"
 												use:enhance={() => {
 													isBusy = true;
-													return async ({ result }) => {
-														isBusy = false;
+													return async ({ result, update }) => {
 														handleFormResult(result, {
 															failure: 'Gagal mengubah urutan produk.'
 														});
+														await update();
+														isBusy = false;
 													};
 												}}
 											>
@@ -321,11 +322,12 @@
 												action="?/reorder"
 												use:enhance={() => {
 													isBusy = true;
-													return async ({ result }) => {
-														isBusy = false;
+													return async ({ result, update }) => {
 														handleFormResult(result, {
 															failure: 'Gagal mengubah urutan produk.'
 														});
+														await update();
+														isBusy = false;
 													};
 												}}
 											>

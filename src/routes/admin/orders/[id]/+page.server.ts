@@ -113,13 +113,15 @@ export const actions: Actions = {
 			// Otomatis regenerasi PDF di storage agar stempel status langsung terbarukan.
 			// Dibungkus safe try-catch agar jika koneksi storage ada kendala sesaat,
 			// update status di database tetap sukses dan tidak membingungkan admin.
+			let pdfRegenerated = false;
 			try {
 				await regenerateInvoicePdf(params.id);
+				pdfRegenerated = true;
 			} catch (pdfErr) {
 				logger.warn('admin.payment-status.pdf-regen-deferred', { orderId: params.id, error: pdfErr });
 			}
 
-			return { success: true };
+			return { success: true, pdfRegenerated, paymentStatus: status };
 		} catch (err) {
 			logger.error('admin.payment-status-failed', { orderId: params.id, error: err });
 			const invalid = err instanceof Error && err.message === 'Status pembayaran tidak valid.';

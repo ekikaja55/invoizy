@@ -11,7 +11,8 @@
 		History,
 		AlertTriangle,
 		CheckCircle2,
-		Clock
+		Clock,
+		Ban
 	} from '@lucide/svelte';
 
 	interface HistoryEntry {
@@ -125,7 +126,7 @@
 	}
 </script>
 
-<div class="space-y-8 overflow-x-clip pb-24">
+<div class="space-y-8 pb-24">
 	<!-- Page Header -->
 	<header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 		<div class="space-y-2">
@@ -201,10 +202,11 @@
 				{@const isWaiting = status?.paymentStatus === 'WAITING_VERIFICATION'}
 				{@const isConfirmed = status?.paymentStatus === 'CONFIRMED'}
 				{@const isExpired = status?.paymentStatus === 'EXPIRED' || status?.isExpired}
+				{@const isCancelled = status?.paymentStatus === 'CANCELLED'}
 				{@const tiltClass = idx % 2 === 0 ? '-rotate-[0.5deg]' : 'rotate-[0.5deg]'}
 
 				<div
-					class="group relative rounded-[14px_6px_12px_8px] border-2 border-brandy bg-white p-5 shadow-[4px_4px_0px_#78290f] transition-all hover:rotate-0 hover:shadow-[6px_6px_0px_#78290f] dark:border-papaya/30 dark:bg-ink/90 {tiltClass}"
+					class="group relative rounded-[14px_6px_12px_8px] border-2 border-brandy bg-white p-5 shadow-[4px_4px_0px_#78290f] transition-transform duration-200 transform-gpu backface-hidden hover:rotate-0 hover:shadow-[6px_6px_0px_#78290f] dark:border-papaya/30 dark:bg-ink/90 {tiltClass}"
 				>
 					<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 						<div class="space-y-1">
@@ -247,6 +249,13 @@
 									>
 										<span>Kedaluwarsa</span>
 									</span>
+								{:else if isCancelled}
+									<span
+										class="inline-flex items-center gap-1 rounded bg-crimson/15 px-2 py-0.5 font-mono text-[11px] font-bold text-crimson dark:bg-crimson/25 dark:text-red-300"
+									>
+										<Ban size={12} />
+										<span>Pesanan Dibatalkan</span>
+									</span>
 								{:else if isPending}
 									<span
 										class="inline-flex items-center gap-1 rounded bg-amber-100 px-2 py-0.5 font-mono text-[11px] font-bold text-amber-800 dark:bg-amber-950 dark:text-amber-300"
@@ -288,7 +297,7 @@
 									<span>Lanjut Bayar</span>
 									<ArrowRight size={13} />
 								</a>
-							{:else if isWaiting || isConfirmed}
+							{:else if isWaiting || isConfirmed || isCancelled}
 								<a
 									href="{resolve('/invoice/[orderId]', {
 										orderId: entry.orderId

@@ -67,6 +67,11 @@ function invoiceLink(orderId: string, token: string): string {
 	return base ? `${base}/invoice/${orderId}?token=${token}` : '';
 }
 
+function reuploadLink(orderId: string, token: string): string {
+	const base = publicEnv.PUBLIC_APP_URL || '';
+	return base ? `${base}/order/bayar/${orderId}?token=${token}&reupload=true` : '';
+}
+
 /** Email on kecuali EMAIL_ENABLED=false (mode manual WA). Default: on. */
 export function isEmailEnabled(): boolean {
 	return privateEnv.EMAIL_ENABLED !== 'false';
@@ -157,7 +162,9 @@ export async function processNewInvoice(
 			invoiceUrl: link,
 			proofContact: data.settings.proofContact,
 			instagram: data.settings.instagram,
-			pdf
+			pdf,
+			paymentStatus: result.order.paymentStatus,
+			reuploadUrl: reuploadLink(orderId, accessToken)
 		});
 
 		await updateOrderInvoiceResult(orderId, {
@@ -225,7 +232,9 @@ export async function resendInvoiceEmail(orderId: string): Promise<void> {
 			invoiceUrl: link,
 			proofContact: data.settings.proofContact,
 			instagram: data.settings.instagram,
-			pdf
+			pdf,
+			paymentStatus: result.order.paymentStatus,
+			reuploadUrl: reuploadLink(orderId, head.accessToken)
 		});
 
 		await updateOrderInvoiceResult(orderId, {

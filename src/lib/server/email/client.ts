@@ -16,6 +16,8 @@ export interface SendInvoiceEmailInput {
 	proofContact: string;
 	instagram: string;
 	pdf: Uint8Array;
+	paymentStatus?: string;
+	reuploadUrl?: string;
 }
 
 export async function sendInvoiceEmail(input: SendInvoiceEmailInput): Promise<void> {
@@ -37,9 +39,18 @@ export async function sendInvoiceEmail(input: SendInvoiceEmailInput): Promise<vo
 			total: input.total,
 			invoiceUrl: input.invoiceUrl,
 			proofContact: input.proofContact,
-			instagram: input.instagram
+			instagram: input.instagram,
+			paymentStatus: input.paymentStatus,
+			reuploadUrl: input.reuploadUrl
 		}
 	});
+
+	let subject = `Faktur Pesanan #${input.orderId} — ${input.storeName}`;
+	if (input.paymentStatus === 'CONFIRMED') {
+		subject = `Pembayaran LUNAS: Pesanan #${input.orderId} — ${input.storeName}`;
+	} else if (input.paymentStatus === 'PENDING') {
+		subject = `PENTING: Unggah Ulang Bukti Pembayaran #${input.orderId} — ${input.storeName}`;
+	}
 
 	// Idempotency per ISI konten (bukan per order): kirim ulang PDF yang sama
 	// ter-dedupe aman, tapi generate ulang (byte berubah) tetap terkirim.
@@ -50,7 +61,7 @@ export async function sendInvoiceEmail(input: SendInvoiceEmailInput): Promise<vo
 		{
 			from,
 			to: [input.to],
-			subject: `Invoice ${input.orderId} — ${input.storeName}`,
+			subject,
 			html: body,
 			attachments: [
 				{ filename: `${FILE_PREFIX}-invoice-${input.orderId}.pdf`, content: Buffer.from(input.pdf) }

@@ -1,11 +1,12 @@
 <script lang="ts">
+	import { tick } from 'svelte';
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import type { ResolvedPathname } from '$app/types';
 	import { formatRupiah } from '$lib/utils/currency';
 	import BusyOverlay from '$lib/components/ui/BusyOverlay.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
-	import { ArrowLeft, MessageSquare, AlertTriangle, ChevronDown, ChevronUp, ExternalLink } from '@lucide/svelte';
+	import { ArrowLeft, MessageSquare, AlertTriangle, ChevronDown, ChevronUp, ExternalLink, Mail, Send } from '@lucide/svelte';
 	import { invoiceStatusLabel, paymentStatusLabel } from '$lib/utils/status-label';
 	import { handleFormResult } from '$lib/utils/handle-form-result';
 	import { toast } from 'svelte-sonner';
@@ -22,6 +23,17 @@
 	// Modal konfirmasi pembatalan pesanan (Void)
 	let isCancelOrderModalOpen = $state(false);
 	let cancelFormEl = $state<HTMLFormElement | null>(null);
+
+	// Banner rekomendasi kirim ulang email setelah status & PDF berhasil di-regenerate
+	let resendBanner = $state<{
+		show: boolean;
+		type: 'confirmed' | 'rejected';
+	}>({
+		show: false,
+		type: 'confirmed'
+	});
+	let bannerEl = $state<HTMLDivElement | null>(null);
+	let waSectionEl = $state<HTMLDivElement | null>(null);
 
 	const isOrderExpired = $derived(data.order.paymentStatus === 'EXPIRED');
 
@@ -257,6 +269,12 @@
 											});
 											if (result.type === 'success') {
 												await update();
+												const resData = result.data as { pdfRegenerated?: boolean } | undefined;
+												if (resData?.pdfRegenerated) {
+													resendBanner = { show: true, type: 'confirmed' };
+												}
+												await tick();
+												(bannerEl || waSectionEl)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 											}
 										};
 									}}
@@ -285,6 +303,12 @@
 												await update();
 												waAccordionOpen = true;
 												onSelectTemplate('unclear');
+												const resData = result.data as { pdfRegenerated?: boolean } | undefined;
+												if (resData?.pdfRegenerated) {
+													resendBanner = { show: true, type: 'rejected' };
+												}
+												await tick();
+												(bannerEl || waSectionEl)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 											}
 										};
 									}}
@@ -369,8 +393,82 @@
 		</button>
 	</div>
 
+	{#if resendBanner.show}
+		<div
+			bind:this={bannerEl}
+			class="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 rounded-xl border p-4 text-sm transition-all {resendBanner.type === 'confirmed'
+				? 'border-emerald-300 bg-emerald-50/90 text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200'
+				: 'border-amber-300 bg-amber-50/90 text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200'}"
+		>
+			<div class="flex items-start gap-3">
+				<div
+					class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg {resendBanner.type === 'confirmed'
+						? 'bg-emerald-600 text-white dark:bg-emerald-500 dark:text-neutral-950'
+						: 'bg-amber-600 text-white dark:bg-amber-500 dark:text-neutral-950'}"
+				>
+					<Mail size={16} />
+				</div>
+				<div class="space-y-0.5">
+					<p class="font-bold text-sm">
+						{resendBanner.type === 'confirmed'
+							? 'Faktur Lunas Berhasil Dibuat Ulang'
+							: 'Status Diperbarui: Menunggu Bukti Ulang'}
+					</p>
+					<p class="text-xs leading-relaxed opacity-90">
+						{resendBanner.type === 'confirmed'
+							? `Faktur PDF berstempel lunas telah diperbarui di sistem. Direkomendasikan untuk mengirim salinan terbaru ini ke email pembeli (${data.order.email}).`
+							: `Batas waktu pembayaran diperpanjang 30 menit & PDF diperbarui. Direkomendasikan mengirim salinan instruksi ini ke email pembeli.`}
+					</p>
+				</div>
+			</div>
+
+			<div class="flex items-center gap-2 self-end sm:self-center shrink-0">
+				<form
+					method="POST"
+					action="?/resend"
+					use:enhance={() => {
+						isBusy = true;
+						return async ({ result, update }) => {
+							handleFormResult(result, {
+								success: 'Email faktur terbaru berhasil dikirim ke pembeli.',
+								failure: 'Gagal mengirim ulang email faktur.'
+							});
+							if (result.type === 'success') {
+								await update();
+								resendBanner.show = false;
+							}
+							isBusy = false;
+						};
+					}}
+				>
+					<button
+						type="submit"
+						disabled={isBusy}
+						class="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 font-semibold text-xs shadow-xs transition-colors {resendBanner.type === 'confirmed'
+							? 'bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-500 dark:text-neutral-950 dark:hover:bg-emerald-400'
+							: 'bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-500 dark:text-neutral-950 dark:hover:bg-amber-400'}"
+					>
+						<Send size={13} />
+						<span>Kirim Email Sekarang</span>
+					</button>
+				</form>
+
+				<button
+					type="button"
+					onclick={() => (resendBanner.show = false)}
+					class="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
+				>
+					Abaikan
+				</button>
+			</div>
+		</div>
+	{/if}
+
 	<!-- Accordion: Panel WhatsApp Buyer yang Lapang -->
-	<div class="rounded-xl border border-neutral-200 bg-white transition-all dark:border-neutral-800 dark:bg-neutral-900 overflow-hidden shadow-xs">
+	<div
+		bind:this={waSectionEl}
+		class="rounded-xl border border-neutral-200 bg-white transition-all dark:border-neutral-800 dark:bg-neutral-900 overflow-hidden shadow-xs"
+	>
 		<button
 			type="button"
 			onclick={toggleWaAccordion}

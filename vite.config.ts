@@ -21,6 +21,9 @@ export default defineConfig({
 			}
 		})
 	],
+	ssr: {
+		noExternal: ['@thisux/sveltednd']
+	},
 	test: {
 		expect: { requireAssertions: true },
 		projects: [

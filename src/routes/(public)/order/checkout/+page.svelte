@@ -30,19 +30,21 @@
 	let isBusy = $state(false);
 
 	$effect(() => {
-		if (typeof document !== 'undefined') {
-			if (isBusy) {
-				document.body.style.overflow = 'hidden';
-			} else {
-				document.body.style.overflow = '';
-			}
+		if (isBusy) {
+			const prevBodyOverflow = document.body.style.overflow;
+			const prevHtmlOverflow = document.documentElement.style.overflow;
+			document.body.style.overflow = 'hidden';
+			document.documentElement.style.overflow = 'hidden';
+			return () => {
+				document.body.style.overflow = prevBodyOverflow;
+				document.documentElement.style.overflow = prevHtmlOverflow;
+			};
 		}
-		return () => {
-			if (typeof document !== 'undefined') {
-				document.body.style.overflow = '';
-			}
-		};
 	});
+
+	function preventScroll(e: Event) {
+		e.preventDefault();
+	}
 
 	let itemToDelete = $state<CartProduct | null>(null);
 	let confirmClearOpen = $state(false);
@@ -616,10 +618,13 @@
 
 {#if isBusy}
 	<div
-		class="fixed inset-0 z-[999] flex flex-col items-center justify-center bg-black/60 backdrop-blur-xs p-4 text-center select-none"
+		class="fixed inset-0 z-[999] flex flex-col items-center justify-center bg-black/60 backdrop-blur-xs p-4 text-center select-none touch-none overscroll-none"
 		role="dialog"
 		aria-modal="true"
 		aria-label="Memproses pesanan"
+		tabindex="-1"
+		onwheel={preventScroll}
+		ontouchmove={preventScroll}
 	>
 		<div
 			class="-rotate-1 rounded-[16px_8px_14px_6px] border-2 border-brandy bg-papaya p-6 shadow-[6px_6px_0px_#78290f] max-w-sm w-full space-y-4 dark:border-papaya/40 dark:bg-ink dark:shadow-[6px_6px_0px_rgba(255,236,209,0.3)]"
@@ -629,10 +634,10 @@
 			></div>
 			<div class="space-y-1">
 				<p class="font-headline text-lg font-bold text-ink dark:text-papaya">
-					Memproses Pesanan...
+					Memverifikasi Pesanan Anda...
 				</p>
 				<p class="font-sans text-xs text-brandy/80 dark:text-papaya/70">
-					Sedang mengunci stok dan menyiapkan rincian pembayaran. Mohon tunggu sebentar.
+					Menyiapkan detail pembayaran, tunggu sebentar
 				</p>
 			</div>
 		</div>

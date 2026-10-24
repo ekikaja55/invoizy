@@ -1,3 +1,4 @@
+terjadi bug di bagian sort ordering productnya aku coba testing testing kaya +1 atau -1 toastnya muncul kalo berhasil disimpan tapi ga berubah sama sekali dan ketika aku refresh pagenya baru berubah dan berubah nya random banget kadang tiba2 paling bawah kadang naik +2 kadang -4 random banget, dan ketika ku cek db nya field sort_order nya masih value 0 semua, kamu bisa lakukan validasi ini dengan memanggil supabase ku dan cek sendiri tabel productnya, apakah memang pendekatan ini kurang efisien atau murni bug?
 ### Panduan Pengujian Lokal (Checklist Testing)
 
   1. Uji Transaksi & Transisi Bebas Flicker:
