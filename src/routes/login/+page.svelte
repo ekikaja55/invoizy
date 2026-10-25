@@ -3,7 +3,6 @@
 	import { resolve } from '$app/paths';
 	import { authClient } from '$lib/auth-client';
 	import { toast } from 'svelte-sonner';
-	import SketchBackground from '$lib/components/ui/SketchBackground.svelte';
 	import { Lock, Mail, Eye, EyeOff, LogIn, Loader2, ArrowLeft } from '@lucide/svelte';
 
 	let email = $state('');
@@ -36,11 +35,8 @@
 	<title>Login Admin — cho.lazey - CHIBICONXI CATALOGUE</title>
 </svelte:head>
 
-<div class="relative min-h-screen bg-papaya text-ink transition-colors dark:bg-ink dark:text-papaya flex items-center justify-center p-4 py-12 overflow-x-clip">
-	<!-- Dynamic SVG Sketch Background Layer -->
-	<SketchBackground />
-
-	<!-- Main Login Container (Digital Scrapbook Ticket Card) -->
+<div class="drafting-grid relative min-h-screen bg-[#f2efe9] text-[#262626] transition-colors dark:bg-[#1a1825] dark:text-[#f2efe9] flex items-center justify-center p-4 py-12 overflow-x-clip">
+	<!-- Main Login Container (Warm Monoline Ticket Card) -->
 	<main class="relative z-10 w-full max-w-md">
 		<!-- Back to Public Site link -->
 		<div class="mb-4">

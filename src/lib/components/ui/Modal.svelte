@@ -54,35 +54,35 @@
 		<button
 			aria-label="Tutup dialog"
 			onclick={onCancel}
-			class="absolute inset-0 cursor-default bg-ink/70 backdrop-blur-xs dark:bg-ink/85"
+			class="absolute inset-0 cursor-default bg-[#262626]/60 backdrop-blur-xs dark:bg-black/75"
 		></button>
 		<div
 			role="dialog"
 			aria-modal="true"
 			aria-label={title}
-			class="relative w-full max-w-sm rounded-[18px_6px_16px_8px] border-2 border-brandy bg-papaya p-6 shadow-[6px_6px_0px_#78290f] dark:border-papaya/40 dark:bg-ink dark:shadow-[6px_6px_0px_rgba(255,236,209,0.25)]"
+			class="relative w-full max-w-sm rounded-[18px_6px_16px_8px] border-2 border-[#262626] bg-white p-6 shadow-[5px_5px_0px_#262626] dark:border-[#f2efe9] dark:bg-[#252331] dark:shadow-[5px_5px_0px_#f2efe9]"
 		>
-			<h2 class="font-serif text-lg font-bold text-ink dark:text-papaya">{title}</h2>
+			<h2 class="font-serif text-lg font-bold text-[#262626] dark:text-[#f2efe9]">{title}</h2>
 			{#if children}
 				{@render children()}
 			{:else if message}
-				<p class="mt-2.5 text-sm leading-relaxed text-ink/80 dark:text-papaya/80">{message}</p>
+				<p class="mt-2.5 text-sm leading-relaxed text-[#595959] dark:text-[#a3a099]">{message}</p>
 			{/if}
 			{#if !hideActions}
 				<div class="mt-5 flex justify-end gap-2.5">
 					<button
 						type="button"
 						onclick={onCancel}
-						class="rounded-[8px_3px_7px_2px] border-2 border-brandy bg-papaya px-4 py-2 font-mono text-xs font-bold text-ink shadow-[2px_2px_0px_#78290f] transition-all hover:bg-brandy/10 active:translate-y-0.5 active:shadow-none dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[2px_2px_0px_rgba(255,236,209,0.2)]"
+						class="rounded-[8px_3px_7px_2px] border-[1.5px] border-[#262626] bg-white px-4 py-2 font-sans text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#b4a6d5]/20 active:translate-y-0.5 active:shadow-none dark:border-[#f2efe9] dark:bg-[#343044] dark:text-[#f2efe9] dark:shadow-[2px_2px_0px_#f2efe9] dark:hover:bg-[#b4a6d5] dark:hover:text-[#1a1825]"
 					>
 						{cancelLabel}
 					</button>
 					<button
 						type="button"
 						onclick={() => onConfirm?.()}
-						class="rounded-[8px_3px_7px_2px] border-2 border-brandy px-4 py-2 font-mono text-xs font-bold text-white shadow-[2px_2px_0px_#78290f] transition-all active:translate-y-0.5 active:shadow-none {danger
-							? 'bg-crimson hover:bg-[#a50f1b]'
-							: 'bg-tangerine hover:bg-[#e06d00]'}"
+						class="rounded-[8px_3px_7px_2px] border-[1.5px] px-4 py-2 font-sans text-xs font-bold transition-all active:translate-y-0.5 active:shadow-none {danger
+							? 'border-[#c1121f] bg-[#c1121f] text-white shadow-[2px_2px_0px_#c1121f] hover:bg-[#991b1b]'
+							: 'border-[#262626] bg-[#262626] text-[#f2efe9] shadow-[2px_2px_0px_#262626] hover:bg-[#3d3a37] dark:border-[#f2efe9] dark:bg-[#f2efe9] dark:text-[#262626] dark:shadow-[2px_2px_0px_#f2efe9] dark:hover:bg-[#e0ded8]'}"
 					>
 						{confirmLabel}
 					</button>

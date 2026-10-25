@@ -1,8 +1,16 @@
+import { auth } from '$lib/server/auth';
+import { error } from '@sveltejs/kit';
 import { mockInvoice } from '../mock-data';
 import { renderTestInvoicePdf } from '../render-test-pdf';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async () => {
+export const GET: RequestHandler = async ({ request }) => {
+	// Guard: Hanya pengguna yang sudah terotentikasi yang dapat mengunduh PDF eksperimen
+	const session = await auth.api.getSession({ headers: request.headers });
+	if (!session) {
+		throw error(401, 'Unauthorized: Silakan login terlebih dahulu untuk mengunduh PDF uji coba.');
+	}
+
 	// Pastikan mock invoice memiliki data diskon dan metode shipping untuk evaluasi visual utuh
 	const testData = {
 		...mockInvoice,
@@ -21,8 +29,9 @@ export const GET: RequestHandler = async () => {
 	return new Response(new Blob([body], { type: 'application/pdf' }), {
 		headers: {
 			'Content-Type': 'application/pdf',
-			'Content-Disposition': 'inline; filename="INVOICE-EKSPERIMEN-CHOLAZEY.pdf"',
-			'Cache-Control': 'no-cache, no-store, must-revalidate'
+			'Content-Disposition': 'attachment; filename="INVOICE-EKSPERIMEN-CHOLAZEY.pdf"',
+			'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+			'X-Timestamp': Date.now().toString()
 		}
 	});
 };

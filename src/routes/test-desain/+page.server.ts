@@ -1,12 +1,16 @@
-import { dev } from '$app/environment';
-import { error } from '@sveltejs/kit';
+import { auth } from '$lib/server/auth';
+import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async () => {
-	// Guard: Hanya aktif di local dev server. Di production otomatis 404.
-	if (!dev) {
-		throw error(404, 'Halaman ini hanya tersedia di lingkungan development.');
+export const load: PageServerLoad = async ({ request }) => {
+	// Guard: Hanya pengguna yang sudah terotentikasi (login) yang dapat mengakses lab desain ini.
+	const session = await auth.api.getSession({ headers: request.headers });
+
+	if (!session) {
+		throw redirect(303, '/login');
 	}
 
-	return {};
+	return {
+		user: session.user
+	};
 };

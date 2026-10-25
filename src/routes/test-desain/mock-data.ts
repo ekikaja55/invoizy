@@ -52,7 +52,7 @@ export const mockInvoice: InvoiceData = {
 		instagram: '@cho.lazey',
 		twitter: '@cholazey',
 		emailFromName: 'Cho Lazey Store',
-		paymentNote: 'Mohon cantumkan kode invoice INV-TEST-01 pada berita transfer untuk verifikasi kilat.',
+		paymentNote: '',
 		proofContact: '082112345678'
 	},
 	paymentMethods: [
@@ -80,9 +80,23 @@ export const mockInvoice: InvoiceData = {
 	]
 };
 
+export const mockPaymentStatuses = [
+	'PENDING',
+	'UNCONFIRMED',
+	'PAID',
+	'EXPIRED'
+] as const;
+
+export const mockInvoiceStatuses = [
+	'PENDING',
+	'GENERATING',
+	'READY',
+	'SENT',
+	'FAILED'
+] as const;
+
 export const mockStatuses = [
 	{ invoice: 'PENDING', payment: 'PENDING' },
-	{ invoice: 'GENERATING', payment: 'PENDING' },
 	{ invoice: 'READY', payment: 'UNCONFIRMED' },
 	{ invoice: 'SENT', payment: 'PAID' },
 	{ invoice: 'FAILED', payment: 'EXPIRED' }

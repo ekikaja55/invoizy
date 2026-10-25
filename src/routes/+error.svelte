@@ -3,7 +3,6 @@
 	import { page } from '$app/state';
 	import { EMERGENCY_CONTACT } from '$lib/constants';
 	import { waLink } from '$lib/utils/contact';
-	import SketchBackground from '$lib/components/ui/SketchBackground.svelte';
 	import InstagramIcon from '$lib/components/icons/InstagramIcon.svelte';
 	import { AlertTriangle, RotateCcw, Home, MessageCircle, Mail } from '@lucide/svelte';
 
@@ -39,11 +38,8 @@
 	<title>{page.status} — {messages[page.status] ?? 'Terjadi Kesalahan'}</title>
 </svelte:head>
 
-<div class="relative min-h-screen bg-papaya text-ink transition-colors dark:bg-ink dark:text-papaya flex items-center justify-center p-4 py-12 overflow-x-clip">
-	<!-- Dynamic SVG Sketch Background Layer -->
-	<SketchBackground />
-
-	<!-- Main Error Card (Digital Scrapbook Memo) -->
+<div class="drafting-grid relative min-h-screen bg-[#f2efe9] text-[#262626] transition-colors dark:bg-[#1a1825] dark:text-[#f2efe9] flex items-center justify-center p-4 py-12 overflow-x-clip">
+	<!-- Main Error Card (Warm Monoline Memo) -->
 	<main class="relative z-10 w-full max-w-lg">
 		<div
 			class="relative rounded-[18px_8px_16px_10px] border-2 border-brandy bg-white/95 p-6 sm:p-8 shadow-[6px_6px_0px_#78290f] backdrop-blur-xs transition-all dark:border-papaya/40 dark:bg-ink/95 dark:text-papaya dark:shadow-[6px_6px_0px_rgba(255,236,209,0.2)]"

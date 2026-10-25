@@ -28,6 +28,9 @@
 			wa?: string;
 			instagram?: string;
 		};
+		class?: string;
+		staticPosition?: boolean;
+		preventNavigation?: boolean;
 	}
 
 	// 1. Ambil props utuh agar tetap reaktif
@@ -37,6 +40,9 @@
 	let items = $derived(props.items);
 	let isAdmin = $derived(props.isAdmin ?? false);
 	let contact = $derived(props.contact);
+	let className = $derived(props.class ?? '');
+	let staticPosition = $derived(props.staticPosition ?? false);
+	let preventNavigation = $derived(props.preventNavigation ?? false);
 	let currentPath = $derived(page.url.pathname);
 	let isAdminPage = $derived(currentPath.startsWith('/admin'));
 
@@ -95,11 +101,13 @@
 <svelte:window onclick={handleWindowClick} onkeydown={handleKeydown} />
 
 <aside
-	class="fixed top-1/2 left-4 z-30 hidden -translate-y-1/2 flex-col rounded-[16px_8px_14px_6px] border-2 border-brandy bg-papaya/95 p-2 text-ink shadow-[4px_4px_0px_#78290f] backdrop-blur-xs transition-all duration-200 md:flex dark:border-papaya/30 dark:bg-ink/95 dark:text-papaya dark:shadow-[4px_4px_0px_rgba(255,236,209,0.2)]"
+	class="{staticPosition
+		? 'relative flex'
+		: 'fixed top-1/2 left-4 z-30 hidden -translate-y-1/2 md:flex'} flex-col rounded-md border-[1.5px] border-[#262626] bg-[#f2efe9]/95 p-2 text-[#262626] shadow-[3px_3px_0px_#262626] backdrop-blur-xs transition-all duration-200 dark:border-[#f2efe9]/30 dark:bg-[#1a1825]/95 dark:text-[#f2efe9] dark:shadow-[3px_3px_0px_#f2efe9] {className}"
 	class:w-16={collapsed}
 	class:w-56={!collapsed}
 >
-	<button onclick={toggle} class={navActionClass()}>
+	<button onclick={toggle} class={navActionClass()} aria-label={collapsed ? 'Perluas sidebar' : 'Ciutkan sidebar'}>
 		{#if collapsed}
 			<PanelLeftOpen size={16} strokeWidth={2.75} />
 		{:else}
@@ -110,7 +118,16 @@
 	<nav class="flex flex-col gap-1">
 		{#each items as item (item.href)}
 			{@const isActive = currentPath === item.href}
-			<a href={resolve(item.href)} class={navItemClass(isActive)}>
+			<a
+				href={resolve(item.href)}
+				class={navItemClass(isActive)}
+				onclick={(e) => {
+					if (preventNavigation) {
+						e.preventDefault();
+						toast.info(`[Sandbox] Navigasi: Menuju "${item.label}" (${item.href})`);
+					}
+				}}
+			>
 				<item.icon size={16} strokeWidth={2.5} />
 				{#if !collapsed}
 					<span>{item.label}</span>
@@ -124,7 +141,7 @@
 					type="button"
 					onclick={toggleContact}
 					class="{navActionClass()} {contactOpen
-						? 'border-2 border-brandy bg-tangerine text-white shadow-[2px_2px_0px_#78290f]'
+						? 'border-[1.5px] border-[#262626] bg-[#b4a6d5] text-[#262626] shadow-[2px_2px_0px_#262626] dark:border-[#f2efe9] dark:bg-[#b4a6d5] dark:text-[#1a1825]'
 						: ''}"
 					aria-haspopup="true"
 					aria-expanded={contactOpen}
@@ -138,42 +155,50 @@
 
 				{#if contactOpen}
 					<div
-						class="absolute left-full top-0 ml-3 z-50 w-56 rounded-2xl border-2 border-brandy bg-papaya/95 p-2 shadow-[4px_4px_0px_#78290f] backdrop-blur-xs dark:border-papaya/30 dark:bg-ink/95 dark:text-papaya dark:shadow-[4px_4px_0px_rgba(255,236,209,0.25)]"
+						class="absolute left-full top-0 ml-3 z-50 w-56 rounded-md border-[1.5px] border-[#262626] bg-[#f2efe9] p-2.5 shadow-[4px_4px_0px_#262626] backdrop-blur-xs dark:border-[#f2efe9]/30 dark:bg-[#252331] dark:text-[#f2efe9] dark:shadow-[4px_4px_0px_#f2efe9]"
 					>
-						<div class="border-b-2 border-brandy/15 px-2.5 py-1.5 dark:border-papaya/15">
-							<p class="font-headline text-xs font-bold text-ink dark:text-papaya">
+						<div class="border-b border-[#262626]/15 pb-2 dark:border-[#f2efe9]/15">
+							<p class="font-serif text-xs font-bold text-[#262626] dark:text-[#f2efe9]">
 								Hubungi Kami
 							</p>
-							<p class="text-[11px] text-brandy/70 dark:text-papaya/60 font-sans">
+							<p class="text-[11px] text-[#404040] dark:text-[#b8b5ad] font-sans">
 								Pilih saluran kontak langsung
 							</p>
 						</div>
 
-						<div class="mt-1 flex flex-col gap-1">
+						<div class="mt-2 flex flex-col gap-1.5">
 							{#if waHref}
 								<a
 									href={waHref}
 									target="_blank"
 									rel="external noopener noreferrer"
-									onclick={() => (contactOpen = false)}
-									class="flex items-center justify-between gap-2.5 rounded-xl border border-brandy/20 bg-white/70 px-2.5 py-2 text-sm text-ink transition-all hover:bg-papaya hover:border-brandy dark:border-papaya/20 dark:bg-ink/70 dark:text-papaya dark:hover:bg-ink"
+									onclick={(e) => {
+										if (preventNavigation) {
+											e.preventDefault();
+											contactOpen = false;
+											toast.info('[Sandbox] Simulasi: Membuka WhatsApp chat admin');
+										} else {
+											contactOpen = false;
+										}
+									}}
+									class="flex items-center justify-between gap-2.5 rounded-md border-[1.5px] border-[#262626] bg-white px-2.5 py-2 text-sm text-[#262626] transition-all hover:bg-[#d1fae5] dark:border-[#f2efe9]/20 dark:bg-[#1a1825] dark:text-[#f2efe9] dark:hover:bg-[#065f46]/30"
 								>
 									<div class="flex items-center gap-2.5">
 										<div
-											class="flex h-7 w-7 items-center justify-center rounded-lg border border-forest/40 bg-forest/15 text-forest"
+											class="flex h-7 w-7 items-center justify-center rounded-md border border-[#065f46] bg-[#d1fae5] text-[#065f46]"
 										>
 											<MessageCircle size={15} strokeWidth={2.5} />
 										</div>
 										<div class="flex flex-col text-left">
-											<span class="text-xs font-bold text-ink dark:text-papaya"
+											<span class="text-xs font-bold text-[#262626] dark:text-[#f2efe9]"
 												>WhatsApp</span
 											>
-											<span class="text-[10px] text-brandy/70 dark:text-papaya/60"
+											<span class="text-[10px] text-[#404040] dark:text-[#b8b5ad]"
 												>Chat Admin</span
 											>
 										</div>
 									</div>
-									<ExternalLink size={12} strokeWidth={2.5} class="text-brandy/60 dark:text-papaya/50" />
+									<ExternalLink size={12} strokeWidth={2.5} class="text-[#404040] dark:text-[#b8b5ad]" />
 								</a>
 							{/if}
 
@@ -182,25 +207,33 @@
 									href={igHref}
 									target="_blank"
 									rel="external noopener noreferrer"
-									onclick={() => (contactOpen = false)}
-									class="flex items-center justify-between gap-2.5 rounded-xl border border-brandy/20 bg-white/70 px-2.5 py-2 text-sm text-ink transition-all hover:bg-papaya hover:border-brandy dark:border-papaya/20 dark:bg-ink/70 dark:text-papaya dark:hover:bg-ink"
+									onclick={(e) => {
+										if (preventNavigation) {
+											e.preventDefault();
+											contactOpen = false;
+											toast.info('[Sandbox] Simulasi: Membuka profil Instagram');
+										} else {
+											contactOpen = false;
+										}
+									}}
+									class="flex items-center justify-between gap-2.5 rounded-md border-[1.5px] border-[#262626] bg-white px-2.5 py-2 text-sm text-[#262626] transition-all hover:bg-[#fee2e2] dark:border-[#f2efe9]/20 dark:bg-[#1a1825] dark:text-[#f2efe9] dark:hover:bg-[#991b1b]/30"
 								>
 									<div class="flex items-center gap-2.5">
 										<div
-											class="flex h-7 w-7 items-center justify-center rounded-lg border border-pink-500/40 bg-pink-500/15 text-pink-600"
+											class="flex h-7 w-7 items-center justify-center rounded-md border border-[#c1121f] bg-[#fee2e2] text-[#c1121f]"
 										>
 											<InstagramIcon size={15} />
 										</div>
 										<div class="flex flex-col text-left">
-											<span class="text-xs font-bold text-ink dark:text-papaya"
+											<span class="text-xs font-bold text-[#262626] dark:text-[#f2efe9]"
 												>Instagram</span
 											>
-											<span class="text-[10px] text-brandy/70 dark:text-papaya/60"
+											<span class="text-[10px] text-[#404040] dark:text-[#b8b5ad]"
 												>Profil & DM</span
 											>
 										</div>
 									</div>
-									<ExternalLink size={12} strokeWidth={2.5} class="text-brandy/60 dark:text-papaya/50" />
+									<ExternalLink size={12} strokeWidth={2.5} class="text-[#404040] dark:text-[#b8b5ad]" />
 								</a>
 							{/if}
 						</div>
@@ -210,19 +243,37 @@
 		{/if}
 	</nav>
 
-	<div class="mt-2 space-y-1 border-t-2 border-brandy/20 pt-2 dark:border-papaya/20">
+	<div class="mt-2 space-y-1 border-t border-[#262626]/20 pt-2 dark:border-[#f2efe9]/20">
 		<ThemeToggle {collapsed} />
 
 		{#if isAdmin}
 			{#if isAdminPage}
-				<button onclick={() => navigateTo('/')} class={navActionClass()}>
+				<button
+					onclick={() => {
+						if (preventNavigation) {
+							toast.info('[Sandbox] Navigasi: Menuju Beranda ("/")');
+						} else {
+							navigateTo('/');
+						}
+					}}
+					class={navActionClass()}
+				>
 					<Home size={16} strokeWidth={2.5} />
 					{#if !collapsed}
 						<span>Home</span>
 					{/if}
 				</button>
 			{:else}
-				<button onclick={() => navigateTo('/admin')} class={navActionClass()}>
+				<button
+					onclick={() => {
+						if (preventNavigation) {
+							toast.info('[Sandbox] Navigasi: Menuju Dashboard ("/admin")');
+						} else {
+							navigateTo('/admin');
+						}
+					}}
+					class={navActionClass()}
+				>
 					<LayoutDashboard size={16} strokeWidth={2.5} />
 					{#if !collapsed}
 						<span>Dashboard</span>
@@ -230,7 +281,16 @@
 				</button>
 			{/if}
 
-			<button onclick={handleLogout} class={navActionClass()}>
+			<button
+				onclick={() => {
+					if (preventNavigation) {
+						toast.info('[Sandbox] Simulasi: Logout berhasil!');
+					} else {
+						handleLogout();
+					}
+				}}
+				class={navActionClass()}
+			>
 				<LogOut size={16} strokeWidth={2.5} />
 				{#if !collapsed}
 					<span>Logout</span>

@@ -642,30 +642,101 @@ export async function listOrdersForExport(f: OrderListFilters) {
 // DASHBOARD (admin)
 // ─────────────────────────────────────────────
 
+export interface DailySales {
+	date: string;
+	label: string;
+	orders: number;
+	revenue: number;
+}
+
 export interface DashboardStats {
 	totalOrders: number;
 	totalRevenue: number;
+	todayOrders: number;
+	todayRevenue: number;
+	waitingVerificationCount: number;
+	lowStockCount: number;
 	byInvoice: { status: string; count: number }[];
 	byPayment: { status: string; count: number }[];
+	last7Days: DailySales[];
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
-	const [total] = await db.select({ orders: count(), revenue: sum(orders.total) }).from(orders);
+	const now = new Date();
+	const sevenDaysAgo = new Date(now);
+	sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+	sevenDaysAgo.setHours(0, 0, 0, 0);
 
-	const byInvoice = await db
-		.select({ status: orders.invoiceStatus, n: count() })
-		.from(orders)
-		.groupBy(orders.invoiceStatus);
+	const [total, byInvoice, byPayment, lowStockRow, recentOrders] = await Promise.all([
+		db.select({ orders: count(), revenue: sum(orders.total) }).from(orders),
+		db
+			.select({ status: orders.invoiceStatus, n: count() })
+			.from(orders)
+			.groupBy(orders.invoiceStatus),
+		db
+			.select({ status: orders.paymentStatus, n: count() })
+			.from(orders)
+			.groupBy(orders.paymentStatus),
+		db
+			.select({ n: count() })
+			.from(products)
+			.where(and(eq(products.trackStock, true), lte(products.stock, 3), eq(products.active, true))),
+		db
+			.select({ createdAt: orders.createdAt, total: orders.total })
+			.from(orders)
+			.where(gte(orders.createdAt, sevenDaysAgo))
+	]);
 
-	const byPayment = await db
-		.select({ status: orders.paymentStatus, n: count() })
-		.from(orders)
-		.groupBy(orders.paymentStatus);
+	const days: DailySales[] = [];
+	const dayMap = new Map<string, { orders: number; revenue: number }>();
+	const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+
+	for (let i = 6; i >= 0; i--) {
+		const d = new Date(now);
+		d.setDate(d.getDate() - i);
+		const yyyy = d.getFullYear();
+		const mm = String(d.getMonth() + 1).padStart(2, '0');
+		const dd = String(d.getDate()).padStart(2, '0');
+		const key = `${yyyy}-${mm}-${dd}`;
+		const label = `${dayNames[d.getDay()]} (${dd})`;
+		days.push({ date: key, label, orders: 0, revenue: 0 });
+		dayMap.set(key, { orders: 0, revenue: 0 });
+	}
+
+	for (const o of recentOrders) {
+		const d = new Date(o.createdAt);
+		const yyyy = d.getFullYear();
+		const mm = String(d.getMonth() + 1).padStart(2, '0');
+		const dd = String(d.getDate()).padStart(2, '0');
+		const key = `${yyyy}-${mm}-${dd}`;
+		const bucket = dayMap.get(key);
+		if (bucket) {
+			bucket.orders += 1;
+			bucket.revenue += o.total;
+		}
+	}
+
+	for (const day of days) {
+		const bucket = dayMap.get(day.date);
+		if (bucket) {
+			day.orders = bucket.orders;
+			day.revenue = bucket.revenue;
+		}
+	}
+
+	const todayKey = days[days.length - 1]?.date;
+	const todayBucket = todayKey ? dayMap.get(todayKey) : null;
+	const waitingRow = byPayment.find((r) => r.status === 'WAITING_VERIFICATION');
 
 	return {
-		totalOrders: total?.orders ?? 0,
-		totalRevenue: Number(total?.revenue ?? 0),
+		totalOrders: total[0]?.orders ?? 0,
+		totalRevenue: Number(total[0]?.revenue ?? 0),
+		todayOrders: todayBucket?.orders ?? 0,
+		todayRevenue: todayBucket?.revenue ?? 0,
+		waitingVerificationCount: waitingRow?.n ?? 0,
+		lowStockCount: lowStockRow[0]?.n ?? 0,
 		byInvoice: byInvoice.map((r) => ({ status: r.status, count: r.n })),
-		byPayment: byPayment.map((r) => ({ status: r.status, count: r.n }))
+		byPayment: byPayment.map((r) => ({ status: r.status, count: r.n })),
+		last7Days: days
 	};
 }

@@ -1,65 +1,126 @@
-# Invoizy Design System
-**Philosophy:** Organic Maximalism & Digital Scrapbook. "From sketch to life", "Love cute and chaotic things", "Gonna make some mess".
+# Invoizy Design System — Warm Monoline Editorial
 
-## 1. Color Palette & Theming
-Penggunaan warna bukan sekadar estetika, melainkan instrumen hierarki.
-
-### Core Palette
-*   **Ink Black (`#001524` / `var(--color-ink)`):** Jangkar struktural. Latar belakang utama untuk Dark Mode. Warna teks utama untuk Light Mode.
-*   **Papaya Whip (`#ffecd1` / `var(--color-papaya)`):** Kanvas taktil. Latar belakang utama untuk Light Mode, merepresentasikan kertas sketsa. Pada Dark Mode, digunakan untuk warna teks utama agar nyaman dibaca.
-*   **Stormy Teal (`#15616d` / `var(--color-teal)`):** Aksen sekunder elegan. Digunakan untuk teks judul, aksen badge netral, dan kartu modular.
-*   **Vivid Tangerine (`#ff7d00` / `var(--color-tangerine)`):** Pemicu tindakan (CTA utama) & kekacauan terkontrol. Khusus untuk tombol utama, stiker dekoratif, dan highlight penting.
-*   **Brandy (`#78290f` / `var(--color-brandy)`):** Transisi organik. Digunakan untuk bayangan solid (*hard offset shadow* `shadow-[4px_4px_0px_#78290f]`), border tak rata, dan outline ilustratif.
-
-### Semantic Status Colors (Transaksi & Feedback)
-*   **Crimson (`#c1121f` / `var(--color-crimson)`):** Status Gagal (`FAILED`), Kedaluwarsa (`EXPIRED`), stok habis, atau pesan error formulir.
-*   **Forest Emerald (`#2b9348` / `var(--color-forest)`):** Status Lunas (`PAID`), Terkirim (`SENT`), stok tersedia, atau verifikasi sukses.
+Spesifikasi desain antarmuka untuk Invoizy. Dokumen ini menjadi rujukan tunggal untuk token warna, tipografi, ritme tata letak, dan komponen antarmuka.
 
 ---
 
-## 2. Typography Architecture
-Menggabungkan keanggunan editorial dengan keliaran ekspresif. Seluruh font di-bundle secara lokal via `@fontsource` (offline-ready, zero CDN dependency).
+## 1. Prinsip Utama
 
-*   **Headlines (Classy Serif):** `Fraunces` via `font-headline` (700). Digunakan untuk H1, H2, dan nominal harga besar.
-*   **Display & Aksen (Chaotic Handwritten):** `Caveat` via `font-handwriting` (600). Digunakan untuk stiker, coretan nota, catatan toko, atau microcopy dekoratif.
-*   **Body & Form (Clean Sans):** `Plus Jakarta Sans` via `font-sans` (400, 600). Digunakan untuk paragraf, label form, keterangan tombol, dan isi data tabel.
-*   **Data & Transaksional (Monospace):** `Space Mono` via `font-mono` (400, 700). Digunakan eksklusif untuk Order ID, Passcode, kode unik transfer, dan nomor resi.
-
----
-
-## 3. Z-Index Scale (Spatial Layering)
-*   `z-0`: Kanvas dasar & background grain/noise.
-*   `z-10`: Komponen utama (Kartu, Form, Tabel).
-*   `z-20`: Elemen intervensi (Stiker dekoratif, coretan SVG, floating badges).
-*   `z-30`: Header navigasi global / sticky top bar.
-*   `z-40`: Backdrop/Overlay (`bg-ink/80` atau `bg-[#001524]/80`).
-*   `z-50`: Modal dialog interaktif.
-*   `z-100`: Sonner Toasts (Notifikasi "kertas tempel").
+1. **Kehangatan Fisik di Atas Garis Presisi**  
+   Latar warna kertas cream hangat (`#f2efe9`) berpadu dengan garis tepi monoline arang (`#262626`). Menghindari tampilan putih steril ala aplikasi SaaS generik dan menghindari ornamen scrapbook yang memperlambat transaksi.
+2. **Warna Pastel sebagai Aksen Data, Bukan Cat Latar**  
+   Warna brand klien (Lavender, Mint, Peach) digunakan untuk penanda status, kategori barang, dan promo. Tombol transaksi utama memakai warna arang pekat agar target klik terbaca tegas oleh pembeli.
+3. **Keterbacaan Angka Finansial**  
+   Semua nominal rupiah dan kode invoice memakai huruf monospaced agar digit selalu sejajar saat dihitung.
+4. **Kontras WCAG AA Mutlak**  
+   Semua teks kecil memiliki rasio kontras minimal 4.5:1 terhadap latarnya. Tidak ada teks abu-abu terang di atas latar cream.
 
 ---
 
-## 4. UI Components Guidelines (Controlled Chaos / "Jalan Tengah")
+## 2. Palet Warna & Token Desain
 
-### Buttons & Actions
-*   **Bentuk:** Terapkan *asymmetrical borders* yang taktil (contoh: `rounded-[255px_15px_225px_15px/15px_225px_15px_255px]` atau variasi organik `rounded-[14px_6px_12px_8px]`).
-*   **Shadow:** *Hard offset shadow* solid tanpa blur menggunakan warna Brandy (`shadow-[3px_3px_0px_#78290f]` atau `shadow-[4px_4px_0px_#78290f]`).
-*   **Interaksi:** Transisi *scale-up* halus atau rotasi kecil (`-rotate-1` s/d `rotate-2`) saat hover untuk ilusi stiker kertas fisik.
+### 2.1 Warna Dasar Permukaan & Teks
+| Token | Nilai Hex | Penggunaan |
+| :--- | :--- | :--- |
+| `--color-canvas` | `#f2efe9` | Latar belakang utama seluruh halaman web. |
+| `--color-surface` | `#ffffff` | Kartu produk, baris tabel data, modal dialog, kontainer form. |
+| `--color-surface-sunken` | `#e8e4db` | Kotak input form sebelum fokus, latar kolom total di invoice. |
+| `--color-ink-primary` | `#262626` | Teks judul, body text, garis tepi monoline (border), tombol utama. |
+| `--color-ink-secondary` | `#404040` (dark: `#b8b5ad`) | Deskripsi produk, label sekunder, teks bantuan form (rasio kontras > 7:1). |
+| `--color-border` | `#262626` | Garis batas tunggal pada semua komponen interaktif dan kartu. |
 
-### Form Inputs & Data Tables (Disiplin Fungsional)
-*   **Jalan Tengah:** Untuk input form teks, number stepper, dan baris tabel transaksi, gunakan sudut geometri yang rapi dan stabil (border tipis bersih) agar input data pengguna tidak terdistorsi atau sulit diklik.
-*   **Aksen:** Estetika scrapbook disematkan pada label field (menggunakan font sans/handwriting), badge status, dan outline luar kartu kontainer.
-*   **DOM Nodes:** Pada tabel data yang panjang, sembunyikan ilustrasi SVG dekoratif berat demi performa render.
+### 2.2 Warna Brand Klien (Aksen Fungsional)
+| Token | Nilai Hex | Penggunaan Khusus |
+| :--- | :--- | :--- |
+| `--color-brand-lavender` | `#b4a6d5` | Latar tab aktif, header kategori produk, hover tombol sekunder. |
+| `--color-brand-mint` | `#a2e1db` | Badge stok aman, penanda varian produk, filter aktif. |
+| `--color-brand-peach` | `#fea770` | Badge diskon belanja, penanda promo bundle, tag event khusus. |
 
-### Invoice Document Preview
-*   **Estetika:** Nota kasir retro / scrapbook. Tepi kertas atas/bawah bergerigi (SVG mask).
-*   **Cap Lunas / Stamp:** Berbentuk *rubber stamp* miring (rotasi acak `-rotate-6` hingga `rotate-6`) dengan warna Forest Emerald (`#2b9348`) atau Stormy Teal (`#15616d`).
-*   **Cetak (@media print):**
-    *   Terapkan `-webkit-print-color-adjust: exact;`
-    *   Hapus efek `backdrop-filter` atau bayangan blur kompleks.
-    *   Pastikan kontras teks (`Ink Black`) di atas latar belakang tetap solid.
+### 2.3 Warna Semantik (Lolos Uji Kontras WCAG AA)
+Warna semantik dipisahkan antara teks gelap dan latar kontras tinggi:
+
+| Status | Latar Badge | Teks & Ikon | Penggunaan |
+| :--- | :--- | :--- | :--- |
+| **Sukses / Lunas** | `#d1fae5` | `#065f46` | Pembayaran terverifikasi, barang siap diambil/dikirim. |
+| **Peringatan / Menunggu** | `#fef3c7` | `#92400e` | Menunggu konfirmasi admin, stok tersisa < 3 pcs. |
+| **Bahaya / Batal** | `#fee2e2` | `#991b1b` | Pesanan kedaluwarsa, stok habis, tombol hapus produk. |
+| **Informasi / Proses** | `#e0e7ff` | `#3730a3` | Pembuatan PDF invoice, pengalihan halaman. |
 
 ---
 
-## 5. Animation & Interaction
-*   **Kinerja GPU:** Semua animasi murni menggunakan properti `transform` (`translate`, `scale`, `rotate`) dan `opacity` untuk memicu akselerasi GPU tanpa reflow layout.
-*   **Scroll-Triggered:** Stiker dekoratif dan cap dapat menganimasikan dirinya secara halus saat memasuki viewport (dari status sketsa terpencar menjadi kesatuan utuh).
+## 3. Sistem Garis, Sudut, & Elevasi
+
+- **Ketebalan Garis (Border):**  
+  - Standar kartu dan baris tabel: `1px solid #262626`
+  - Kontainer utama, tombol, dan form input: `1.5px solid #262626`
+- **Radius Sudut (Border Radius):**  
+  - Konsisten `6px` (`rounded-md` di Tailwind) untuk kartu, tombol, dan kotak input.
+  - `9999px` (`rounded-full`) khusus untuk badge status dan tag kategori.
+- **Elevasi (Shadow):**  
+  - Default: Tanpa bayangan blur (`shadow-none`).
+  - Interaksi Hover (Kartu Produk & Tombol): Offset kaku `2px 2px 0px #262626`. Tidak menggunakan bayangan abu-abu buram.
+
+---
+
+## 4. Tipografi
+
+Tiga keluarga huruf dengan peran fungsional yang terpisah:
+
+1. **Headings & Nama Produk Utama: Playfair Display / Fraunces (SemiBold)**  
+   Digunakan pada judul halaman, nama produk di katalog, dan header invoice. Memberi karakter editorial toko seni tanpa memperlambat pembacaan.
+2. **Teks Antarmuka & Form: Plus Jakarta Sans (Regular / Medium / Bold)**  
+   Digunakan untuk navigasi, deskripsi barang, label input form, dan instruksi pembayaran. Bebas dari kesan template AI generik.
+3. **Data Finansial & Kode: JetBrains Mono (Medium / Bold)**  
+   Digunakan untuk harga barang (Rupiah), nomor order invoice, kuantitas stepper, dan rincian subtotal tabel.
+
+---
+
+## 5. Hirarki Tombol Aksi
+
+1. **Primary Button (Aksi Final: Beli Sekarang, Checkout, Bayar Pesanan)**  
+   - Light Mode: Latar `#262626` (Arang), Teks `#f2efe9` (Cream), Border `1.5px solid #262626`.
+   - Dark Mode: Inversi material kertas solid — Latar `#f2efe9` (Cream), Teks `#262626` (Arang), Border `1.5px solid #f2efe9`, Bayangan `2px 2px 0px #f2efe9`. Mencegah tombol CTA utama tenggelam di atas kartu gelap.
+   - Hover: Pergeseran posisi `-1px -1px` dengan bayangan `2px 2px 0px`.
+2. **Secondary Button (Aksi Pilihan: Pilih Varian, Unduh PDF)**  
+   - Light Mode: Latar `#ffffff`, Teks `#262626`, Border `1.5px solid #262626`.
+   - Dark Mode: Latar `#343044`, Teks `#f2efe9`, Border `1.5px solid #f2efe9`, Hover Lavender (`#b4a6d5`).
+3. **Ghost / Tertiary Button (Aksi Sekunder: Reset Filter, Kembali)**  
+   - Latar transparan, garis tepi tipis, tanpa bayangan.
+
+---
+
+## 6. Pola Komponen Kunci
+
+### 6.1 Monoline Loader (4 Kotak Geometris Brand)
+- Animasi pemuatan sistem (*busy overlay* dan *navigation overlay*) tidak lagi menggunakan lingkaran spinner generic SaaS.
+- Menggunakan **4 kotak geometris monoline** (`1.5px` border arang/krem) yang saling berputar dan bertukar posisi secara koreografis via CSS keyframes.
+- Merepresentasikan 4 warna inti sistem: **Lavender (`#b4a6d5`)**, **Mint (`#a2e1db`)**, **Peach (`#fea770`)**, dan **Arang (`#262626`)** / Krem di dark mode.
+- Mode default tampil tanpa teks visual untuk kemurnian estetika, dengan `<span class="sr-only">` untuk kepatuhan aksesibilitas WCAG.
+
+### 6.1 Kartu Produk Pembeli (Katalog)
+- Foto produk berbingkai garis tunggal `1px solid #262626`.
+- Nama produk serif tebal, diikuti harga format rupiah monospaced.
+- Badge promo diletakkan rapi di bawah harga menggunakan warna Peach (`#fea770`) bergaris tipis.
+- Tombol order menempel di bagian bawah kartu dengan pembatas garis horizontal.
+
+### 6.2 Form Checkout & Data Pembeli
+- Latar kartu putih bersih di atas kanvas cream.
+- Kotak input bergaris `1.5px solid #262626` dengan padding vertikal `10px` dan horizontal `12px`.
+- Fokus input: Garis tepi tetap arang pekat dengan offset ring halus, tanpa warna biru/ungu acak.
+- Area upload bukti bayar: Kotak persegi bergaris tunggal tegas dengan tombol unggah yang jelas.
+
+### 6.3 Dokumen Invoice (Web & Render PDF)
+- Format faktur klasik dengan garis pemisah monoline.
+- Baris tabel pesanan bergantian antara putih `#ffffff` dan cream tipis `#f9f7f2`.
+- Kolom total akhir diberi garis ganda bawah (*double underline*) khas dokumen akuntansi resmi.
+- Tidak ada elemen dekoratif yang menghabiskan tinta printer saat dicetak pembeli.
+
+---
+
+## 7. Pantangan Desain (Anti-Patterns)
+
+- Dilarang memakai gradient ungu-ke-biru (`from-indigo-500 to-purple-600`) atau teks ber-gradient.
+- Dilarang memakai font default Inter untuk seluruh halaman.
+- Dilarang menumpuk kartu di dalam kartu lebih dari 2 lapis (*nested card clutter*).
+- Dilarang memakai bayangan abu-abu buram tebal (`shadow-xl` / `shadow-2xl`).
+- Dilarang memakai rotasi miring (`-rotate-1`, `-rotate-2`) atau selotip palsu pada form transaksi dan tabel data.

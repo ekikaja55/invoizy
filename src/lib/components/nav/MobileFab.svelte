@@ -28,6 +28,9 @@
 			wa?: string;
 			instagram?: string;
 		};
+		class?: string;
+		staticPosition?: boolean;
+		preventNavigation?: boolean;
 	}
 
 	// 1. Ambil props utuh agar reaktif
@@ -37,6 +40,9 @@
 	let items = $derived(props.items);
 	let isAdmin = $derived(props.isAdmin ?? false);
 	let contact = $derived(props.contact);
+	let className = $derived(props.class ?? '');
+	let staticPosition = $derived(props.staticPosition ?? false);
+	let preventNavigation = $derived(props.preventNavigation ?? false);
 	let currentPath = $derived(page.url.pathname);
 	let isAdminPage = $derived(currentPath.startsWith('/admin'));
 
@@ -75,15 +81,27 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div class="fixed right-4 bottom-4 z-50 md:hidden">
+<div class="{staticPosition ? 'absolute right-4 bottom-4 z-50' : 'fixed right-4 bottom-4 z-50 md:hidden'} {className}">
 	{#if open}
 		<div
-			class="mb-3 w-56 rounded-[14px_6px_12px_8px] border-2 border-brandy bg-papaya/95 p-2.5 text-ink shadow-[6px_6px_0px_#78290f] backdrop-blur-xs dark:border-papaya/30 dark:bg-ink/95 dark:text-papaya dark:shadow-[6px_6px_0px_rgba(255,236,209,0.25)]"
+			class="mb-3 w-60 rounded-md border-[1.5px] border-[#262626] bg-[#f2efe9]/95 p-2.5 text-[#262626] shadow-[4px_4px_0px_#262626] backdrop-blur-xs dark:border-[#f2efe9]/30 dark:bg-[#1a1825]/95 dark:text-[#f2efe9] dark:shadow-[4px_4px_0px_#f2efe9]"
 		>
 			<nav class="flex flex-col gap-1">
 				{#each items as item (item.href)}
 					{@const isActive = currentPath === item.href}
-					<a href={resolve(item.href)} class={navItemClass(isActive)} onclick={close}>
+					<a
+						href={resolve(item.href)}
+						class={navItemClass(isActive)}
+						onclick={(e) => {
+							if (preventNavigation) {
+								e.preventDefault();
+								close();
+								toast.info(`[Sandbox] Navigasi: Menuju "${item.label}" (${item.href})`);
+							} else {
+								close();
+							}
+						}}
+					>
 						<item.icon size={16} strokeWidth={2.5} />
 						<span>{item.label}</span>
 					</a>
@@ -94,7 +112,7 @@
 						<button
 							type="button"
 							onclick={() => (contactAccordionOpen = !contactAccordionOpen)}
-							class="flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-sm font-bold text-ink/80 transition-colors hover:bg-brandy/10 dark:text-papaya/80 dark:hover:bg-papaya/10"
+							class="flex items-center justify-between rounded-md px-2.5 py-2 text-left text-sm font-bold text-[#404040] transition-colors hover:bg-[#b4a6d5]/20 hover:text-[#262626] dark:text-[#b8b5ad] dark:hover:bg-[#b4a6d5]/20 dark:hover:text-[#f2efe9]"
 						>
 							<div class="flex items-center gap-2">
 								<Headset size={16} strokeWidth={2.5} />
@@ -111,15 +129,23 @@
 
 						{#if contactAccordionOpen}
 							<div
-								class="mt-1 flex flex-col gap-1 rounded-xl border border-brandy/20 bg-white/60 p-2 dark:border-papaya/20 dark:bg-ink/60"
+								class="mt-1 flex flex-col gap-1.5 rounded-md border border-[#262626]/20 bg-white/70 p-2 dark:border-[#f2efe9]/20 dark:bg-[#1a1825]/70"
 							>
 								{#if waHref}
 									<a
 										href={waHref}
 										target="_blank"
 										rel="external noopener noreferrer"
-										onclick={close}
-										class="flex items-center justify-between rounded-lg border border-forest/30 bg-forest/10 px-2 py-1.5 text-xs font-bold text-forest hover:bg-forest/20 transition-colors"
+										onclick={(e) => {
+											if (preventNavigation) {
+												e.preventDefault();
+												close();
+												toast.info('[Sandbox] Simulasi: Membuka WhatsApp chat admin');
+											} else {
+												close();
+											}
+										}}
+										class="flex items-center justify-between rounded-md border border-[#065f46]/40 bg-[#d1fae5] px-2 py-1.5 text-xs font-bold text-[#065f46] hover:bg-[#a7f3d0] transition-colors"
 									>
 										<div class="flex items-center gap-2">
 											<MessageCircle size={14} strokeWidth={2.5} />
@@ -134,8 +160,16 @@
 										href={igHref}
 										target="_blank"
 										rel="external noopener noreferrer"
-										onclick={close}
-										class="flex items-center justify-between rounded-lg border border-pink-500/30 bg-pink-500/10 px-2 py-1.5 text-xs font-bold text-pink-600 hover:bg-pink-500/20 transition-colors"
+										onclick={(e) => {
+											if (preventNavigation) {
+												e.preventDefault();
+												close();
+												toast.info('[Sandbox] Simulasi: Membuka profil Instagram');
+											} else {
+												close();
+											}
+										}}
+										class="flex items-center justify-between rounded-md border border-[#c1121f]/40 bg-[#fee2e2] px-2 py-1.5 text-xs font-bold text-[#991b1b] hover:bg-red-200 transition-colors"
 									>
 										<div class="flex items-center gap-2">
 											<InstagramIcon size={14} />
@@ -150,7 +184,7 @@
 				{/if}
 			</nav>
 
-			<div class="mt-2 border-t-2 border-brandy/20 pt-2 dark:border-papaya/20">
+			<div class="mt-2 border-t border-[#262626]/20 pt-2 dark:border-[#f2efe9]/20">
 				<ThemeToggle />
 
 				{#if isAdmin}
@@ -158,7 +192,11 @@
 						<button
 							onclick={() => {
 								close();
-								navigateTo('/');
+								if (preventNavigation) {
+									toast.info('[Sandbox] Navigasi: Menuju Beranda ("/")');
+								} else {
+									navigateTo('/');
+								}
 							}}
 							class={navActionClass()}
 						>
@@ -169,7 +207,11 @@
 						<button
 							onclick={() => {
 								close();
-								navigateTo('/admin');
+								if (preventNavigation) {
+									toast.info('[Sandbox] Navigasi: Menuju Dashboard ("/admin")');
+								} else {
+									navigateTo('/admin');
+								}
 							}}
 							class={navActionClass()}
 						>
@@ -179,7 +221,14 @@
 					{/if}
 
 					<button
-						onclick={handleLogout}
+						onclick={() => {
+							if (preventNavigation) {
+								close();
+								toast.info('[Sandbox] Simulasi: Logout berhasil!');
+							} else {
+								handleLogout();
+							}
+						}}
 						class={navActionClass()}
 					>
 						<LogOut size={16} strokeWidth={2.5} />
@@ -192,20 +241,20 @@
 
 	<button
 		onclick={() => (open = !open)}
-		class="flex h-13 w-13 items-center justify-center rounded-full border-2 border-brandy bg-tangerine text-white shadow-[4px_4px_0px_#78290f] transition-all hover:scale-105 active:scale-95 active:shadow-none"
+		class="flex h-12 w-12 items-center justify-center rounded-full border-[1.5px] border-[#262626] bg-[#fea770] text-[#262626] shadow-[3px_3px_0px_#262626] transition-transform duration-200 hover:scale-105 active:scale-95 active:shadow-none dark:border-[#f2efe9] dark:bg-[#fea770] dark:text-[#262626] dark:shadow-[3px_3px_0px_#f2efe9]"
 		aria-label={open ? 'Close menu' : 'Open menu'}
 	>
 		{#if open}
-			<X size={22} strokeWidth={2.75} />
+			<X size={20} strokeWidth={2.75} />
 		{:else}
-			<Menu size={22} strokeWidth={2.75} />
+			<Menu size={20} strokeWidth={2.75} />
 		{/if}
 	</button>
 </div>
 
 {#if open}
 	<button
-		class="fixed inset-0 z-40 cursor-default bg-ink/70 backdrop-blur-xs md:hidden dark:bg-ink/85"
+		class="{staticPosition ? 'absolute inset-0 z-40 rounded-[30px]' : 'fixed inset-0 z-40 md:hidden'} cursor-default bg-[#262626]/60 backdrop-blur-xs dark:bg-black/75"
 		onclick={close}
 		aria-label="Close menu overlay"
 	></button>

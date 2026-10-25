@@ -14,7 +14,9 @@ const client =
 	globalClient.__dbClient ??
 	postgres(env.DATABASE_URL, {
 		prepare: false,
-		max: dev ? 3 : 10
+		max: 10,
+		connect_timeout: 15,
+		idle_timeout: 30
 	});
 
 if (dev) {

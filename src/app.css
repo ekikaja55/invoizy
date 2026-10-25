@@ -5,6 +5,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
+	--font-serif: 'Fraunces', serif;
 	--font-headline: 'Fraunces', serif;
 	--font-handwriting: 'Caveat', cursive;
 	--font-sans: 'Plus Jakarta Sans', sans-serif;
@@ -20,27 +21,27 @@
 	--color-forest: #2b9348; /* Success / Paid */
 }
 
-/* Invoizy Digital Scrapbook: Tactile Sticky Note Toast Overrides */
+/* Invoizy Warm Monoline: Sonner Toast Overrides */
 [data-sonner-toast] {
-	--normal-bg: #ffecd1 !important;
-	--normal-border: #78290f !important;
-	--normal-text: #001524 !important;
-	--border-radius: 10px 4px 8px 3px !important;
+	--normal-bg: #ffffff !important;
+	--normal-border: #262626 !important;
+	--normal-text: #262626 !important;
+	--border-radius: 6px !important;
 	font-family: 'Plus Jakarta Sans', sans-serif !important;
-	border: 2px solid #78290f !important;
-	box-shadow: 4px 4px 0px #78290f !important;
-	background-color: #ffecd1 !important;
-	color: #001524 !important;
+	border: 1.5px solid #262626 !important;
+	box-shadow: 3px 3px 0px #262626 !important;
+	background-color: #ffffff !important;
+	color: #262626 !important;
 }
 
 :where(.dark) [data-sonner-toast] {
-	--normal-bg: #001524 !important;
-	--normal-border: rgba(255, 236, 209, 0.3) !important;
-	--normal-text: #ffecd1 !important;
-	border-color: rgba(255, 236, 209, 0.3) !important;
-	box-shadow: 4px 4px 0px rgba(255, 236, 209, 0.2) !important;
-	background-color: #001524 !important;
-	color: #ffecd1 !important;
+	--normal-bg: #252331 !important;
+	--normal-border: rgba(242, 239, 233, 0.4) !important;
+	--normal-text: #f2efe9 !important;
+	border-color: rgba(242, 239, 233, 0.4) !important;
+	box-shadow: 3px 3px 0px #f2efe9 !important;
+	background-color: #252331 !important;
+	color: #f2efe9 !important;
 }
 
 [data-sonner-toast] [data-title] {
@@ -49,85 +50,114 @@
 	color: inherit !important;
 }
 
+[data-sonner-toast] [data-description] {
+	color: #404040 !important;
+}
+
+:where(.dark) [data-sonner-toast] [data-description] {
+	color: #b8b5ad !important;
+}
+
+/* Status variants with WCAG AA compliance (DESIGN.md Section 2.3) */
 [data-sonner-toast][data-type='success'] {
-	border-color: #2b9348 !important;
-	color: #2b9348 !important;
+	border-color: #065f46 !important;
+	color: #065f46 !important;
+	background-color: #d1fae5 !important;
 }
 
 [data-sonner-toast][data-type='error'] {
-	border-color: #c1121f !important;
-	color: #c1121f !important;
+	border-color: #991b1b !important;
+	color: #991b1b !important;
+	background-color: #fee2e2 !important;
 }
 
 [data-sonner-toast][data-type='warning'] {
-	border-color: #ff7d00 !important;
-	color: #ff7d00 !important;
+	border-color: #92400e !important;
+	color: #92400e !important;
+	background-color: #fef3c7 !important;
 }
 
 [data-sonner-toast][data-type='info'] {
-	border-color: #15616d !important;
-	color: #15616d !important;
+	border-color: #262626 !important;
+	color: #262626 !important;
+	background-color: #f2efe9 !important;
 }
 
 .dark [data-sonner-toast][data-type='info'],
 html.dark [data-sonner-toast][data-type='info'] {
-	border-color: #2dd4bf !important;
-	color: #2dd4bf !important;
-}
-
-.dark [data-sonner-toast][data-type='info'] [data-title],
-html.dark [data-sonner-toast][data-type='info'] [data-title],
-.dark [data-sonner-toast][data-type='info'] [data-description],
-html.dark [data-sonner-toast][data-type='info'] [data-description] {
-	color: #2dd4bf !important;
+	border-color: rgba(242, 239, 233, 0.4) !important;
+	color: #f2efe9 !important;
+	background-color: #252331 !important;
 }
 
 .dark [data-sonner-toast][data-type='success'],
 html.dark [data-sonner-toast][data-type='success'] {
-	border-color: #4ade80 !important;
-	color: #4ade80 !important;
-}
-
-.dark [data-sonner-toast][data-type='success'] [data-title],
-html.dark [data-sonner-toast][data-type='success'] [data-title] {
-	color: #4ade80 !important;
+	border-color: #10b981 !important;
+	color: #34d399 !important;
+	background-color: #064e3b !important;
 }
 
 .dark [data-sonner-toast][data-type='warning'],
 html.dark [data-sonner-toast][data-type='warning'] {
-	border-color: #fb923c !important;
-	color: #fb923c !important;
-}
-
-.dark [data-sonner-toast][data-type='warning'] [data-title],
-html.dark [data-sonner-toast][data-type='warning'] [data-title] {
-	color: #fb923c !important;
+	border-color: #f59e0b !important;
+	color: #fbbf24 !important;
+	background-color: #78350f !important;
 }
 
 .dark [data-sonner-toast][data-type='error'],
 html.dark [data-sonner-toast][data-type='error'] {
-	border-color: #f87171 !important;
+	border-color: #ef4444 !important;
 	color: #f87171 !important;
+	background-color: #7f1d1d !important;
 }
 
-.dark [data-sonner-toast][data-type='error'] [data-title],
-html.dark [data-sonner-toast][data-type='error'] [data-title] {
-	color: #f87171 !important;
+/* Warm Monoline Drafting Grid (Tekstur Kertas Kalkir Arsitektur) */
+.drafting-grid {
+	background-image:
+		linear-gradient(to right, rgba(38, 38, 38, 0.045) 1px, transparent 1px),
+		linear-gradient(to bottom, rgba(38, 38, 38, 0.045) 1px, transparent 1px);
+	background-size: 40px 40px;
 }
 
-/* Global HTML & Body Canvas (Mencegah belang saat overscroll bounce) */
+:where(.dark) .drafting-grid,
+.dark .drafting-grid,
+html.dark .drafting-grid {
+	background-image:
+		linear-gradient(to right, rgba(242, 239, 233, 0.035) 1px, transparent 1px),
+		linear-gradient(to bottom, rgba(242, 239, 233, 0.035) 1px, transparent 1px);
+	background-size: 40px 40px;
+}
+
+/* Global HTML & Body Canvas (Warm Monoline Material) */
 html,
 body {
-	background-color: #ffecd1;
-	color: #001524;
+	background-color: #f2efe9;
+	color: #262626;
 	font-family: 'Plus Jakarta Sans', sans-serif;
 	min-height: 100%;
 }
 
 html.dark,
 html.dark body {
-	background-color: #001524;
-	color: #ffecd1;
+	background-color: #1a1825;
+	color: #f2efe9;
+}
+
+/* Media Print Standardization (Cetak Dokumen & Faktur Bersih dengan Preservasi Warna Penuh) */
+@media print {
+	.no-print {
+		display: none !important;
+	}
+	* {
+		print-color-adjust: exact !important;
+		-webkit-print-color-adjust: exact !important;
+	}
+	html,
+	body {
+		background-color: #ffffff !important;
+		background-image: none !important;
+		color: #262626 !important;
+	}
 }
 
 

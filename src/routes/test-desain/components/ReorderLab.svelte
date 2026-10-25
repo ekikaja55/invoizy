@@ -152,20 +152,20 @@
 <div class="space-y-6">
 	<!-- Top Bar Lab -->
 	<div
-		class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-xl border-2 border-brandy bg-white p-5 shadow-[4px_4px_0px_#78290f] dark:border-papaya/30 dark:bg-ink dark:shadow-[4px_4px_0px_rgba(255,236,209,0.15)]"
+		class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-md border-[1.5px] border-[#262626] bg-white p-5 shadow-[2px_2px_0px_#262626] dark:border-[#f2efe9]/30 dark:bg-[#252331]"
 	>
 		<div class="space-y-1">
 			<div class="flex items-center gap-2">
 				<span
-					class="inline-block -rotate-1 rounded-xs border-2 border-brandy bg-tangerine px-2 py-0.5 text-[11px] font-black uppercase text-white shadow-[1px_1px_0px_#78290f]"
+					class="inline-block rounded border border-[#262626] bg-[#fea770] px-2 py-0.5 text-[11px] font-bold uppercase text-[#262626]"
 				>
 					SIMULASI ADMIN PRODUK
 				</span>
-				<h2 class="font-headline text-lg font-bold text-ink dark:text-papaya">
+				<h2 class="font-serif text-lg font-bold text-[#262626] dark:text-[#f2efe9]">
 					Eksperimen Interaksi: Mode Atur Urutan Produk (Batch Reorder)
 				</h2>
 			</div>
-			<p class="text-xs text-brandy/80 dark:text-papaya/70 leading-relaxed max-w-2xl">
+			<p class="text-xs text-[#404040] dark:text-[#b8b5ad] leading-relaxed max-w-2xl">
 				Bentuk kartu dan data di bawah ini dibuat <strong>sama persis dengan halaman Manajemen Produk Admin</strong>.
 				Uji coba konsep: ada tombol mode penataan di header kategori, perubahan hanya tersimpan saat tombol ditekan lagi.
 			</p>
@@ -173,13 +173,13 @@
 
 		<div class="flex flex-wrap items-center gap-2 shrink-0">
 			<!-- Pilihan Model -->
-			<div class="flex items-center rounded-lg border border-neutral-300 bg-neutral-100 p-0.5 text-xs font-semibold dark:border-neutral-700 dark:bg-neutral-800">
+			<div class="inline-flex rounded-md border-[1.5px] border-[#262626] bg-[#f2efe9] p-1 text-xs font-bold dark:border-[#f2efe9]/40 dark:bg-[#1a1825]">
 				<button
 					type="button"
 					onclick={() => { activeModel = 'dnd-batch'; isReorderMode = false; }}
 					class="rounded-md px-2.5 py-1 transition-all {activeModel === 'dnd-batch'
-						? 'bg-white text-neutral-900 shadow-xs dark:bg-neutral-900 dark:text-neutral-100'
-						: 'text-neutral-600 hover:text-neutral-900 dark:text-neutral-400'}"
+						? 'bg-[#262626] text-[#f2efe9] shadow-[1px_1px_0px_#262626] dark:bg-[#f2efe9] dark:text-[#262626]'
+						: 'text-[#404040] hover:text-[#262626] dark:text-[#b8b5ad] dark:hover:text-[#f2efe9]'}"
 				>
 					Model Usulan: Toggle Mode DnD
 				</button>
@@ -187,8 +187,8 @@
 					type="button"
 					onclick={() => { activeModel = 'direct-select'; isReorderMode = false; }}
 					class="rounded-md px-2.5 py-1 transition-all {activeModel === 'direct-select'
-						? 'bg-white text-neutral-900 shadow-xs dark:bg-neutral-900 dark:text-neutral-100'
-						: 'text-neutral-600 hover:text-neutral-900 dark:text-neutral-400'}"
+						? 'bg-[#262626] text-[#f2efe9] shadow-[1px_1px_0px_#262626] dark:bg-[#f2efe9] dark:text-[#262626]'
+						: 'text-[#404040] hover:text-[#262626] dark:text-[#b8b5ad] dark:hover:text-[#f2efe9]'}"
 				>
 					Model Pembanding: Direct Select
 				</button>
@@ -197,7 +197,7 @@
 			<button
 				type="button"
 				onclick={resetAllToDefault}
-				class="inline-flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-2.5 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+				class="inline-flex items-center gap-1.5 rounded-md border-[1.5px] border-[#262626] bg-white px-2.5 py-1.5 text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#b4a6d5]/30 active:translate-y-0.5 active:shadow-none dark:border-[#f2efe9] dark:bg-[#252331] dark:text-[#f2efe9]"
 				title="Reset ke susunan awal"
 			>
 				<RotateCcw size={13} />
@@ -209,10 +209,10 @@
 	<!-- Penjelasan Model Aktif -->
 	{#if activeModel === 'dnd-batch'}
 		<div
-			class="flex items-center justify-between rounded-lg border-2 border-brandy/30 bg-papaya/40 p-3.5 text-xs leading-relaxed text-brandy dark:border-papaya/20 dark:bg-ink/40 dark:text-papaya"
+			class="flex items-center justify-between rounded-md border border-[#262626]/20 bg-[#f9f7f2] p-3.5 text-xs leading-relaxed text-[#404040] dark:border-[#f2efe9]/20 dark:bg-[#1a1825] dark:text-[#b8b5ad]"
 		>
 			<div class="flex items-center gap-2.5">
-				<span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brandy text-[10px] font-bold text-white dark:bg-papaya dark:text-ink">
+				<span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[#262626] bg-[#b4a6d5] text-[10px] font-bold text-[#262626]">
 					i
 				</span>
 				<p>
@@ -222,10 +222,10 @@
 		</div>
 	{:else}
 		<div
-			class="flex items-center justify-between rounded-lg border-2 border-brandy/30 bg-papaya/40 p-3.5 text-xs leading-relaxed text-brandy dark:border-papaya/20 dark:bg-ink/40 dark:text-papaya"
+			class="flex items-center justify-between rounded-md border border-[#262626]/20 bg-[#f9f7f2] p-3.5 text-xs leading-relaxed text-[#404040] dark:border-[#f2efe9]/20 dark:bg-[#1a1825] dark:text-[#b8b5ad]"
 		>
 			<div class="flex items-center gap-2.5">
-				<span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-forest text-[10px] font-bold text-white">
+				<span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[#065f46] bg-[#d1fae5] text-[10px] font-bold text-[#065f46]">
 					i
 				</span>
 				<p>
@@ -238,13 +238,13 @@
 	<!-- Kategori Section (Replika dari Admin Products) -->
 	<section class="space-y-3">
 		<!-- Header Kategori -->
-		<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-neutral-200 pb-2 dark:border-neutral-800">
+		<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b-[1.5px] border-[#262626]/20 pb-2 dark:border-[#f2efe9]/20">
 			<div class="flex items-center gap-2">
-				<Layers size={18} class="text-neutral-500" />
-				<h3 class="font-serif text-base font-bold text-neutral-900 dark:text-neutral-100">
+				<Layers size={18} class="text-[#262626] dark:text-[#f2efe9]" />
+				<h3 class="font-serif text-base font-bold text-[#262626] dark:text-[#f2efe9]">
 					Merchandise Edisi Chibicon
 				</h3>
-				<span class="rounded bg-neutral-100 px-2 py-0.5 font-mono text-xs text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
+				<span class="rounded border border-[#262626] bg-[#a2e1db] px-2 py-0.5 font-mono text-xs font-bold text-[#262626]">
 					{productList.length} produk
 				</span>
 			</div>
@@ -256,24 +256,29 @@
 						<button
 							type="button"
 							onclick={startReorderMode}
-							class="inline-flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-800 shadow-xs transition-colors hover:bg-neutral-50 hover:border-neutral-400 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
+							class="inline-flex items-center gap-1.5 rounded-md border-[1.5px] border-[#262626] bg-white px-3 py-1.5 text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#b4a6d5]/30 active:translate-y-0.5 active:shadow-none dark:border-[#f2efe9] dark:bg-[#252331] dark:text-[#f2efe9]"
 						>
-							<ArrowUpDown size={14} class="text-neutral-500" />
+							<ArrowUpDown size={14} class="text-[#262626] dark:text-[#f2efe9]" />
 							<span>Atur Urutan Produk</span>
 						</button>
 					{:else}
 						<!-- Mode Edit Aktif: Tombol Simpan & Batal -->
 						<div class="flex items-center gap-2">
-							<span class="hidden sm:inline font-mono text-[11px] {hasUnsavedChanges ? 'text-tangerine font-bold' : 'text-neutral-500'}">
-								{hasUnsavedChanges ? '● Ada perubahan urutan' : 'Belum ada perubahan'}
+							<span class="hidden sm:inline-flex items-center gap-1.5 font-mono text-[11px] {hasUnsavedChanges ? 'text-[#262626] dark:text-[#fea770] font-black' : 'text-[#404040] dark:text-[#b8b5ad]'}">
+								{#if hasUnsavedChanges}
+									<span class="inline-block h-2 w-2 rounded-full bg-[#fea770] border border-[#262626]"></span>
+									<span>Ada perubahan urutan</span>
+								{:else}
+									<span>Belum ada perubahan</span>
+								{/if}
 							</span>
 
 							<button
 								type="button"
 								onclick={handleCancelClick}
-								class="inline-flex items-center gap-1 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
+								class="inline-flex items-center gap-1 rounded-md border-[1.5px] border-[#262626] bg-white px-3 py-1.5 text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:bg-neutral-100 active:translate-y-0.5 active:shadow-none dark:border-[#f2efe9] dark:bg-[#252331] dark:text-[#f2efe9]"
 							>
-								<X size={13} />
+								<X size={13} strokeWidth={2.5} />
 								<span>Batal</span>
 							</button>
 
@@ -281,13 +286,13 @@
 								type="button"
 								disabled={isSaving}
 								onclick={saveReorderChanges}
-								class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-emerald-700 disabled:opacity-50"
+								class="inline-flex items-center gap-1.5 rounded-md border-[1.5px] border-[#262626] bg-[#262626] px-3.5 py-1.5 text-xs font-bold text-[#f2efe9] shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#3d3a37] active:translate-y-0.5 active:shadow-none disabled:opacity-50 dark:border-[#f2efe9] dark:bg-[#f2efe9] dark:text-[#262626]"
 							>
 								{#if isSaving}
-									<div class="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+									<div class="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent dark:border-[#262626]"></div>
 									<span>Menyimpan...</span>
 								{:else}
-									<Check size={13} />
+									<Check size={13} strokeWidth={2.5} />
 									<span>Simpan Urutan</span>
 								{/if}
 							</button>
@@ -298,23 +303,28 @@
 		</div>
 
 		<!-- Container Tabel / List Kartu Produk (Replika 1:1 dari Admin) -->
-		<div class="overflow-hidden rounded-xl border-2 transition-all duration-200 {isReorderMode ? 'border-tangerine bg-white shadow-[0_0_0_4px_rgba(255,125,0,0.15)] dark:border-tangerine dark:bg-neutral-900' : 'border-neutral-300 bg-white shadow-xs dark:border-neutral-700 dark:bg-neutral-900'}">
+		<div class="overflow-hidden rounded-md border-[1.5px] border-[#262626] transition-all duration-200 {isReorderMode ? 'bg-[#f2efe9]/40 shadow-[4px_4px_0px_#fea770] dark:bg-[#1a1825]' : 'bg-white shadow-[2px_2px_0px_#262626] dark:border-[#f2efe9]/30 dark:bg-[#252331]'}">
 			{#if isReorderMode}
-				<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b-2 border-tangerine/30 bg-tangerine/15 px-4 py-2.5 text-xs font-bold text-ink dark:bg-tangerine/20 dark:text-papaya">
+				<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b-[1.5px] border-[#262626] bg-[#fea770] px-4 py-2.5 text-xs font-bold text-[#262626]">
 					<div class="flex items-center gap-2.5">
 						<span class="relative flex h-2.5 w-2.5">
-							<span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-tangerine opacity-75"></span>
-							<span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-tangerine"></span>
+							<span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#262626] opacity-75"></span>
+							<span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#262626]"></span>
 						</span>
-						<span>MODE ATUR URUTAN AKTIF — Garis oranye tebal menandai posisi mendarat produk</span>
+						<span>MODE ATUR URUTAN AKTIF — Garis peach tebal menandai posisi mendarat produk</span>
 					</div>
-					<span class="font-mono text-[11px] {hasUnsavedChanges ? 'text-tangerine font-black' : 'opacity-70'}">
-						{hasUnsavedChanges ? '● Ada perubahan belum disimpan' : 'Belum ada produk digeser'}
+					<span class="inline-flex items-center gap-1.5 font-mono text-[11px] {hasUnsavedChanges ? 'font-black' : 'opacity-80'}">
+						{#if hasUnsavedChanges}
+							<span class="inline-block h-2 w-2 rounded-full bg-[#262626]"></span>
+							<span>Ada perubahan belum disimpan</span>
+						{:else}
+							<span>Belum ada produk digeser</span>
+						{/if}
 					</span>
 				</div>
 			{/if}
 
-			<div class="divide-y-2 divide-neutral-300 dark:divide-neutral-700">
+			<div class="divide-y-[1.5px] divide-[#262626]/15 dark:divide-[#f2efe9]/15">
 				{#each productList as prod, idx (prod.id)}
 					{@const hasVariants = prod.variants && prod.variants.length > 0}
 					{@const totalStock = hasVariants
@@ -338,7 +348,7 @@
 								onDrop: (state) => handleDndDrop(state, prod)
 							}
 						}}
-						class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between transition-colors hover:bg-neutral-50/60 dark:hover:bg-neutral-800/40 {isReorderMode ? 'cursor-grab' : ''}"
+						class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between transition-colors hover:bg-[#f2efe9]/50 dark:hover:bg-[#1a1825]/50 {isReorderMode ? 'cursor-grab' : ''}"
 					>
 						<!-- Left: Drag Handle, Number Badge, Image & Info -->
 						<div class="flex items-start gap-3.5 flex-1 min-w-0">
@@ -348,7 +358,7 @@
 									<div class="flex items-center self-center pr-1">
 										<button
 											type="button"
-											class="drag-handle touch-none flex h-9 w-9 shrink-0 cursor-grab items-center justify-center rounded-lg border border-neutral-300 bg-neutral-100 text-neutral-600 hover:bg-neutral-200 active:cursor-grabbing dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+											class="drag-handle touch-none flex h-9 w-9 shrink-0 cursor-grab items-center justify-center rounded-md border-[1.5px] border-[#262626] bg-[#f2efe9] text-[#262626] hover:bg-[#b4a6d5]/30 active:cursor-grabbing dark:border-[#f2efe9] dark:bg-[#252331] dark:text-[#f2efe9]"
 											aria-label="Pegang untuk memindahkan {prod.name}"
 											title="Pegang titik 6 untuk memindahkan"
 										>
@@ -360,9 +370,9 @@
 
 							<!-- Badge Nomor Urut -->
 							<div class="self-center">
-								<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg font-mono text-xs font-bold {isReorderMode
-									? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-									: 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400'}">
+								<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[#262626] font-mono text-xs font-bold {isReorderMode
+									? 'bg-[#fea770] text-[#262626]'
+									: 'bg-[#f2efe9] text-[#262626] dark:bg-[#1a1825] dark:text-[#f2efe9] dark:border-[#f2efe9]/40'}">
 									#{idx + 1}
 								</span>
 							</div>
@@ -372,10 +382,10 @@
 								<img
 									src={prod.imageUrls[0]}
 									alt={prod.name}
-									class="h-14 w-14 shrink-0 rounded-lg border border-neutral-200 object-cover dark:border-neutral-800"
+									class="h-14 w-14 shrink-0 rounded-md border-[1.5px] border-[#262626] object-cover dark:border-[#f2efe9]/30"
 								/>
 							{:else}
-								<div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-neutral-200 bg-neutral-100 text-neutral-400 dark:border-neutral-800 dark:bg-neutral-950">
+								<div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-md border-[1.5px] border-[#262626] bg-[#f2efe9] text-[#262626] dark:border-[#f2efe9]/30 dark:bg-[#1a1825] dark:text-[#f2efe9]">
 									<Package size={20} />
 								</div>
 							{/if}
@@ -383,44 +393,44 @@
 							<!-- Rincian Produk -->
 							<div class="min-w-0 flex-1">
 								<div class="flex items-center gap-2">
-									<h4 class="font-serif text-sm font-bold text-neutral-900 truncate dark:text-neutral-100">
+									<h4 class="font-serif text-sm font-bold text-[#262626] truncate dark:text-[#f2efe9]">
 										{prod.name}
 									</h4>
 									{#if !prod.active}
-										<span class="rounded bg-neutral-200 px-1.5 py-0.5 font-mono text-[10px] text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
+										<span class="rounded border border-[#262626]/30 bg-[#262626]/10 px-1.5 py-0.5 font-mono text-[10px] font-bold text-[#404040] dark:bg-[#f2efe9]/10 dark:text-[#b8b5ad]">
 											Nonaktif
 										</span>
 									{/if}
 								</div>
 
 								<div class="mt-1 flex flex-wrap items-center gap-2 text-xs">
-									<span class="font-mono font-bold text-neutral-800 dark:text-neutral-200">
+									<span class="font-mono font-bold text-[#262626] dark:text-[#f2efe9]">
 										{formatRupiah(prod.priceInt)}
 									</span>
 
-									<span class="text-neutral-300 dark:text-neutral-700">•</span>
+									<span class="inline-block h-1 w-1 rounded-full bg-[#262626]/30 dark:bg-[#f2efe9]/30"></span>
 
 									{#if hasVariants}
-										<span class="rounded-full bg-blue-50 px-2 py-0.5 font-mono text-[11px] font-semibold text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+										<span class="rounded-full border border-[#262626] bg-[#b4a6d5] px-2 py-0.5 font-mono text-[11px] font-bold text-[#262626]">
 											{prod.variants.length} Varian ({totalStock} stok total)
 										</span>
 									{:else if prod.trackStock}
 										<span
-											class="rounded-full px-2 py-0.5 font-mono text-[11px] font-semibold {isOutOfStock
-												? 'bg-crimson/10 text-crimson dark:bg-crimson/20'
-												: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'}"
+											class="rounded-full border px-2 py-0.5 font-mono text-[11px] font-bold {isOutOfStock
+												? 'border-[#991b1b] bg-[#fee2e2] text-[#991b1b]'
+												: 'border-[#065f46] bg-[#d1fae5] text-[#065f46]'}"
 										>
 											{isOutOfStock ? 'Stok Habis' : `Stok: ${prod.stock}`}
 										</span>
 									{:else}
-										<span class="font-mono text-[11px] text-neutral-400">
+										<span class="font-mono text-[11px] text-[#404040] dark:text-[#b8b5ad]">
 											Stok tidak dilacak
 										</span>
 									{/if}
 								</div>
 
 								{#if prod.description}
-									<p class="mt-1 line-clamp-1 text-xs text-neutral-500">
+									<p class="mt-1 line-clamp-1 text-xs text-[#404040] dark:text-[#b8b5ad]">
 										{prod.description}
 									</p>
 								{/if}
@@ -431,21 +441,23 @@
 						<div class="flex items-center justify-end gap-2 shrink-0 self-end sm:self-center">
 							{#if activeModel === 'dnd-batch'}
 								{#if isReorderMode}
-									<span class="rounded bg-neutral-100 px-2 py-1 font-mono text-[11px] text-neutral-500 dark:bg-neutral-800">
+									<span class="rounded border border-[#262626] bg-[#f2efe9] px-2 py-1 font-mono text-[11px] font-bold text-[#262626] dark:bg-[#1a1825] dark:text-[#f2efe9]">
 										Seret untuk geser
 									</span>
 								{:else}
 									<!-- Tombol aksi standar saat mode normal -->
 									<button
 										type="button"
-										class="inline-flex items-center gap-1 rounded-lg border border-neutral-300 bg-white px-2.5 py-1.5 text-xs font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
+										onclick={() => toast.info(`[Sandbox] Simulasi edit produk: ${prod.name}`)}
+										class="inline-flex items-center gap-1 rounded-md border-[1.5px] border-[#262626] bg-white px-2.5 py-1.5 text-xs font-bold text-[#262626] shadow-[1.5px_1.5px_0px_#262626] transition-all hover:bg-[#b4a6d5]/30 active:translate-y-0.5 active:shadow-none dark:border-[#f2efe9] dark:bg-[#252331] dark:text-[#f2efe9]"
 									>
 										<Pencil size={13} />
 										<span>Edit</span>
 									</button>
 									<button
 										type="button"
-										class="rounded-lg p-1.5 text-neutral-400 hover:bg-crimson/10 hover:text-crimson"
+										onclick={() => toast.error(`[Sandbox] Simulasi hapus produk: ${prod.name}`)}
+										class="rounded-md border border-[#991b1b] p-1.5 text-[#991b1b] hover:bg-[#fee2e2] transition-colors"
 										aria-label="Hapus produk"
 									>
 										<Trash2 size={15} />
@@ -460,7 +472,7 @@
 											id="direct-pos-{prod.id}"
 											value={idx + 1}
 											onchange={(e) => onDirectSelect(prod.id, Number(e.currentTarget.value) - 1)}
-											class="h-8 rounded-lg border border-neutral-300 bg-white px-2 font-mono text-xs font-bold text-neutral-800 shadow-xs focus:border-neutral-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
+											class="h-8 rounded-md border-[1.5px] border-[#262626] bg-white px-2 font-mono text-xs font-bold text-[#262626] shadow-[1px_1px_0px_#262626] focus:outline-none dark:border-[#f2efe9] dark:bg-[#252331] dark:text-[#f2efe9]"
 										>
 											{#each productList as pItem, pIdx (pItem.id)}
 												<option value={pIdx + 1}>#{pIdx + 1}</option>
@@ -473,7 +485,7 @@
 												type="button"
 												disabled={idx === 0}
 												onclick={() => onStepMove(prod.id, 'up')}
-												class="flex h-4 w-4 items-center justify-center rounded-t border border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-100 disabled:opacity-20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+												class="flex h-4 w-4 items-center justify-center rounded-t border-[1.5px] border-[#262626] bg-white text-[#262626] hover:bg-neutral-100 disabled:opacity-30 dark:border-[#f2efe9] dark:bg-[#252331] dark:text-[#f2efe9]"
 												aria-label="Naik satu urutan"
 											>
 												<ChevronUp size={10} />
@@ -482,7 +494,7 @@
 												type="button"
 												disabled={idx === productList.length - 1}
 												onclick={() => onStepMove(prod.id, 'down')}
-												class="flex h-4 w-4 items-center justify-center rounded-b border-x border-b border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-100 disabled:opacity-20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+												class="flex h-4 w-4 items-center justify-center rounded-b border-x-[1.5px] border-b-[1.5px] border-[#262626] bg-white text-[#262626] hover:bg-neutral-100 disabled:opacity-30 dark:border-[#f2efe9] dark:bg-[#252331] dark:text-[#f2efe9]"
 												aria-label="Turun satu urutan"
 											>
 												<ChevronDown size={10} />
@@ -492,7 +504,8 @@
 
 									<button
 										type="button"
-										class="inline-flex items-center gap-1 rounded-lg border border-neutral-300 bg-white px-2.5 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+										onclick={() => toast.info(`[Sandbox] Simulasi edit produk: ${prod.name}`)}
+										class="inline-flex items-center gap-1 rounded-md border-[1.5px] border-[#262626] bg-white px-2.5 py-1.5 text-xs font-bold text-[#262626] shadow-[1.5px_1.5px_0px_#262626] hover:bg-[#b4a6d5]/30 dark:border-[#f2efe9] dark:bg-[#252331] dark:text-[#f2efe9]"
 									>
 										<Pencil size={13} />
 										<span>Edit</span>
@@ -508,14 +521,14 @@
 
 	<!-- Checklist Analisa Evaluasi -->
 	<div
-		class="rounded-xl border border-neutral-200 bg-neutral-50 p-5 text-xs text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900/60 dark:text-neutral-400 space-y-2"
+		class="rounded-md border-[1.5px] border-[#262626] bg-white p-5 text-xs text-[#404040] shadow-[2px_2px_0px_#262626] dark:border-[#f2efe9]/30 dark:bg-[#252331] dark:text-[#b8b5ad] space-y-2"
 	>
-		<p class="font-bold text-neutral-900 dark:text-neutral-100">
+		<p class="font-serif text-sm font-bold text-[#262626] dark:text-[#f2efe9]">
 			Poin yang Bisa Anda Amati pada Simulasi Ini:
 		</p>
 		<ul class="list-disc pl-5 space-y-1">
 			<li>
-				<strong>Visual Indicator Tegas:</strong> Garis mendarat produk saat ini berwarna <em>Tangerine oranye 4px</em> dengan glow jelas dan highlight kartu target, menghilangkan kebingungan posisi drop.
+				<strong>Visual Indicator Tegas:</strong> Garis mendarat produk saat ini berwarna <em>Peach (#fea770)</em> monoline tebal dengan highlight target drop, menghilangkan kebingungan posisi drop.
 			</li>
 			<li>
 				<strong>Proteksi Batal:</strong> Jika ada produk yang sudah digeser lalu Anda klik "Batal", muncul modal konfirmasi agar hasil susunan tidak terbuang karena salah klik.
@@ -540,12 +553,12 @@
 </div>
 
 <style>
-	/* Custom Drop Indicator Garis Oranye Tebal & Jelas */
+	/* Custom Drop Indicator Garis Peach Monoline Tebal & Jelas */
 	:global(.drop-before::before),
 	:global(.drop-after::after) {
 		height: 4px !important;
-		background: #ff7d00 !important;
-		box-shadow: 0 0 10px rgba(255, 125, 0, 0.7) !important;
+		background: #fea770 !important;
+		box-shadow: 0 0 8px rgba(254, 167, 112, 0.7) !important;
 		border-radius: 9999px !important;
 		z-index: 30 !important;
 	}
@@ -560,7 +573,7 @@
 
 	/* Highlight Kartu Sasaran Drop */
 	:global(.drag-over) {
-		background-color: rgba(255, 125, 0, 0.08) !important;
-		border-color: #ff7d00 !important;
+		background-color: rgba(254, 167, 112, 0.12) !important;
+		border-color: #262626 !important;
 	}
 </style>
