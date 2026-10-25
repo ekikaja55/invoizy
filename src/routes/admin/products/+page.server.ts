@@ -9,6 +9,7 @@ import {
 	updateProduct,
 	deleteProduct,
 	reorderProduct,
+	reorderProductsBatch,
 	bulkImportProducts,
 	type BulkProductItem
 } from '$lib/server/db/queries/product';
@@ -220,6 +221,29 @@ export const actions: Actions = {
 		} catch (err) {
 			logger.error('product.reorder-failed', { error: err, productId: id });
 			return fail(500, { error: 'Gagal mengubah urutan.' });
+		}
+	},
+
+	reorderBatch: async ({ request }) => {
+		const formData = await request.formData();
+		const categoryId = formData.get('categoryId');
+		const rawOrderedIds = formData.get('orderedIds');
+
+		if (typeof categoryId !== 'string' || typeof rawOrderedIds !== 'string') {
+			return fail(400, { error: 'Data urutan tidak valid.' });
+		}
+
+		try {
+			const orderedIds: string[] = JSON.parse(rawOrderedIds);
+			if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
+				return fail(400, { error: 'Daftar ID produk kosong.' });
+			}
+
+			await reorderProductsBatch(categoryId, orderedIds);
+			return { success: true };
+		} catch (err) {
+			logger.error('product.reorder-batch-failed', { error: err, categoryId });
+			return fail(500, { error: 'Gagal menyimpan susunan urutan produk.' });
 		}
 	},
 

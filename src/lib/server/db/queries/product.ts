@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import { products, categories, productVariants, productPromos } from '$lib/server/db/schema';
-import { eq, asc } from 'drizzle-orm';
+import { eq, asc, and } from 'drizzle-orm';
 import { deleteProductImage } from '$lib/server/storage/supabase';
 import type { ProductInput } from '$lib/schemas/product';
 
@@ -184,6 +184,34 @@ export async function reorderProduct(id: string, direction: 'up' | 'down') {
 					.update(products)
 					.set({ sortOrder: i })
 					.where(eq(products.id, updated[i].id));
+			}
+		}
+	});
+}
+
+export async function reorderProductsBatch(categoryId: string, orderedIds: string[]) {
+	if (!orderedIds || orderedIds.length === 0) return;
+
+	// Ambil semua produk di kategori ini untuk verifikasi kepemilikan ID
+	const currentProducts = await db.query.products.findMany({
+		where: eq(products.categoryId, categoryId),
+		columns: { id: true, sortOrder: true }
+	});
+
+	const validIdSet = new Set(currentProducts.map((p) => p.id));
+	const currentOrderMap = new Map(currentProducts.map((p) => [p.id, p.sortOrder]));
+
+	await db.transaction(async (tx) => {
+		for (let i = 0; i < orderedIds.length; i++) {
+			const id = orderedIds[i];
+			if (validIdSet.has(id)) {
+				const currentSortOrder = currentOrderMap.get(id);
+				if (currentSortOrder !== i) {
+					await tx
+						.update(products)
+						.set({ sortOrder: i })
+						.where(and(eq(products.id, id), eq(products.categoryId, categoryId)));
+				}
 			}
 		}
 	});

@@ -1,21 +1,28 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
+	import { invalidateAll, beforeNavigate } from '$app/navigation';
 	import { formatRupiah } from '$lib/utils/currency';
 	import { handleFormResult } from '$lib/utils/handle-form-result';
 	import Modal from '$lib/components/ui/Modal.svelte';
 	import BusyOverlay from '$lib/components/ui/BusyOverlay.svelte';
+	import { draggable, droppable, type DragDropState } from '@thisux/sveltednd';
+	import { toast } from 'svelte-sonner';
 	import {
 		Plus,
 		Pencil,
 		Trash2,
-		ChevronUp,
-		ChevronDown,
 		Search,
 		FileSpreadsheet,
-		Package
+		Package,
+		ArrowUpDown,
+		GripVertical,
+		Check,
+		X
 	} from '@lucide/svelte';
 	import type { PageData } from './$types';
+
+	type ProductItem = PageData['categoriesWithProducts'][number]['products'][number];
 
 	let { data }: { data: PageData } = $props();
 
@@ -23,6 +30,124 @@
 	let selectedCategoryFilter = $state<'all' | string>('all');
 	let selectedStockFilter = $state<'all' | 'in_stock' | 'out_of_stock'>('all');
 	let isBusy = $state(false);
+
+	// State Reorder DnD
+	let activeReorderCatId = $state<string | null>(null);
+	let categoryProductsMap = $state<Record<string, ProductItem[]>>({});
+	let initialSnapshot = $state<Record<string, ProductItem[]>>({});
+	let hasUnsavedChanges = $state(false);
+	let isSaving = $state(false);
+	let confirmCancelModalOpen = $state(false);
+	let pendingCancelCatId = $state<string | null>(null);
+
+	// Sinkronisasi data awal dari server saat tidak sedang dalam mode edit
+	$effect(() => {
+		if (!activeReorderCatId) {
+			const map: Record<string, ProductItem[]> = {};
+			for (const cat of data.categoriesWithProducts) {
+				map[cat.id] = [...cat.products];
+			}
+			categoryProductsMap = map;
+		}
+	});
+
+	// Navigation Guard untuk mencegah data hilang saat kabur
+	beforeNavigate((navigation) => {
+		if (hasUnsavedChanges) {
+			const answer = window.confirm(
+				'Ada perubahan susunan urutan produk yang belum disimpan. Yakin ingin keluar dari halaman?'
+			);
+			if (!answer) {
+				navigation.cancel();
+			}
+		}
+	});
+
+	function startReorder(catId: string) {
+		if (activeReorderCatId && hasUnsavedChanges) {
+			toast.warning('Selesaikan atau batalkan pengaturan urutan pada kategori saat ini terlebih dahulu.');
+			return;
+		}
+		// Reset search dan filter agar seluruh produk terlihat utuh tanpa risiko partial corruption
+		searchQuery = '';
+		selectedCategoryFilter = 'all';
+		selectedStockFilter = 'all';
+
+		const cat = data.categoriesWithProducts.find((c) => c.id === catId);
+		if (cat) {
+			categoryProductsMap[catId] = [...cat.products];
+			initialSnapshot[catId] = [...cat.products];
+		}
+		activeReorderCatId = catId;
+		hasUnsavedChanges = false;
+	}
+
+	function handleDndDrop(state: DragDropState, targetItem: ProductItem, catId: string) {
+		const source = state.draggedItem as ProductItem | undefined;
+		if (!source || source.id === targetItem.id) return;
+
+		const currentList = categoryProductsMap[catId] || [];
+		const fromIndex = currentList.findIndex((p) => p.id === source.id);
+		const toIndex = currentList.findIndex((p) => p.id === targetItem.id);
+		if (fromIndex === -1 || toIndex === -1) return;
+
+		const updated = [...currentList];
+		const [moved] = updated.splice(fromIndex, 1);
+		updated.splice(toIndex, 0, moved);
+
+		categoryProductsMap[catId] = updated;
+		hasUnsavedChanges = true;
+	}
+
+	function handleCancelReorder(catId: string) {
+		if (hasUnsavedChanges) {
+			pendingCancelCatId = catId;
+			confirmCancelModalOpen = true;
+		} else {
+			activeReorderCatId = null;
+		}
+	}
+
+	function confirmDiscardChanges() {
+		if (pendingCancelCatId && initialSnapshot[pendingCancelCatId]) {
+			categoryProductsMap[pendingCancelCatId] = [...initialSnapshot[pendingCancelCatId]];
+		}
+		hasUnsavedChanges = false;
+		activeReorderCatId = null;
+		confirmCancelModalOpen = false;
+		pendingCancelCatId = null;
+		toast.info('Perubahan urutan dibatalkan.');
+	}
+
+	async function saveReorder(catId: string) {
+		const prods = categoryProductsMap[catId];
+		if (!prods || prods.length === 0) return;
+
+		isSaving = true;
+		try {
+			const formData = new FormData();
+			formData.append('categoryId', catId);
+			formData.append('orderedIds', JSON.stringify(prods.map((p) => p.id)));
+
+			const res = await fetch('?/reorderBatch', {
+				method: 'POST',
+				body: formData
+			});
+
+			if (!res.ok) {
+				throw new Error('Gagal menghubungi server.');
+			}
+
+			hasUnsavedChanges = false;
+			activeReorderCatId = null;
+			toast.success('Urutan produk berhasil disimpan!');
+			await invalidateAll();
+		} catch (err) {
+			toast.error('Gagal menyimpan urutan produk: ' + (err instanceof Error ? err.message : 'Kesalahan jaringan.'));
+		} finally {
+			isSaving = false;
+		}
+	}
 
 	// Modal Hapus
 	let deleteModalOpen = $state(false);
@@ -45,7 +170,7 @@
 				return true;
 			})
 			.map((cat) => {
-				let prods = cat.products;
+				let prods = categoryProductsMap[cat.id] ?? cat.products;
 
 				if (q) {
 					prods = prods.filter(
@@ -79,6 +204,15 @@
 			.filter((cat) => cat.products.length > 0 || (searchQuery === '' && selectedCategoryFilter === cat.id));
 	});
 </script>
+
+<svelte:window
+	onbeforeunload={(e) => {
+		if (hasUnsavedChanges) {
+			e.preventDefault();
+			e.returnValue = '';
+		}
+	}}
+/>
 
 <BusyOverlay active={isBusy}>
 <div class="space-y-6 pb-20">
@@ -190,9 +324,12 @@
 	<!-- Daftar Produk per Kategori -->
 	<div class="space-y-8">
 		{#each filteredCategories as category (category.id)}
-			<div class="space-y-3">
+			{@const isReorderingThis = activeReorderCatId === category.id}
+			{@const isReorderingOther = activeReorderCatId !== null && !isReorderingThis}
+
+			<div class="space-y-3 transition-opacity duration-200 {isReorderingOther ? 'opacity-40 pointer-events-none' : ''}">
 				<!-- Category Header Bar -->
-				<div class="flex items-center justify-between border-b border-neutral-200 pb-2 dark:border-neutral-800">
+				<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-neutral-200 pb-2 dark:border-neutral-800">
 					<div class="flex items-center gap-2">
 						<span class="rounded bg-neutral-100 px-2 py-0.5 font-mono text-[11px] font-bold text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
 							{category.products.length} item
@@ -202,12 +339,58 @@
 						</h2>
 					</div>
 
-					<a
-						href="{resolve('/admin/products/new')}?category={category.id}"
-						class="text-xs font-medium text-brandy hover:underline dark:text-papaya"
-					>
-						+ Tambah di kategori ini
-					</a>
+					<div class="flex items-center gap-3">
+						<!-- Tombol Kontrol Atur Urutan -->
+						{#if !isReorderingThis}
+							{#if category.products.length > 1}
+								<button
+									type="button"
+									disabled={isReorderingOther}
+									onclick={() => startReorder(category.id)}
+									class="inline-flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-2.5 py-1 text-xs font-semibold text-neutral-700 shadow-xs hover:bg-neutral-50 disabled:opacity-40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
+								>
+									<ArrowUpDown size={13} class="text-neutral-500" />
+									<span>Atur Urutan</span>
+								</button>
+							{/if}
+						{:else}
+							<!-- Mode Edit Aktif: Batal & Simpan -->
+							<div class="flex items-center gap-2">
+								<span class="hidden sm:inline font-mono text-[11px] {hasUnsavedChanges ? 'text-tangerine font-bold' : 'text-neutral-500'}">
+									{hasUnsavedChanges ? '● Ada perubahan' : 'Belum digeser'}
+								</span>
+								<button
+									type="button"
+									onclick={() => handleCancelReorder(category.id)}
+									class="inline-flex items-center gap-1 rounded-lg border border-neutral-300 bg-white px-2.5 py-1 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
+								>
+									<X size={13} />
+									<span>Batal</span>
+								</button>
+								<button
+									type="button"
+									disabled={isSaving}
+									onclick={() => saveReorder(category.id)}
+									class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1 text-xs font-semibold text-white shadow-xs hover:bg-emerald-700 disabled:opacity-50"
+								>
+									{#if isSaving}
+										<div class="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+										<span>Menyimpan...</span>
+									{:else}
+										<Check size={13} />
+										<span>Simpan Urutan</span>
+									{/if}
+								</button>
+							</div>
+						{/if}
+
+						<a
+							href="{resolve('/admin/products/new')}?category={category.id}"
+							class="text-xs font-medium text-brandy hover:underline dark:text-papaya"
+						>
+							+ Tambah di kategori ini
+						</a>
+					</div>
 				</div>
 
 				{#if category.products.length === 0}
@@ -215,9 +398,24 @@
 						Belum ada produk di kategori ini.
 					</div>
 				{:else}
-					<!-- Grid Table / Cards -->
-					<div class="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-xs dark:border-neutral-800 dark:bg-neutral-900">
-						<div class="divide-y divide-neutral-200 dark:divide-neutral-800">
+					<!-- Grid Table / Cards dengan Penegasan Border -->
+					<div class="overflow-hidden rounded-xl border-2 transition-all duration-200 {isReorderingThis ? 'border-tangerine bg-white shadow-[0_0_0_4px_rgba(255,125,0,0.15)] dark:border-tangerine dark:bg-neutral-900' : 'border-neutral-300 bg-white shadow-xs dark:border-neutral-700 dark:bg-neutral-900'}">
+						{#if isReorderingThis}
+							<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b-2 border-tangerine/30 bg-tangerine/15 px-4 py-2.5 text-xs font-bold text-ink dark:bg-tangerine/20 dark:text-papaya">
+								<div class="flex items-center gap-2.5">
+									<span class="relative flex h-2.5 w-2.5">
+										<span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-tangerine opacity-75"></span>
+										<span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-tangerine"></span>
+									</span>
+									<span>MODE ATUR URUTAN AKTIF — Geser produk ke posisi tujuan, lalu klik "Simpan Urutan"</span>
+								</div>
+								<span class="font-mono text-[11px] {hasUnsavedChanges ? 'text-tangerine font-black' : 'opacity-70'}">
+									{hasUnsavedChanges ? '● Ada perubahan belum disimpan' : 'Belum ada produk digeser'}
+								</span>
+							</div>
+						{/if}
+
+						<div class="divide-y-2 divide-neutral-300 dark:divide-neutral-700">
 							{#each category.products as prod, idx (prod.id)}
 								{@const hasVariants = prod.variants && prod.variants.length > 0}
 								{@const totalStock = hasVariants
@@ -227,17 +425,52 @@
 									? totalStock <= 0
 									: prod.trackStock && prod.stock <= 0}
 
-								<div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between transition-colors hover:bg-neutral-50/60 dark:hover:bg-neutral-800/40">
-									<!-- Left: Image & Info -->
+								<div
+									use:draggable={{
+										container: `admin-product-reorder-${category.id}`,
+										dragData: prod,
+										handle: '.drag-handle',
+										disabled: !isReorderingThis
+									}}
+									use:droppable={{
+										container: `admin-product-reorder-${category.id}`,
+										disabled: !isReorderingThis,
+										callbacks: {
+											onDrop: (state) => handleDndDrop(state, prod, category.id)
+										}
+									}}
+									class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between transition-colors hover:bg-neutral-50/60 dark:hover:bg-neutral-800/40 {isReorderingThis ? 'cursor-grab' : ''}"
+								>
+									<!-- Left: Drag Handle, Number Badge, Image & Info -->
 									<div class="flex items-start gap-3.5 flex-1 min-w-0">
+										<!-- Handle Drag & Badge Nomor Urut (Saat Mode DnD Aktif) -->
+										{#if isReorderingThis}
+											<div class="flex items-center self-center pr-1">
+												<button
+													type="button"
+													class="drag-handle touch-none flex h-9 w-9 shrink-0 cursor-grab items-center justify-center rounded-lg border border-neutral-300 bg-neutral-100 text-neutral-600 hover:bg-neutral-200 active:cursor-grabbing dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+													aria-label="Pegang untuk memindahkan {prod.name}"
+													title="Pegang titik 6 untuk memindahkan"
+												>
+													<GripVertical size={18} />
+												</button>
+											</div>
+
+											<div class="self-center">
+												<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg font-mono text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+													#{idx + 1}
+												</span>
+											</div>
+										{/if}
+
 										{#if prod.imageUrls && prod.imageUrls.length > 0}
 											<img
 												src={prod.imageUrls[0]}
 												alt={prod.name}
-												class="h-14 w-14 shrink-0 rounded-lg border border-neutral-200 object-cover dark:border-neutral-800"
+												class="h-14 w-14 shrink-0 rounded-lg border border-neutral-300 object-cover dark:border-neutral-700"
 											/>
 										{:else}
-											<div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-neutral-200 bg-neutral-100 text-neutral-400 dark:border-neutral-800 dark:bg-neutral-950">
+											<div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-neutral-300 bg-neutral-100 text-neutral-400 dark:border-neutral-700 dark:bg-neutral-950">
 												<Package size={20} />
 											</div>
 										{/if}
@@ -288,81 +521,29 @@
 										</div>
 									</div>
 
-									<!-- Right: Reorder & Actions -->
-									<div class="flex items-center justify-end gap-1.5 shrink-0 self-end sm:self-center">
-										<!-- Reorder Buttons -->
-										<div class="flex items-center rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950">
-											<form
-												method="POST"
-												action="?/reorder"
-												use:enhance={() => {
-													isBusy = true;
-													return async ({ result, update }) => {
-														handleFormResult(result, {
-															failure: 'Gagal mengubah urutan produk.'
-														});
-														await update();
-														isBusy = false;
-													};
-												}}
+									<!-- Right: Actions (Disembunyikan saat mode reorder aktif agar tidak salah klik) -->
+									{#if !isReorderingThis}
+										<div class="flex items-center justify-end gap-1.5 shrink-0 self-end sm:self-center">
+											<!-- Edit Link -->
+											<a
+												href={resolve('/admin/products/[id]/edit', { id: prod.id })}
+												class="inline-flex items-center gap-1 rounded-lg border border-neutral-300 bg-white px-2.5 py-1.5 text-xs font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
 											>
-												<input type="hidden" name="id" value={prod.id} />
-												<input type="hidden" name="direction" value="up" />
-												<button
-													type="submit"
-													disabled={isBusy || idx === 0}
-													class="p-1 text-neutral-500 hover:text-neutral-900 disabled:opacity-30 dark:hover:text-neutral-100"
-													aria-label="Geser ke atas"
-												>
-													<ChevronUp size={14} />
-												</button>
-											</form>
-											<form
-												method="POST"
-												action="?/reorder"
-												use:enhance={() => {
-													isBusy = true;
-													return async ({ result, update }) => {
-														handleFormResult(result, {
-															failure: 'Gagal mengubah urutan produk.'
-														});
-														await update();
-														isBusy = false;
-													};
-												}}
+												<Pencil size={13} />
+												<span>Edit</span>
+											</a>
+
+											<!-- Delete Button -->
+											<button
+												type="button"
+												onclick={() => openDeleteModal({ id: prod.id, name: prod.name })}
+												class="rounded-lg p-1.5 text-neutral-400 hover:bg-crimson/10 hover:text-crimson"
+												aria-label="Hapus produk"
 											>
-												<input type="hidden" name="id" value={prod.id} />
-												<input type="hidden" name="direction" value="down" />
-												<button
-													type="submit"
-													disabled={isBusy || idx === category.products.length - 1}
-													class="p-1 text-neutral-500 hover:text-neutral-900 disabled:opacity-30 dark:hover:text-neutral-100"
-													aria-label="Geser ke bawah"
-												>
-													<ChevronDown size={14} />
-												</button>
-											</form>
+												<Trash2 size={15} />
+											</button>
 										</div>
-
-										<!-- Edit Link -->
-										<a
-											href={resolve('/admin/products/[id]/edit', { id: prod.id })}
-											class="inline-flex items-center gap-1 rounded-lg border border-neutral-300 bg-white px-2.5 py-1.5 text-xs font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
-										>
-											<Pencil size={13} />
-											<span>Edit</span>
-										</a>
-
-										<!-- Delete Button -->
-										<button
-											type="button"
-											onclick={() => openDeleteModal({ id: prod.id, name: prod.name })}
-											class="rounded-lg p-1.5 text-neutral-400 hover:bg-crimson/10 hover:text-crimson"
-											aria-label="Hapus produk"
-										>
-											<Trash2 size={15} />
-										</button>
-									</div>
+									{/if}
 								</div>
 							{/each}
 						</div>
@@ -371,6 +552,18 @@
 			</div>
 		{/each}
 	</div>
+
+	<!-- Modal Konfirmasi Batal Pengaturan Urutan -->
+	<Modal
+		open={confirmCancelModalOpen}
+		title="Batalkan Perubahan Urutan?"
+		message="Anda telah mengubah susunan beberapa produk pada kategori ini. Jika dibatalkan, semua perubahan urutan yang belum disimpan akan dikembalikan ke posisi awal."
+		danger={true}
+		confirmLabel="Ya, Buang Perubahan"
+		cancelLabel="Lanjut Mengatur"
+		onConfirm={confirmDiscardChanges}
+		onCancel={() => (confirmCancelModalOpen = false)}
+	/>
 
 	<!-- Modal Konfirmasi Hapus Produk -->
 	{#if deleteModalOpen && productToDelete}
@@ -421,3 +614,29 @@
 	{/if}
 </div>
 </BusyOverlay>
+
+<style>
+	/* Custom Drop Indicator Garis Oranye Tebal & Jelas */
+	:global(.drop-before::before),
+	:global(.drop-after::after) {
+		height: 4px !important;
+		background: #ff7d00 !important;
+		box-shadow: 0 0 10px rgba(255, 125, 0, 0.7) !important;
+		border-radius: 9999px !important;
+		z-index: 30 !important;
+	}
+
+	:global(.drop-before::before) {
+		top: -2px !important;
+	}
+
+	:global(.drop-after::after) {
+		bottom: -2px !important;
+	}
+
+	/* Highlight Kartu Sasaran Drop */
+	:global(.drag-over) {
+		background-color: rgba(255, 125, 0, 0.08) !important;
+		border-color: #ff7d00 !important;
+	}
+</style>

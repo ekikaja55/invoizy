@@ -37,11 +37,11 @@
 	/>
 </svelte:head>
 
-<div class="space-y-12 overflow-x-clip py-6 text-left max-w-3xl">
+<div class="mx-auto max-w-2xl space-y-12 overflow-x-clip py-6 text-center">
 	<!-- Hero Section -->
 	<div class="space-y-4">
 		<!-- Event Edition Banner: Pembeda Visual Branch Event Offline -->
-		<div class="flex flex-wrap items-center justify-start gap-2.5">
+		<div class="flex flex-wrap items-center justify-center gap-2.5">
 			<div
 				class="inline-block -rotate-1 rounded-xs border-2 border-brandy bg-yellow-200 px-3 py-1 shadow-[2px_2px_0px_#78290f]"
 			>
@@ -51,7 +51,7 @@
 			</div>
 		</div>
 
-		<!-- Main Headline: Fraunces Serif Lega Rata Kiri -->
+		<!-- Main Headline: Fraunces Serif Lega Rata Tengah -->
 		<h1
 			class="font-headline text-3xl leading-tight font-extrabold text-ink sm:text-5xl dark:text-papaya"
 		>
@@ -67,8 +67,8 @@
 		</p>
 	</div>
 
-	<!-- Action Buttons: Tactile Buttons Rata Kiri -->
-	<div class="flex flex-col items-stretch sm:items-center justify-start gap-4 sm:flex-row">
+	<!-- Action Buttons: Tactile Buttons Rata Tengah -->
+	<div class="flex flex-col items-stretch sm:items-center justify-center gap-4 sm:flex-row">
 		<a
 			href={resolve('/order')}
 			class="flex -rotate-1 transform-gpu items-center justify-center gap-2.5 rounded-[14px_6px_12px_8px] border-2 border-brandy bg-tangerine px-7 py-3.5 text-base font-bold text-white shadow-[4px_4px_0px_#78290f] transition-all duration-150 backface-hidden hover:-translate-x-0.5 hover:-translate-y-0.5 hover:rotate-0 hover:shadow-[5px_5px_0px_#78290f] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none sm:w-auto"
@@ -88,7 +88,7 @@
 	</div>
 
 	{#if isLogin}
-		<div class="pt-1">
+		<div class="pt-1 text-center">
 			<a
 				href={resolve('/admin')}
 				class="inline-flex items-center gap-1 font-mono text-xs font-bold text-teal underline underline-offset-4 hover:opacity-80 dark:text-tangerine"
@@ -99,17 +99,18 @@
 	{/if}
 
 	<!-- Bento Section: Cara Order -->
-	<div class="space-y-6 text-left">
-		<div class="flex items-center justify-start gap-3">
+	<div class="space-y-6 text-center">
+		<div class="flex items-center justify-center gap-3">
+			<span class="h-0.5 w-12 border-t-2 border-dashed border-brandy/30 dark:border-papaya/30"></span>
 			<h2
 				class="inline-block -rotate-1 rounded-[6px_2px_5px_1px] border-2 border-brandy bg-papaya px-3.5 py-1 font-mono text-xs font-bold tracking-widest text-brandy uppercase shadow-[2px_2px_0px_#78290f] dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[2px_2px_0px_rgba(255,236,209,0.2)]"
 			>
 				How to Order
 			</h2>
-			<span class="h-0.5 flex-1 max-w-xs border-t-2 border-dashed border-brandy/30 dark:border-papaya/30"></span>
+			<span class="h-0.5 w-12 border-t-2 border-dashed border-brandy/30 dark:border-papaya/30"></span>
 		</div>
 
-		<ol class="space-y-5">
+		<ol class="space-y-5 text-left">
 			{#each steps as step, i (step.title)}
 				{@const stepTilt = i % 2 === 0 ? '-rotate-[1.2deg]' : 'rotate-[1.2deg]'}
 				{@const badgeTilt = i % 2 === 0 ? '-rotate-3' : 'rotate-3'}
@@ -147,7 +148,7 @@
 	<!-- Social Footer Note -->
 	{#if data.settings?.instagram || data.settings?.twitter}
 		<div
-			class="border-t-2 border-brandy/20 pt-6 font-mono text-xs font-bold text-brandy/80 dark:border-papaya/20 dark:text-papaya/70"
+			class="border-t-2 border-brandy/20 pt-6 font-mono text-xs font-bold text-brandy/80 text-center dark:border-papaya/20 dark:text-papaya/70"
 		>
 			{#if data.settings?.instagram}
 				<span>Instagram: {data.settings.instagram}</span>

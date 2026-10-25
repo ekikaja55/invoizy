@@ -134,19 +134,127 @@ export const mockTableOrders = [
 export interface MockReorderProduct {
 	id: string;
 	name: string;
-	price: number;
+	priceInt: number;
 	stock: number;
+	trackStock: boolean;
+	active: boolean;
+	description: string | null;
+	imageUrls: string[];
+	variants: { name: string; stock: number }[];
 }
 
 export const mockReorderProducts: MockReorderProduct[] = [
-	{ id: 'prod-01', name: '1. Gantungan Kunci Akrilik Hologram Karakter A', price: 35000, stock: 24 },
-	{ id: 'prod-02', name: '2. Sticker Pack Vinyl Waterproof Set Chibi A6', price: 25000, stock: 50 },
-	{ id: 'prod-03', name: '3. Art Print Poster Tebal 260gsm Ukuran A4', price: 30000, stock: 15 },
-	{ id: 'prod-04', name: '4. Standee Akrilik Double Sided 15cm', price: 65000, stock: 8 },
-	{ id: 'prod-05', name: '5. Enamel Pin Logam Edisi Terbatas Chibicon', price: 45000, stock: 12 },
-	{ id: 'prod-06', name: '6. Tote Bag Canvas Sablon Serat Organik', price: 75000, stock: 10 },
-	{ id: 'prod-07', name: '7. Buku Sketsa Hardcover Kertas Khusus Ilustrasi', price: 55000, stock: 18 },
-	{ id: 'prod-08', name: '8. Washi Tape Masking Foil Gold 15mm', price: 28000, stock: 30 },
-	{ id: 'prod-09', name: '9. Grip Tok / Phone Holder Karakter Kucing', price: 22000, stock: 40 },
-	{ id: 'prod-10', name: '10. Bookmark Magnetik Set 3 Pcs Bertema Kopi', price: 18000, stock: 25 }
+	{
+		id: 'prod-01',
+		name: 'Gantungan Kunci Akrilik Hologram Karakter A',
+		priceInt: 35000,
+		stock: 24,
+		trackStock: true,
+		active: true,
+		description: 'Bahan akrilik 4mm dengan gantungan putar warna emas dan efek hologram pelangi.',
+		imageUrls: ['https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80'],
+		variants: [
+			{ name: 'Chibi Cat', stock: 14 },
+			{ name: 'Chibi Fox', stock: 10 }
+		]
+	},
+	{
+		id: 'prod-02',
+		name: 'Sticker Pack Vinyl Waterproof Set Chibi A6',
+		priceInt: 25000,
+		stock: 50,
+		trackStock: true,
+		active: true,
+		description: 'Kertas stiker vinyl anti air dengan laminasi doff, isi 8 karakter lucu.',
+		imageUrls: ['https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=200&auto=format&fit=crop&q=80'],
+		variants: []
+	},
+	{
+		id: 'prod-03',
+		name: 'Art Print Poster Tebal 260gsm Ukuran A4',
+		priceInt: 30000,
+		stock: 15,
+		trackStock: true,
+		active: true,
+		description: 'Cetak digital offset art carton 260gsm warna tajam dan tidak mudah pudar.',
+		imageUrls: ['https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=200&auto=format&fit=crop&q=80'],
+		variants: []
+	},
+	{
+		id: 'prod-04',
+		name: 'Standee Akrilik Double Sided 15cm',
+		priceInt: 65000,
+		stock: 0,
+		trackStock: true,
+		active: true,
+		description: 'Standee meja akrilik tebal 5mm dengan base oval bertanda tangan ilustrator.',
+		imageUrls: [],
+		variants: []
+	},
+	{
+		id: 'prod-05',
+		name: 'Enamel Pin Logam Edisi Terbatas Chibicon',
+		priceInt: 45000,
+		stock: 12,
+		trackStock: true,
+		active: true,
+		description: 'Hard enamel pin dengan pelapisan emas 18k dan peniti ganda karet hitam.',
+		imageUrls: ['https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=200&auto=format&fit=crop&q=80'],
+		variants: []
+	},
+	{
+		id: 'prod-06',
+		name: 'Tote Bag Canvas Sablon Serat Organik',
+		priceInt: 75000,
+		stock: 10,
+		trackStock: true,
+		active: false,
+		description: 'Bahan kanvas twill tebal berserat organik alami dilengkapi resleting utama.',
+		imageUrls: [],
+		variants: []
+	},
+	{
+		id: 'prod-07',
+		name: 'Buku Sketsa Hardcover Kertas Khusus Ilustrasi',
+		priceInt: 55000,
+		stock: 18,
+		trackStock: true,
+		active: true,
+		description: 'Hardcover spiral binding 100 lembar kertas bookpaper 90gsm ramah pensil & drawing pen.',
+		imageUrls: ['https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=200&auto=format&fit=crop&q=80'],
+		variants: []
+	},
+	{
+		id: 'prod-08',
+		name: 'Washi Tape Masking Foil Gold 15mm',
+		priceInt: 28000,
+		stock: 30,
+		trackStock: true,
+		active: true,
+		description: 'Pita washi jepang motif bunga sakura dengan aksen foil emas panjang 10 meter.',
+		imageUrls: [],
+		variants: []
+	},
+	{
+		id: 'prod-09',
+		name: 'Grip Tok / Phone Holder Karakter Kucing',
+		priceInt: 22000,
+		stock: 40,
+		trackStock: true,
+		active: true,
+		description: 'Pegangan smartphone bahan resin bening dengan perekat 3M kuat dan bisa diputar.',
+		imageUrls: [],
+		variants: []
+	},
+	{
+		id: 'prod-10',
+		name: 'Bookmark Magnetik Set 3 Pcs Bertema Kopi',
+		priceInt: 18000,
+		stock: 25,
+		trackStock: false,
+		active: true,
+		description: 'Pembatas buku lipat magnetik tahan air isi 3 karakter dengan ilustrasi kedai kopi retro.',
+		imageUrls: [],
+		variants: []
+	}
 ];
