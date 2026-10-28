@@ -159,7 +159,7 @@
 	{:else}
 		<div class="mb-2 flex items-center justify-between gap-2 px-1 py-1">
 			<span class="font-serif text-sm font-bold tracking-tight text-[#262626] dark:text-[#f2efe9]">
-				Invoizy
+				Cho.lazey
 			</span>
 
 			<button
