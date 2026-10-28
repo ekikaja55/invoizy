@@ -37,7 +37,21 @@ function ensure(ctx: Ctx, h: number) {
 	if (ctx.y - h < 46) newPage(ctx);
 }
 
-function wrap(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
+/**
+ * Sanitasi teks agar kompatibel dengan encoding WinAnsi font standar pdf-lib (Helvetica).
+ * Membuang karakter di luar rentang WinAnsi (termasuk emoji) agar dokumen tidak melempar
+ * unhandled exception "WinAnsi cannot encode".
+ */
+export function sanitizePdfText(text: string | null | undefined): string {
+	if (!text) return '';
+	return text
+		.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '')
+		.replace(/[^\t\r\n\x20-\x7E\xA0-\xFF]/g, '')
+		.trim();
+}
+
+function wrap(rawText: string, font: PDFFont, size: number, maxWidth: number): string[] {
+	const text = sanitizePdfText(rawText);
 	const words = text.split(/\s+/).filter(Boolean);
 	const lines: string[] = [];
 	let cur = '';
@@ -57,7 +71,13 @@ function wrap(text: string, font: PDFFont, size: number, maxWidth: number): stri
 function para(
 	ctx: Ctx,
 	text: string,
-	opts?: { size?: number; bold?: boolean; color?: ReturnType<typeof rgb>; x?: number; maxWidth?: number }
+	opts?: {
+		size?: number;
+		bold?: boolean;
+		color?: ReturnType<typeof rgb>;
+		x?: number;
+		maxWidth?: number;
+	}
 ) {
 	const size = opts?.size ?? 10;
 	const font = opts?.bold ? ctx.bold : ctx.regular;
@@ -101,7 +121,7 @@ export async function renderInvoicePdf(data: InvoiceData): Promise<Uint8Array> {
 		const top = ctx.y;
 
 		// Sisi Kiri: Nama Toko
-		const store = settings.storeName || 'CHO.LAZEY - CHIBICONXI CATALOGUE';
+		const store = sanitizePdfText(settings.storeName || 'CHO.LAZEY - CHIBICONXI CATALOGUE');
 		ctx.page.drawText(store, {
 			x: LM,
 			y: top - 18,
@@ -178,8 +198,10 @@ export async function renderInvoicePdf(data: InvoiceData): Promise<Uint8Array> {
 		para(ctx, order.handle, { size: 12, bold: true, color: BLACK });
 		if (order.email) para(ctx, `Email: ${order.email}`, { size: 9, color: GRAY_DARK });
 		if (order.phone) para(ctx, `WhatsApp: ${order.phone}`, { size: 9, color: GRAY_DARK });
-		if (order.shippingLabel) para(ctx, `Metode: ${order.shippingLabel}`, { size: 9, bold: true, color: BLACK });
-		if (order.address && order.address.trim() !== '') para(ctx, `Alamat: ${order.address}`, { size: 9, color: BLACK, maxWidth: CONTENT_W - 60 });
+		if (order.shippingLabel)
+			para(ctx, `Metode: ${order.shippingLabel}`, { size: 9, bold: true, color: BLACK });
+		if (order.address && order.address.trim() !== '')
+			para(ctx, `Alamat: ${order.address}`, { size: 9, color: BLACK, maxWidth: CONTENT_W - 60 });
 		if (order.note) para(ctx, `Catatan: ${order.note}`, { size: 9, color: GRAY_DARK });
 		ctx.y -= 10;
 	}
@@ -194,20 +216,46 @@ export async function renderInvoicePdf(data: InvoiceData): Promise<Uint8Array> {
 		ctx.page.drawRectangle({ x: LM, y: top - 20, width: CONTENT_W, height: 20, color: GRAY_LIGHT });
 		ctx.page.drawRectangle({ x: LM, y: top - 20, width: CONTENT_W, height: 1, color: BLACK });
 
-		ctx.page.drawText('ITEM & SPESIFIKASI', { x: LM + 8, y: top - 14, font: bold, size: 8, color: BLACK });
+		ctx.page.drawText('ITEM & SPESIFIKASI', {
+			x: LM + 8,
+			y: top - 14,
+			font: bold,
+			size: 8,
+			color: BLACK
+		});
 		const qh = 'QTY';
-		ctx.page.drawText(qh, { x: colQty - bold.widthOfTextAtSize(qh, 8) / 2, y: top - 14, font: bold, size: 8, color: BLACK });
+		ctx.page.drawText(qh, {
+			x: colQty - bold.widthOfTextAtSize(qh, 8) / 2,
+			y: top - 14,
+			font: bold,
+			size: 8,
+			color: BLACK
+		});
 		const ph = 'HARGA SATUAN';
-		ctx.page.drawText(ph, { x: colPrice - bold.widthOfTextAtSize(ph, 8) / 2, y: top - 14, font: bold, size: 8, color: BLACK });
+		ctx.page.drawText(ph, {
+			x: colPrice - bold.widthOfTextAtSize(ph, 8) / 2,
+			y: top - 14,
+			font: bold,
+			size: 8,
+			color: BLACK
+		});
 		const th = 'TOTAL';
-		ctx.page.drawText(th, { x: PAGE_W - RM - bold.widthOfTextAtSize(th, 8) - 8, y: top - 14, font: bold, size: 8, color: BLACK });
+		ctx.page.drawText(th, {
+			x: PAGE_W - RM - bold.widthOfTextAtSize(th, 8) - 8,
+			y: top - 14,
+			font: bold,
+			size: 8,
+			color: BLACK
+		});
 
 		ctx.y = top - 20 - 4;
 	}
 
 	for (const item of order.items) {
 		ensure(ctx, 32);
-		const itemName = item.variantNameSnapshot ? `${item.nameSnapshot} (${item.variantNameSnapshot})` : item.nameSnapshot;
+		const itemName = item.variantNameSnapshot
+			? `${item.nameSnapshot} (${item.variantNameSnapshot})`
+			: item.nameSnapshot;
 		para(ctx, itemName, { size: 9, bold: true, maxWidth: 240, x: LM + 8 });
 		para(ctx, item.categorySnapshot, { size: 8, color: GRAY_DARK, maxWidth: 240, x: LM + 8 });
 
@@ -254,17 +302,33 @@ export async function renderInvoicePdf(data: InvoiceData): Promise<Uint8Array> {
 			rows.push([`Potongan Diskon Promo`, `-${formatRupiah(order.discountTotal ?? 0)}`]);
 		}
 		if (order.shippingLabel) {
-			rows.push([`Metode: ${order.shippingLabel}`, shippingDiff > 0 ? formatRupiah(shippingDiff) : 'Rp 0']);
+			rows.push([
+				`Metode: ${order.shippingLabel}`,
+				shippingDiff > 0 ? formatRupiah(shippingDiff) : 'Rp 0'
+			]);
 		} else if (shippingDiff > 0) {
 			rows.push([`Biaya Pengiriman`, formatRupiah(shippingDiff)]);
 		}
 
 		for (const [label, val] of rows) {
 			ensure(ctx, 14);
+			const cleanLabel = sanitizePdfText(label);
 			const sw = regular.widthOfTextAtSize(val, 9);
-			ctx.page.drawText(val, { x: PAGE_W - RM - sw - 8, y: ctx.y - 9, font: regular, size: 9, color: BLACK });
-			const lw = regular.widthOfTextAtSize(label, 9);
-			ctx.page.drawText(label, { x: PAGE_W - RM - sw - lw - 32, y: ctx.y - 9, font: regular, size: 9, color: GRAY_DARK });
+			ctx.page.drawText(val, {
+				x: PAGE_W - RM - sw - 8,
+				y: ctx.y - 9,
+				font: regular,
+				size: 9,
+				color: BLACK
+			});
+			const lw = regular.widthOfTextAtSize(cleanLabel, 9);
+			ctx.page.drawText(cleanLabel, {
+				x: PAGE_W - RM - sw - lw - 32,
+				y: ctx.y - 9,
+				font: regular,
+				size: 9,
+				color: GRAY_DARK
+			});
 			ctx.y -= 14;
 		}
 
@@ -304,18 +368,27 @@ export async function renderInvoicePdf(data: InvoiceData): Promise<Uint8Array> {
 	}
 
 	// ── 5. Instruksi Pembayaran & Rekening ──
-	if (paymentMethods.length > 0 || qrisCodes.length > 0 || settings.proofContact || settings.paymentNote) {
+	if (
+		paymentMethods.length > 0 ||
+		qrisCodes.length > 0 ||
+		settings.proofContact ||
+		settings.paymentNote
+	) {
 		ensure(ctx, 30);
 		para(ctx, 'INFORMASI PEMBAYARAN', { size: 9, bold: true, color: GRAY_DARK });
 		rule(ctx, 0.5, BORDER_LIGHT);
 
 		for (const m of paymentMethods) {
 			ensure(ctx, 16);
-			para(ctx, `${m.label}: ${m.accountNumber} — a.n. ${m.accountHolder}${m.note ? ` (${m.note})` : ''}`, {
-				size: 9,
-				bold: true,
-				color: BLACK
-			});
+			para(
+				ctx,
+				`${m.label}: ${m.accountNumber} — a.n. ${m.accountHolder}${m.note ? ` (${m.note})` : ''}`,
+				{
+					size: 9,
+					bold: true,
+					color: BLACK
+				}
+			);
 		}
 
 		for (const q of qrisCodes) {
@@ -353,7 +426,9 @@ export async function renderInvoicePdf(data: InvoiceData): Promise<Uint8Array> {
 		ensure(ctx, 35);
 		ctx.y -= 12;
 		rule(ctx, 0.5, BORDER_LIGHT);
-		const closing = `Terima kasih atas pesanan Anda di ${settings.storeName || 'toko kami'}!`;
+		const closing = sanitizePdfText(
+			`Terima kasih atas pesanan Anda di ${settings.storeName || 'toko kami'}!`
+		);
 		const cw = regular.widthOfTextAtSize(closing, 9);
 		ctx.page.drawText(closing, {
 			x: LM + (CONTENT_W - cw) / 2,
@@ -365,7 +440,9 @@ export async function renderInvoicePdf(data: InvoiceData): Promise<Uint8Array> {
 
 		let yOffset = 20;
 		if (settings.proofContact || settings.instagram) {
-			const support = `Bantuan Pesanan: ${settings.proofContact || ''}${settings.proofContact && settings.instagram ? ' | ' : ''}${settings.instagram ? `Instagram: @${settings.instagram.replace(/^@/, '')}` : ''}`;
+			const support = sanitizePdfText(
+				`Bantuan Pesanan: ${settings.proofContact || ''}${settings.proofContact && settings.instagram ? ' | ' : ''}${settings.instagram ? `Instagram: @${settings.instagram.replace(/^@/, '')}` : ''}`
+			);
 			const sw = regular.widthOfTextAtSize(support, 8);
 			ctx.page.drawText(support, {
 				x: LM + (CONTENT_W - sw) / 2,

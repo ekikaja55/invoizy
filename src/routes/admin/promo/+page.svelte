@@ -4,7 +4,7 @@
 	import { formatRupiah } from '$lib/utils/currency';
 	import Modal from '$lib/components/ui/Modal.svelte';
 	import BusyOverlay from '$lib/components/ui/BusyOverlay.svelte';
-	import { Plus, Trash2, Pencil, Sparkles } from '@lucide/svelte';
+	import { Plus, Trash2, Pencil, Sparkles, Search, ArrowUp } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
 
@@ -14,6 +14,25 @@
 	let isEditModalOpen = $state(false);
 	let isBusy = $state(false);
 	let promoToDelete = $state<string | null>(null);
+
+	// Filter & Search State
+	let searchQuery = $state('');
+	let statusFilter = $state<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
+	let showBackToTop = $state(false);
+
+	const filteredPromos = $derived(
+		data.promos.filter((p) => {
+			const q = searchQuery.trim().toLowerCase();
+			const matchQuery =
+				!q ||
+				p.name.toLowerCase().includes(q) ||
+				p.product.name.toLowerCase().includes(q) ||
+				p.product.category.name.toLowerCase().includes(q);
+			const matchStatus =
+				statusFilter === 'ALL' ? true : statusFilter === 'ACTIVE' ? p.active : !p.active;
+			return matchQuery && matchStatus;
+		})
+	);
 
 	// Form State Tambah Promo
 	let selectedProductId = $state('');
@@ -116,6 +135,59 @@
 			</div>
 		</div>
 
+		<!-- Filter & Search Bar -->
+		{#if data.promos.length > 0}
+			<div
+				class="relative flex flex-col gap-3 rounded-[14px_4px_14px_4px] border-2 border-[#262626] bg-white p-4 shadow-[3px_3px_0px_#262626] sm:flex-row sm:items-center sm:justify-between dark:border-[#a2e1db] dark:bg-[#252331] dark:shadow-[3px_3px_0px_#b4a6d5]"
+			>
+				<div class="relative flex-1">
+					<Search
+						size={16}
+						class="absolute top-1/2 left-3 -translate-y-1/2 text-[#262626]/40 dark:text-[#f2efe9]/40"
+					/>
+					<input
+						type="search"
+						bind:value={searchQuery}
+						placeholder="Cari nama promo, produk, atau kategori..."
+						class="w-full rounded-lg border-2 border-[#262626] bg-white py-2 pr-3.5 pl-9 font-sans text-xs text-[#262626] shadow-[2px_2px_0px_#262626] placeholder:text-[#404040]/40 focus:ring-2 focus:ring-[#fea770] focus:outline-none sm:text-sm dark:border-[#f2efe9] dark:bg-[#1a1825] dark:text-[#f2efe9] dark:placeholder:text-[#b8b5ad]/40"
+					/>
+				</div>
+
+				<div class="flex items-center gap-1.5 self-start sm:self-auto">
+					<button
+						type="button"
+						onclick={() => (statusFilter = 'ALL')}
+						class="rounded-lg border-2 border-[#262626] px-3 py-1.5 font-mono text-xs font-bold transition-all {statusFilter ===
+						'ALL'
+							? 'bg-[#262626] text-white shadow-[2px_2px_0px_#262626] dark:border-[#f2efe9] dark:bg-[#f2efe9] dark:text-[#262626]'
+							: 'bg-white text-[#262626] hover:bg-[#f2efe9] dark:border-[#f2efe9]/40 dark:bg-[#1a1825] dark:text-[#f2efe9]'}"
+					>
+						Semua ({data.promos.length})
+					</button>
+					<button
+						type="button"
+						onclick={() => (statusFilter = 'ACTIVE')}
+						class="rounded-lg border-2 border-[#262626] px-3 py-1.5 font-mono text-xs font-bold transition-all {statusFilter ===
+						'ACTIVE'
+							? 'bg-[#065f46] text-white shadow-[2px_2px_0px_#262626] dark:border-[#a2e1db] dark:bg-[#a2e1db] dark:text-[#065f46]'
+							: 'bg-white text-[#262626] hover:bg-[#f2efe9] dark:border-[#f2efe9]/40 dark:bg-[#1a1825] dark:text-[#f2efe9]'}"
+					>
+						Aktif ({data.promos.filter((p) => p.active).length})
+					</button>
+					<button
+						type="button"
+						onclick={() => (statusFilter = 'INACTIVE')}
+						class="rounded-lg border-2 border-[#262626] px-3 py-1.5 font-mono text-xs font-bold transition-all {statusFilter ===
+						'INACTIVE'
+							? 'bg-[#991b1b] text-white shadow-[2px_2px_0px_#262626] dark:border-[#f87171] dark:bg-[#f87171] dark:text-[#991b1b]'
+							: 'bg-white text-[#262626] hover:bg-[#f2efe9] dark:border-[#f2efe9]/40 dark:bg-[#1a1825] dark:text-[#f2efe9]'}"
+					>
+						Nonaktif ({data.promos.filter((p) => !p.active).length})
+					</button>
+				</div>
+			</div>
+		{/if}
+
 		<!-- Promo Table / List -->
 		{#if data.promos.length === 0}
 			<div
@@ -142,123 +214,154 @@
 					</button>
 				</div>
 			</div>
+		{:else if filteredPromos.length === 0}
+			<div
+				class="rounded-[14px_4px_14px_4px] border-2 border-[#262626] bg-white p-10 text-center shadow-[3px_3px_0px_#262626] dark:border-[#f2efe9]/40 dark:bg-[#1a1825]"
+			>
+				<h2 class="text-base font-black text-[#262626] sm:text-lg dark:text-[#f2efe9]">
+					Tidak Ada Promo yang Cocok
+				</h2>
+				<p
+					class="mx-auto mt-1 max-w-sm font-mono text-xs text-[#262626]/60 sm:text-[13px] dark:text-[#f2efe9]/60"
+				>
+					Coba sesuaikan kata kunci pencarian atau ubah filter status di atas.
+				</p>
+			</div>
 		{:else}
 			<div
 				class="overflow-hidden rounded-[14px_4px_14px_4px] border-2 border-[#262626] bg-white shadow-[4px_4px_0px_#262626] dark:border-[#f2efe9]/20 dark:bg-[#1a1825]"
 			>
 				<div class="overflow-x-auto">
 					<table class="w-full min-w-[640px] text-left text-sm">
-					<thead
-						class="border-b-2 border-[#262626] bg-[#f2efe9] font-mono text-xs font-black tracking-wider text-[#262626] uppercase dark:border-[#f2efe9]/20 dark:bg-black/30 dark:text-[#f2efe9]"
-					>
-						<tr>
-							<th class="p-4">Nama Promo</th>
-							<th class="p-4">Target Produk</th>
-							<th class="p-4">Syarat & Diskon</th>
-							<th class="p-4 text-center">Status</th>
-							<th class="p-4 text-right">Aksi</th>
-						</tr>
-					</thead>
-					<tbody class="divide-y-2 divide-[#262626]/10 dark:divide-[#f2efe9]/10">
-						{#each data.promos as promo (promo.id)}
-							<tr class="transition-colors hover:bg-[#f2efe9]/50 dark:hover:bg-neutral-800/40">
-								<td class="p-4 text-sm font-bold text-[#262626] sm:text-base dark:text-[#f2efe9]">
-									{promo.name}
-								</td>
-								<td class="p-4">
-									<p class="text-sm font-bold text-[#262626] sm:text-base dark:text-[#f2efe9]">
-										{promo.product.name}
-									</p>
-									<p
-										class="font-mono text-xs text-[#262626]/60 sm:text-[13px] dark:text-[#f2efe9]/60"
-									>
-										{promo.product.category.name} · {formatRupiah(promo.product.priceInt)}/pcs
-									</p>
-								</td>
-								<td class="p-4">
-									<div
-										class="inline-flex items-center gap-1.5 rounded-md border border-[#262626] bg-emerald-50 px-3 py-1 font-mono text-xs font-bold text-[#262626] shadow-[1px_1px_0px_#262626] sm:text-[13px] dark:border-[#f2efe9] dark:bg-emerald-950/60 dark:text-emerald-300"
-									>
-										<span>Beli ≥ <strong>{promo.minQty} pcs</strong></span>
-										<span>→</span>
-										<span class="font-black text-emerald-700 dark:text-emerald-300"
-											>Potongan {formatRupiah(promo.discountAmount)}</span
-										>
-									</div>
-								</td>
-								<td class="p-4 text-center">
-									<!-- Toggle Switch Sakelar UI -->
-									<form
-										method="POST"
-										action="?/toggle"
-										use:enhance={() => {
-											isBusy = true;
-											return async ({ result, update }) => {
-												handleFormResult(result, {
-													success: promo.active ? 'Promo dinonaktifkan.' : 'Promo diaktifkan.',
-													failure: 'Gagal mengubah status promo.'
-												});
-												if (result.type === 'success') await update();
-												isBusy = false;
-											};
-										}}
-										class="inline-flex items-center justify-center"
-									>
-										<input type="hidden" name="id" value={promo.id} />
-										<input type="hidden" name="active" value={promo.active ? 'false' : 'true'} />
-										<button
-											type="submit"
-											disabled={isBusy}
-											role="switch"
-											aria-checked={promo.active}
-											title={promo.active
-												? 'Klik untuk nonaktifkan promo'
-												: 'Klik untuk aktifkan promo'}
-											class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-[#262626] transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 {promo.active
-												? 'bg-emerald-500'
-												: 'bg-neutral-300 dark:bg-neutral-700'}"
-										>
-											<span class="sr-only">Toggle Status Promo</span>
-											<span
-												aria-hidden="true"
-												class="pointer-events-none inline-block h-4.5 w-4.5 transform rounded-full border border-[#262626] bg-white shadow-xs transition duration-200 ease-in-out {promo.active
-													? 'translate-x-5'
-													: 'translate-x-0.5'}"
-											></span>
-										</button>
-									</form>
-								</td>
-								<td class="p-4 text-right">
-									<div class="inline-flex items-center gap-1.5">
-										<button
-											type="button"
-											onclick={() => openEditModal(promo)}
-											disabled={isBusy}
-											class="rounded-md border-2 border-[#262626] bg-white p-2 text-[#262626] shadow-[1px_1px_0px_#262626] transition-transform hover:-translate-y-0.5 disabled:opacity-50 dark:border-[#f2efe9] dark:bg-[#1a1825] dark:text-[#f2efe9]"
-											title="Edit Promo"
-										>
-											<Pencil size={15} />
-										</button>
-										<button
-											type="button"
-											onclick={() => (promoToDelete = promo.id)}
-											disabled={isBusy}
-											class="rounded-md border-2 border-[#262626] bg-red-100 p-2 text-red-900 shadow-[1px_1px_0px_#262626] transition-transform hover:-translate-y-0.5 disabled:opacity-50 dark:bg-red-950/60 dark:text-red-300"
-											title="Hapus Promo"
-										>
-											<Trash2 size={15} />
-										</button>
-									</div>
-								</td>
+						<thead
+							class="border-b-2 border-[#262626] bg-[#f2efe9] font-mono text-xs font-black tracking-wider text-[#262626] uppercase dark:border-[#f2efe9]/20 dark:bg-black/30 dark:text-[#f2efe9]"
+						>
+							<tr>
+								<th class="p-4">Nama Promo</th>
+								<th class="p-4">Target Produk</th>
+								<th class="p-4">Syarat & Diskon</th>
+								<th class="p-4 text-center">Status</th>
+								<th class="p-4 text-right">Aksi</th>
 							</tr>
-						{/each}
-					</tbody>
-				</table>
+						</thead>
+						<tbody class="divide-y-2 divide-[#262626]/10 dark:divide-[#f2efe9]/10">
+							{#each filteredPromos as promo (promo.id)}
+								<tr class="transition-colors hover:bg-[#f2efe9]/50 dark:hover:bg-neutral-800/40">
+									<td class="p-4 text-sm font-bold text-[#262626] sm:text-base dark:text-[#f2efe9]">
+										{promo.name}
+									</td>
+									<td class="p-4">
+										<p class="text-sm font-bold text-[#262626] sm:text-base dark:text-[#f2efe9]">
+											{promo.product.name}
+										</p>
+										<p
+											class="font-mono text-xs text-[#262626]/60 sm:text-[13px] dark:text-[#f2efe9]/60"
+										>
+											{promo.product.category.name} · {formatRupiah(promo.product.priceInt)}/pcs
+										</p>
+									</td>
+									<td class="p-4">
+										<div
+											class="inline-flex items-center gap-1.5 rounded-md border border-[#262626] bg-emerald-50 px-3 py-1 font-mono text-xs font-bold text-[#262626] shadow-[1px_1px_0px_#262626] sm:text-[13px] dark:border-[#f2efe9] dark:bg-emerald-950/60 dark:text-emerald-300"
+										>
+											<span>Beli ≥ <strong>{promo.minQty} pcs</strong></span>
+											<span>→</span>
+											<span class="font-black text-emerald-700 dark:text-emerald-300"
+												>Potongan {formatRupiah(promo.discountAmount)}</span
+											>
+										</div>
+									</td>
+									<td class="p-4 text-center">
+										<!-- Toggle Switch Sakelar UI -->
+										<form
+											method="POST"
+											action="?/toggle"
+											use:enhance={() => {
+												isBusy = true;
+												return async ({ result, update }) => {
+													handleFormResult(result, {
+														success: promo.active ? 'Promo dinonaktifkan.' : 'Promo diaktifkan.',
+														failure: 'Gagal mengubah status promo.'
+													});
+													if (result.type === 'success') await update();
+													isBusy = false;
+												};
+											}}
+											class="inline-flex items-center justify-center"
+										>
+											<input type="hidden" name="id" value={promo.id} />
+											<input type="hidden" name="active" value={promo.active ? 'false' : 'true'} />
+											<button
+												type="submit"
+												disabled={isBusy}
+												role="switch"
+												aria-checked={promo.active}
+												title={promo.active
+													? 'Klik untuk nonaktifkan promo'
+													: 'Klik untuk aktifkan promo'}
+												class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-[#262626] transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 {promo.active
+													? 'bg-emerald-500'
+													: 'bg-neutral-300 dark:bg-neutral-700'}"
+											>
+												<span class="sr-only">Toggle Status Promo</span>
+												<span
+													aria-hidden="true"
+													class="pointer-events-none inline-block h-4.5 w-4.5 transform rounded-full border border-[#262626] bg-white shadow-xs transition duration-200 ease-in-out {promo.active
+														? 'translate-x-5'
+														: 'translate-x-0.5'}"
+												></span>
+											</button>
+										</form>
+									</td>
+									<td class="p-4 text-right">
+										<div class="inline-flex items-center gap-1.5">
+											<button
+												type="button"
+												onclick={() => openEditModal(promo)}
+												disabled={isBusy}
+												class="rounded-md border-2 border-[#262626] bg-white p-2 text-[#262626] shadow-[1px_1px_0px_#262626] transition-transform hover:-translate-y-0.5 disabled:opacity-50 dark:border-[#f2efe9] dark:bg-[#1a1825] dark:text-[#f2efe9]"
+												title="Edit Promo"
+											>
+												<Pencil size={15} />
+											</button>
+											<button
+												type="button"
+												onclick={() => (promoToDelete = promo.id)}
+												disabled={isBusy}
+												class="rounded-md border-2 border-[#262626] bg-red-100 p-2 text-red-900 shadow-[1px_1px_0px_#262626] transition-transform hover:-translate-y-0.5 disabled:opacity-50 dark:bg-red-950/60 dark:text-red-300"
+												title="Hapus Promo"
+											>
+												<Trash2 size={15} />
+											</button>
+										</div>
+									</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
 			</div>
-		</div>
 		{/if}
 	</div>
 </BusyOverlay>
+
+<svelte:window
+	onscroll={() => {
+		showBackToTop = window.scrollY > 400;
+	}}
+/>
+
+{#if showBackToTop}
+	<button
+		type="button"
+		onclick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+		class="fixed right-6 bottom-6 z-40 flex h-11 w-11 items-center justify-center rounded-full border-2 border-[#262626] bg-[#fea770] text-[#262626] shadow-[3px_3px_0px_#262626] transition-transform hover:-translate-y-1 active:translate-y-0 active:shadow-none dark:border-[#f2efe9] dark:bg-[#fea770] dark:text-[#262626] dark:shadow-[3px_3px_0px_#f2efe9]"
+		aria-label="Kembali ke atas"
+		title="Kembali ke atas"
+	>
+		<ArrowUp size={20} strokeWidth={2.5} />
+	</button>
+{/if}
 
 <!-- Form Tersembunyi untuk Hapus Promo -->
 <form

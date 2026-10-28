@@ -3,12 +3,16 @@ import { listOrders, countOrders, ORDER_PER_PAGE } from '$lib/server/db/queries/
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ url }) => {
+	const hideVoidParam = url.searchParams.get('hideVoid');
+	const hideVoid = hideVoidParam === null ? 'true' : hideVoidParam === 'true' ? 'true' : 'false';
+
 	const filters = {
 		invoice: url.searchParams.get('invoice') ?? '',
 		payment: url.searchParams.get('payment') ?? '',
 		q: url.searchParams.get('q') ?? '',
 		from: url.searchParams.get('from') ?? '',
-		to: url.searchParams.get('to') ?? ''
+		to: url.searchParams.get('to') ?? '',
+		hideVoid
 	};
 
 	const rawPage = Number.parseInt(url.searchParams.get('page') ?? '1', 10);

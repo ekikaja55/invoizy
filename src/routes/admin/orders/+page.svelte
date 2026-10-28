@@ -6,12 +6,13 @@
 	import { formatRupiah } from '$lib/utils/currency';
 	import { invoiceStatusLabel, paymentStatusLabel } from '$lib/utils/status-label';
 	import Pagination from '$lib/components/ui/Pagination.svelte';
-	import { RefreshCw } from '@lucide/svelte';
+	import { RefreshCw, ArrowUp } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 	let refreshing = $state(false);
+	let showBackToTop = $state(false);
 
 	const isTableLoading = $derived(
 		refreshing ||
@@ -49,7 +50,16 @@
 	}
 
 	// Bedakan "belum ada order sama sekali" vs "filter tidak cocok".
-	const hasActiveFilter = $derived(Object.values(data.filters).some((v) => v !== ''));
+	const hasActiveFilter = $derived(
+		Boolean(
+			data.filters.q ||
+			data.filters.invoice ||
+			data.filters.payment ||
+			data.filters.from ||
+			data.filters.to ||
+			data.filters.hideVoid === 'false'
+		)
+	);
 
 	const pageHref = (p: number): ResolvedPathname => {
 		const qs = new URLSearchParams({ ...activeParams(), page: String(p) }).toString();
@@ -157,7 +167,7 @@
 					class="w-full truncate rounded-lg border-2 border-[#262626] bg-white px-3 py-2 font-mono text-xs text-[#262626] shadow-[2px_2px_0px_#262626] focus:ring-2 focus:ring-[#fea770] focus:outline-none sm:text-sm dark:border-[#f2efe9] dark:bg-[#1a1825] dark:text-[#f2efe9]"
 				>
 					<option value="">Bayar: semua</option>
-					{#each ['PENDING', 'CONFIRMED', 'CANCELLED'] as s (s)}
+					{#each ['PENDING', 'WAITING_VERIFICATION', 'CONFIRMED', 'CANCELLED', 'EXPIRED'] as s (s)}
 						<option value={s} selected={data.filters.payment === s}>{paymentStatusLabel(s)}</option>
 					{/each}
 				</select>
@@ -178,19 +188,37 @@
 				/>
 			</div>
 
-			<div class="flex gap-2.5">
-				<button
-					type="submit"
-					class="rounded-lg border-2 border-[#262626] bg-[#fea770] px-4 py-2 font-mono text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#f99252] active:translate-y-0.5 active:shadow-none sm:text-sm"
-				>
-					Terapkan
-				</button>
-				<a
-					href={resolve('/admin/orders')}
-					class="rounded-lg border-2 border-[#262626] bg-white px-4 py-2 font-mono text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#b4a6d5] active:translate-y-0.5 active:shadow-none sm:text-sm dark:border-[#f2efe9] dark:bg-[#343044] dark:text-[#f2efe9]"
-				>
-					Reset
-				</a>
+			<div
+				class="flex flex-wrap items-center justify-between gap-3 border-t border-[#262626]/10 pt-1 sm:col-span-2 dark:border-[#f2efe9]/10"
+			>
+				<label class="flex cursor-pointer items-center gap-2 select-none">
+					<input type="hidden" name="hideVoid" value="false" />
+					<input
+						type="checkbox"
+						name="hideVoid"
+						value="true"
+						checked={data.filters.hideVoid !== 'false'}
+						class="h-4 w-4 rounded border-2 border-[#262626] text-[#262626] accent-[#fea770] focus:ring-[#fea770]"
+					/>
+					<span class="font-mono text-xs font-bold text-[#262626] dark:text-[#f2efe9]">
+						Sembunyikan Batal & Kadaluarsa
+					</span>
+				</label>
+
+				<div class="flex gap-2.5">
+					<button
+						type="submit"
+						class="rounded-lg border-2 border-[#262626] bg-[#fea770] px-4 py-2 font-mono text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#f99252] active:translate-y-0.5 active:shadow-none sm:text-sm"
+					>
+						Terapkan
+					</button>
+					<a
+						href={resolve('/admin/orders')}
+						class="rounded-lg border-2 border-[#262626] bg-white px-4 py-2 font-mono text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#b4a6d5] active:translate-y-0.5 active:shadow-none sm:text-sm dark:border-[#f2efe9] dark:bg-[#343044] dark:text-[#f2efe9]"
+					>
+						Reset
+					</a>
+				</div>
 			</div>
 		</form>
 
@@ -206,51 +234,51 @@
 				>
 					<div class="overflow-x-auto">
 						<table class="w-full min-w-160 text-left font-sans text-sm">
-						<thead>
-							<tr
-								class="border-b-2 border-[#262626] bg-[#f2efe9] font-mono text-xs font-bold tracking-wider text-[#262626] uppercase dark:border-[#f2efe9]/20 dark:bg-[#1a1825] dark:text-[#f2efe9]"
-							>
-								<th class="px-4 py-3">Order</th>
-								<th class="px-4 py-3">Buyer</th>
-								<th class="px-4 py-3">Items</th>
-								<th class="px-4 py-3 text-right">Total</th>
-								<th class="px-4 py-3">Status</th>
-								<th class="px-4 py-3 text-center">Aksi</th>
-							</tr>
-						</thead>
-						<tbody class="divide-y-2 border-[#262626] dark:divide-[#f2efe9]/20">
-							{#each Array.from({ length: 5 }, (_, i) => i) as i (i)}
-								<tr class="animate-pulse">
-									<td class="px-4 py-4">
-										<div class="h-4 w-28 rounded bg-[#262626]/15 dark:bg-[#f2efe9]/20"></div>
-										<div class="mt-2 h-3 w-20 rounded bg-[#262626]/10 dark:bg-[#f2efe9]/12"></div>
-									</td>
-									<td class="px-4 py-4">
-										<div class="h-4 w-32 rounded bg-[#262626]/15 dark:bg-[#f2efe9]/20"></div>
-										<div class="mt-2 h-3 w-40 rounded bg-[#262626]/10 dark:bg-[#f2efe9]/12"></div>
-									</td>
-									<td class="px-4 py-4">
-										<div class="h-4 w-24 rounded bg-[#262626]/15 dark:bg-[#f2efe9]/20"></div>
-									</td>
-									<td class="px-4 py-4 text-right">
-										<div
-											class="ml-auto h-4 w-24 rounded bg-[#262626]/15 dark:bg-[#f2efe9]/20"
-										></div>
-									</td>
-									<td class="px-4 py-4">
-										<div class="h-6 w-20 rounded-md bg-[#262626]/15 dark:bg-[#f2efe9]/20"></div>
-									</td>
-									<td class="px-4 py-4 text-center">
-										<div
-											class="mx-auto h-7 w-20 rounded-md bg-[#262626]/15 dark:bg-[#f2efe9]/20"
-										></div>
-									</td>
+							<thead>
+								<tr
+									class="border-b-2 border-[#262626] bg-[#f2efe9] font-mono text-xs font-bold tracking-wider text-[#262626] uppercase dark:border-[#f2efe9]/20 dark:bg-[#1a1825] dark:text-[#f2efe9]"
+								>
+									<th class="px-4 py-3">Order</th>
+									<th class="px-4 py-3">Buyer</th>
+									<th class="px-4 py-3">Items</th>
+									<th class="px-4 py-3 text-right">Total</th>
+									<th class="px-4 py-3">Status</th>
+									<th class="px-4 py-3 text-center">Aksi</th>
 								</tr>
-							{/each}
-						</tbody>
-					</table>
+							</thead>
+							<tbody class="divide-y-2 border-[#262626] dark:divide-[#f2efe9]/20">
+								{#each Array.from({ length: 5 }, (_, i) => i) as i (i)}
+									<tr class="animate-pulse">
+										<td class="px-4 py-4">
+											<div class="h-4 w-28 rounded bg-[#262626]/15 dark:bg-[#f2efe9]/20"></div>
+											<div class="mt-2 h-3 w-20 rounded bg-[#262626]/10 dark:bg-[#f2efe9]/12"></div>
+										</td>
+										<td class="px-4 py-4">
+											<div class="h-4 w-32 rounded bg-[#262626]/15 dark:bg-[#f2efe9]/20"></div>
+											<div class="mt-2 h-3 w-40 rounded bg-[#262626]/10 dark:bg-[#f2efe9]/12"></div>
+										</td>
+										<td class="px-4 py-4">
+											<div class="h-4 w-24 rounded bg-[#262626]/15 dark:bg-[#f2efe9]/20"></div>
+										</td>
+										<td class="px-4 py-4 text-right">
+											<div
+												class="ml-auto h-4 w-24 rounded bg-[#262626]/15 dark:bg-[#f2efe9]/20"
+											></div>
+										</td>
+										<td class="px-4 py-4">
+											<div class="h-6 w-20 rounded-md bg-[#262626]/15 dark:bg-[#f2efe9]/20"></div>
+										</td>
+										<td class="px-4 py-4 text-center">
+											<div
+												class="mx-auto h-7 w-20 rounded-md bg-[#262626]/15 dark:bg-[#f2efe9]/20"
+											></div>
+										</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
 				</div>
-			</div>
 			</div>
 		{:else if data.orders.length === 0}
 			{#if hasActiveFilter}
@@ -285,101 +313,129 @@
 				</div>
 			{/if}
 		{:else}
-			<div class="flex items-center justify-between">
+			<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 				<span class="font-mono text-xs font-bold text-[#404040] sm:text-sm dark:text-[#b8b5ad]">
 					Total <strong class="text-[#262626] dark:text-[#f2efe9]">{data.total}</strong> pesanan ditemukan
 				</span>
+				{#if data.totalPages > 1}
+					<Pagination page={data.page} totalPages={data.totalPages} buildHref={pageHref} />
+				{/if}
 			</div>
 			<div
 				class="relative overflow-hidden rounded-[14px_4px_14px_4px] border-2 border-[#262626] bg-white shadow-[4px_4px_0px_#262626] dark:border-[#a2e1db] dark:bg-[#252331] dark:shadow-[4px_4px_0px_#b4a6d5]"
 			>
 				<div class="overflow-x-auto">
 					<table class="w-full min-w-160 text-left font-sans text-sm">
-					<thead>
-						<tr
-							class="border-b-2 border-[#262626] bg-[#f2efe9] font-mono text-xs font-bold tracking-wider text-[#262626] uppercase dark:border-[#f2efe9]/20 dark:bg-[#1a1825] dark:text-[#f2efe9]"
-						>
-							<th class="px-4 py-3.5">Order</th>
-							<th class="px-4 py-3.5">Buyer</th>
-							<th class="px-4 py-3.5 text-right">Total</th>
-							<th class="px-4 py-3.5">Invoice</th>
-							<th class="px-4 py-3.5">Bayar</th>
-							<th class="px-4 py-3.5">Tanggal</th>
-						</tr>
-					</thead>
-					<tbody class="divide-y divide-[#262626]/10 dark:divide-[#f2efe9]/10">
-						{#each data.orders as o (o.orderId)}
-							<tr class="transition-colors hover:bg-[#f2efe9]/60 dark:hover:bg-[#1a1825]/60">
-								<td class="px-4 py-3.5 font-mono">
-									<a
-										href={orderHref(o.orderId)}
-										class="text-sm font-bold underline underline-offset-2 hover:text-[#fea770]"
-									>
-										#{o.orderId}
-									</a>
-									<span class="ml-1 text-xs font-bold text-[#404040] dark:text-[#b8b5ad]"
-										>({o.itemQty})</span
-									>
-								</td>
-								<td class="px-4 py-3.5">
-									<span
-										class="font-serif text-sm font-bold text-[#262626] md:text-base dark:text-[#f2efe9]"
-										>{o.handle}</span
-									>
-									<span
-										class="block font-mono text-xs font-medium text-[#404040] dark:text-[#b8b5ad]"
-										>{o.email}</span
-									>
-								</td>
-								<td
-									class="px-4 py-3.5 text-right font-mono text-sm font-bold text-[#065f46] md:text-base dark:text-[#a2e1db]"
-								>
-									{formatRupiah(o.total)}
-								</td>
-								<td class="px-4 py-3.5">
-									<span
-										class="inline-block rounded border border-[#262626] bg-[#f2efe9] px-2.5 py-1 font-mono text-xs font-bold text-[#262626] dark:border-[#f2efe9] dark:bg-[#1a1825] dark:text-[#f2efe9]"
-									>
-										{invoiceStatusLabel(o.invoiceStatus)}
-									</span>
-								</td>
-								<td class="px-4 py-3.5">
-									{#if o.paymentStatus === 'CONFIRMED'}
-										<span
-											class="inline-flex items-center gap-1.5 rounded-full border border-[#065f46] bg-[#d1fae5] px-2.5 py-1 font-mono text-xs font-bold text-[#065f46]"
-										>
-											<span class="h-1.5 w-1.5 rounded-full bg-[#065f46]"></span>
-											<span>Lunas</span>
-										</span>
-									{:else if o.paymentStatus === 'CANCELLED'}
-										<span
-											class="inline-flex items-center gap-1.5 rounded-full border border-[#991b1b] bg-[#fee2e2] px-2.5 py-1 font-mono text-xs font-bold text-[#991b1b]"
-										>
-											<span class="h-1.5 w-1.5 rounded-full bg-[#991b1b]"></span>
-											<span>Batal</span>
-										</span>
-									{:else}
-										<span
-											class="inline-flex items-center gap-1.5 rounded-full border border-[#92400e] bg-[#fef3c7] px-2.5 py-1 font-mono text-xs font-bold text-[#92400e]"
-										>
-											<span class="h-1.5 w-1.5 rounded-full bg-[#92400e]"></span>
-											<span>{paymentStatusLabel(o.paymentStatus)}</span>
-										</span>
-									{/if}
-								</td>
-								<td
-									class="px-4 py-3.5 font-mono text-xs font-medium text-[#404040] dark:text-[#b8b5ad]"
-								>
-									{dateLabel(o.createdAt)}
-								</td>
+						<thead>
+							<tr
+								class="border-b-2 border-[#262626] bg-[#f2efe9] font-mono text-xs font-bold tracking-wider text-[#262626] uppercase dark:border-[#f2efe9]/20 dark:bg-[#1a1825] dark:text-[#f2efe9]"
+							>
+								<th class="px-4 py-3.5">Order</th>
+								<th class="px-4 py-3.5">Buyer</th>
+								<th class="px-4 py-3.5 text-right">Total</th>
+								<th class="px-4 py-3.5">Invoice</th>
+								<th class="px-4 py-3.5">Bayar</th>
+								<th class="px-4 py-3.5">Tanggal</th>
 							</tr>
-						{/each}
-					</tbody>
-				</table>
+						</thead>
+						<tbody class="divide-y divide-[#262626]/10 dark:divide-[#f2efe9]/10">
+							{#each data.orders as o (o.orderId)}
+								<tr class="transition-colors hover:bg-[#f2efe9]/60 dark:hover:bg-[#1a1825]/60">
+									<td class="px-4 py-3.5 font-mono">
+										<a
+											href={orderHref(o.orderId)}
+											class="text-sm font-bold underline underline-offset-2 hover:text-[#fea770]"
+										>
+											#{o.orderId}
+										</a>
+										<span class="ml-1 text-xs font-bold text-[#404040] dark:text-[#b8b5ad]"
+											>({o.itemQty})</span
+										>
+									</td>
+									<td class="px-4 py-3.5">
+										<span
+											class="font-serif text-sm font-bold text-[#262626] md:text-base dark:text-[#f2efe9]"
+											>{o.handle}</span
+										>
+										<span
+											class="block font-mono text-xs font-medium text-[#404040] dark:text-[#b8b5ad]"
+											>{o.email}</span
+										>
+									</td>
+									<td
+										class="px-4 py-3.5 text-right font-mono text-sm font-bold text-[#065f46] md:text-base dark:text-[#a2e1db]"
+									>
+										{formatRupiah(o.total)}
+									</td>
+									<td class="px-4 py-3.5">
+										<span
+											class="inline-block rounded border border-[#262626] bg-[#f2efe9] px-2.5 py-1 font-mono text-xs font-bold text-[#262626] dark:border-[#f2efe9] dark:bg-[#1a1825] dark:text-[#f2efe9]"
+										>
+											{invoiceStatusLabel(o.invoiceStatus)}
+										</span>
+									</td>
+									<td class="px-4 py-3.5">
+										{#if o.paymentStatus === 'CONFIRMED'}
+											<span
+												class="inline-flex items-center gap-1.5 rounded-full border border-[#065f46] bg-[#d1fae5] px-2.5 py-1 font-mono text-xs font-bold text-[#065f46]"
+											>
+												<span class="h-1.5 w-1.5 rounded-full bg-[#065f46]"></span>
+												<span>Lunas</span>
+											</span>
+										{:else if o.paymentStatus === 'EXPIRED'}
+											<span
+												class="inline-flex items-center gap-1.5 rounded-full border-2 border-[#262626] bg-[#262626] px-2.5 py-1 font-mono text-xs font-bold text-white shadow-[1px_1px_0px_#262626] dark:border-[#f2efe9]/40 dark:bg-neutral-800 dark:text-neutral-200"
+											>
+												<span class="h-1.5 w-1.5 rounded-full bg-neutral-400"></span>
+												<span>Kadaluarsa</span>
+											</span>
+										{:else if o.paymentStatus === 'CANCELLED'}
+											<span
+												class="inline-flex items-center gap-1.5 rounded-full border border-[#991b1b] bg-[#fee2e2] px-2.5 py-1 font-mono text-xs font-bold text-[#991b1b]"
+											>
+												<span class="h-1.5 w-1.5 rounded-full bg-[#991b1b]"></span>
+												<span>Batal</span>
+											</span>
+										{:else}
+											<span
+												class="inline-flex items-center gap-1.5 rounded-full border border-[#92400e] bg-[#fef3c7] px-2.5 py-1 font-mono text-xs font-bold text-[#92400e]"
+											>
+												<span class="h-1.5 w-1.5 rounded-full bg-[#92400e]"></span>
+												<span>{paymentStatusLabel(o.paymentStatus)}</span>
+											</span>
+										{/if}
+									</td>
+									<td
+										class="px-4 py-3.5 font-mono text-xs font-medium text-[#404040] dark:text-[#b8b5ad]"
+									>
+										{dateLabel(o.createdAt)}
+									</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
 			</div>
-		</div>
 
 			<Pagination page={data.page} totalPages={data.totalPages} buildHref={pageHref} />
 		{/if}
 	</div>
 </div>
+
+<svelte:window
+	onscroll={() => {
+		showBackToTop = window.scrollY > 400;
+	}}
+/>
+
+{#if showBackToTop}
+	<button
+		type="button"
+		onclick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+		class="fixed right-6 bottom-6 z-40 flex h-11 w-11 items-center justify-center rounded-full border-2 border-[#262626] bg-[#fea770] text-[#262626] shadow-[3px_3px_0px_#262626] transition-transform hover:-translate-y-1 active:translate-y-0 active:shadow-none dark:border-[#f2efe9] dark:bg-[#fea770] dark:text-[#262626] dark:shadow-[3px_3px_0px_#f2efe9]"
+		aria-label="Kembali ke atas"
+		title="Kembali ke atas"
+	>
+		<ArrowUp size={20} strokeWidth={2.5} />
+	</button>
+{/if}

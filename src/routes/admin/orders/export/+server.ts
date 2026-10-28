@@ -4,12 +4,16 @@ import type { RequestHandler } from './$types';
 
 // Layout /admin meng-guard sesi — endpoint ini ikut terlindungi.
 export const GET: RequestHandler = async ({ url }) => {
+	const hideVoidParam = url.searchParams.get('hideVoid');
+	const hideVoid = hideVoidParam === null ? 'true' : hideVoidParam === 'true' ? 'true' : 'false';
+
 	const rows = await listOrdersForExport({
 		invoice: url.searchParams.get('invoice') ?? '',
 		payment: url.searchParams.get('payment') ?? '',
 		q: url.searchParams.get('q') ?? '',
 		from: url.searchParams.get('from') ?? '',
-		to: url.searchParams.get('to') ?? ''
+		to: url.searchParams.get('to') ?? '',
+		hideVoid
 	});
 
 	const header = [

@@ -22,7 +22,7 @@
 		loading = false;
 
 		if (signInError) {
-			toast.error('Login gagal. Cek email dan password Anda.');
+			toast.error(signInError.message || 'Login gagal. Cek email dan password Anda.');
 			return;
 		}
 

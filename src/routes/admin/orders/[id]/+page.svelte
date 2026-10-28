@@ -288,9 +288,11 @@
 						class="inline-flex items-center rounded-md border border-[#262626] px-2.5 py-1 font-mono text-xs font-bold shadow-[1px_1px_0px_#262626] {data
 							.order.paymentStatus === 'CONFIRMED'
 							? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300'
-							: data.order.paymentStatus === 'CANCELLED' || data.order.paymentStatus === 'EXPIRED'
-								? 'bg-red-100 text-red-900 dark:bg-red-950/60 dark:text-red-300'
-								: 'bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300'}"
+							: data.order.paymentStatus === 'EXPIRED'
+								? 'bg-[#262626] text-white dark:border-[#f2efe9]/40 dark:bg-neutral-800 dark:text-neutral-200'
+								: data.order.paymentStatus === 'CANCELLED'
+									? 'bg-red-100 text-red-900 dark:bg-red-950/60 dark:text-red-300'
+									: 'bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300'}"
 					>
 						{paymentStatusLabel(data.order.paymentStatus)}
 					</span>

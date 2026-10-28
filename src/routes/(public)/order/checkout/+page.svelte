@@ -327,7 +327,7 @@
 							disabled={isBusy}
 							class="mt-1 accent-[#262626] dark:accent-[#a2e1db]"
 						/>
-						<div class="space-y-1">
+						<div class="space-y-1.5">
 							<div class="flex flex-wrap items-center gap-2">
 								<span class="font-serif text-sm font-bold text-[#262626] dark:text-[#f2efe9]">
 									Self-Pickup: Chibiconxi Day 1
@@ -338,10 +338,17 @@
 									Ambil di Booth (Rp 0)
 								</span>
 							</div>
-							<p class="font-mono text-xs leading-relaxed text-[#404040] dark:text-[#b8b5ad]">
-								Ambil pesanan langsung di meja booth cho.lazey pada event Chibiconxi hari pertama
-								(Sabtu, 12 Desember 2026).
-							</p>
+							<div class="space-y-0.5 font-mono text-xs text-[#404040] dark:text-[#b8b5ad]">
+								<p>
+									Booth: <strong class="text-[#262626] dark:text-[#f2efe9]">@cho.lazey</strong> (No. TBA
+									· Pasien Waras Dikit)
+								</p>
+								<p>
+									Jadwal: <strong class="text-[#262626] dark:text-[#f2efe9]"
+										>Sabtu, 12 Desember 2026</strong
+									>
+								</p>
+							</div>
 						</div>
 					</div>
 					<span class="font-mono text-sm font-black text-[#065f46] dark:text-[#a2e1db]">Rp 0</span>
@@ -363,7 +370,7 @@
 							disabled={isBusy}
 							class="mt-1 accent-[#262626] dark:accent-[#a2e1db]"
 						/>
-						<div class="space-y-1">
+						<div class="space-y-1.5">
 							<div class="flex flex-wrap items-center gap-2">
 								<span class="font-serif text-sm font-bold text-[#262626] dark:text-[#f2efe9]">
 									Self-Pickup: Chibiconxi Day 2
@@ -374,10 +381,17 @@
 									Ambil di Booth (Rp 0)
 								</span>
 							</div>
-							<p class="font-mono text-xs leading-relaxed text-[#404040] dark:text-[#b8b5ad]">
-								Ambil pesanan langsung di meja booth cho.lazey pada event Chibiconxi hari kedua
-								(Minggu, 13 Desember 2026).
-							</p>
+							<div class="space-y-0.5 font-mono text-xs text-[#404040] dark:text-[#b8b5ad]">
+								<p>
+									Booth: <strong class="text-[#262626] dark:text-[#f2efe9]">@cho.lazey</strong> (No. TBA
+									· Pasien Waras Dikit)
+								</p>
+								<p>
+									Jadwal: <strong class="text-[#262626] dark:text-[#f2efe9]"
+										>Minggu, 13 Desember 2026</strong
+									>
+								</p>
+							</div>
 						</div>
 					</div>
 					<span class="font-mono text-sm font-black text-[#065f46] dark:text-[#a2e1db]">Rp 0</span>
@@ -700,6 +714,9 @@
 					disabled={isBusy}
 					class="mt-1.5 w-full rounded-lg border-2 border-[#262626] bg-white px-3.5 py-2.5 font-sans text-sm leading-relaxed text-[#262626] shadow-[2px_2px_0px_#262626] placeholder:text-[#404040]/40 focus:ring-2 focus:ring-[#fea770] focus:outline-none disabled:opacity-50 dark:border-[#f2efe9] dark:bg-[#252331] dark:text-[#f2efe9] dark:shadow-[2px_2px_0px_#f2efe9] dark:placeholder:text-[#b8b5ad]/40"
 				></textarea>
+				<p class="mt-1.5 font-mono text-[11px] font-bold text-[#991b1b] dark:text-[#f87171]">
+					PERHATIAN: Emotikon atau simbol dekoratif tidak akan dicetak pada berkas PDF faktur.
+				</p>
 			</div>
 
 			<!-- Primary Submit Button: Dual-Span Rolling Ticker -->

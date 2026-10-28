@@ -10,7 +10,21 @@ import {
 	productVariants,
 	productPromos
 } from '$lib/server/db/schema';
-import { eq, asc, and, gte, lte, inArray, sql, count, desc, ilike, or, sum } from 'drizzle-orm';
+import {
+	eq,
+	asc,
+	and,
+	gte,
+	lte,
+	inArray,
+	notInArray,
+	sql,
+	count,
+	desc,
+	ilike,
+	or,
+	sum
+} from 'drizzle-orm';
 import { generateOrderId, generateAccessToken } from '$lib/utils/order-id';
 import { SHIPPING_COURIERS } from '$lib/server/shipping/couriers';
 import { ORDER_HOLD_TIMEOUT_MINUTES } from '$lib/constants';
@@ -605,11 +619,17 @@ export async function updateOrderPaymentStatus(
 // LIST + FILTER + PAGINATION (admin)
 // ─────────────────────────────────────────────
 
-export const ORDER_PER_PAGE = 10;
+export const ORDER_PER_PAGE = 7;
 export const ORDER_EXPORT_LIMIT = 2000;
 
 const INVOICE_FILTERS = ['PENDING', 'GENERATING', 'SENT', 'FAILED'] as const;
-const PAYMENT_FILTERS = ['PENDING', 'CONFIRMED', 'CANCELLED'] as const;
+const PAYMENT_FILTERS = [
+	'PENDING',
+	'WAITING_VERIFICATION',
+	'CONFIRMED',
+	'CANCELLED',
+	'EXPIRED'
+] as const;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export interface OrderListFilters {
@@ -618,6 +638,7 @@ export interface OrderListFilters {
 	q?: string;
 	from?: string;
 	to?: string;
+	hideVoid?: string;
 }
 
 // Satu builder WHERE dipakai list + count + export — filter selalu konsisten.
@@ -630,6 +651,8 @@ function buildOrderConditions(f: OrderListFilters) {
 
 	if (f.payment && (PAYMENT_FILTERS as readonly string[]).includes(f.payment)) {
 		cond.push(eq(orders.paymentStatus, f.payment as (typeof PAYMENT_FILTERS)[number]));
+	} else if (f.hideVoid === 'true') {
+		cond.push(notInArray(orders.paymentStatus, ['CANCELLED', 'EXPIRED']));
 	}
 
 	const q = f.q?.trim();

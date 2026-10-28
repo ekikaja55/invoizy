@@ -19,6 +19,7 @@ let limiter: Ratelimit | null = null;
 let shippingLimiter: Ratelimit | null = null;
 let paymentProofLimiter: Ratelimit | null = null;
 let verifyHistoryLimiter: Ratelimit | null = null;
+let loginLimiter: Ratelimit | null = null;
 
 if (url && token) {
 	const redis = new Redis({ url, token });
@@ -51,6 +52,14 @@ if (url && token) {
 		redis,
 		limiter: Ratelimit.slidingWindow(20, '1 m'),
 		prefix: 'invoizy:verify-history',
+		ephemeralCache,
+		timeout: 2000
+	});
+	// Proteksi brute-force login admin (5 request / 15 menit per IP)
+	loginLimiter = new Ratelimit({
+		redis,
+		limiter: Ratelimit.slidingWindow(5, '15 m'),
+		prefix: 'invoizy:login',
 		ephemeralCache,
 		timeout: 2000
 	});
@@ -115,6 +124,21 @@ export async function checkVerifyHistoryRateLimit(identifier: string): Promise<R
 	}
 
 	const result = await verifyHistoryLimiter.limit(identifier);
+	return {
+		success: result.success,
+		limit: result.limit,
+		remaining: result.remaining,
+		reset: result.reset
+	};
+}
+
+export async function checkLoginRateLimit(identifier: string): Promise<RateLimitResult> {
+	// Fail open — tanpa Upstash, jangan halangi login sah.
+	if (!loginLimiter) {
+		return { success: true, limit: 5, remaining: 5, reset: 0 };
+	}
+
+	const result = await loginLimiter.limit(identifier);
 	return {
 		success: result.success,
 		limit: result.limit,
