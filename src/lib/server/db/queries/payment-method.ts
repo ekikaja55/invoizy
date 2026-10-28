@@ -27,6 +27,17 @@ export async function deletePaymentMethod(id: string) {
 	await db.delete(paymentMethods).where(eq(paymentMethods.id, id));
 }
 
+export async function reorderPaymentMethodsBatch(orderedIds: string[]) {
+	await db.transaction(async (tx) => {
+		for (let i = 0; i < orderedIds.length; i++) {
+			await tx
+				.update(paymentMethods)
+				.set({ sortOrder: i, updatedAt: new Date() })
+				.where(eq(paymentMethods.id, orderedIds[i]));
+		}
+	});
+}
+
 export async function reorderPaymentMethod(id: string, direction: 'up' | 'down') {
 	const all = await db.query.paymentMethods.findMany({ orderBy: [asc(paymentMethods.sortOrder)] });
 	const index = all.findIndex((p) => p.id === id);

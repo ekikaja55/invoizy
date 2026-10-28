@@ -17,7 +17,7 @@
 // diingat / ditulis manual oleh admin, tapi tidak dipakai sebagai kunci akses karena terlalu
 // mudah ditebak(36 ^ 5 kombinasi saja).accessToken yang jadi gerbang ke / invoice / [orderId] ? token =....
 // ------------------------------------------------------------------
-import { pgTable, text, integer, boolean, timestamp, pgEnum, uuid } from 'drizzle-orm/pg-core';
+import { pgTable, text, integer, boolean, timestamp, pgEnum, uuid, index } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // ─────────────────────────────────────────────
@@ -113,40 +113,48 @@ export const categoriesRelations = relations(categories, ({ many }) => ({
 // PRODUCTS
 // ─────────────────────────────────────────────
 
-export const products = pgTable('products', {
-	id: uuid('id').primaryKey().defaultRandom(),
-	categoryId: uuid('category_id')
-		.notNull()
-		.references(() => categories.id, { onDelete: 'cascade' }),
+export const products = pgTable(
+	'products',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		categoryId: uuid('category_id')
+			.notNull()
+			.references(() => categories.id, { onDelete: 'cascade' }),
 
-	name: text('name').notNull(),
-	priceInt: integer('price_int').notNull(),
+		name: text('name').notNull(),
+		priceInt: integer('price_int').notNull(),
 
-	trackStock: boolean('track_stock').notNull().default(false),
-	stock: integer('stock').notNull().default(0),
-	weightGrams: integer('weight_grams').notNull().default(0),
-	description: text('description'),
-	imageUrls: text('image_urls').array(),
+		trackStock: boolean('track_stock').notNull().default(false),
+		stock: integer('stock').notNull().default(0),
+		weightGrams: integer('weight_grams').notNull().default(0),
+		description: text('description'),
+		imageUrls: text('image_urls').array(),
 
-	active: boolean('active').notNull().default(true),
-	sortOrder: integer('sort_order').notNull().default(0),
+		active: boolean('active').notNull().default(true),
+		sortOrder: integer('sort_order').notNull().default(0),
 
-	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
-});
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(table) => [index('products_category_id_idx').on(table.categoryId)]
+);
 
-export const productVariants = pgTable('product_variants', {
-	id: uuid('id').primaryKey().defaultRandom(),
-	productId: uuid('product_id')
-		.notNull()
-		.references(() => products.id, { onDelete: 'cascade' }),
-	name: text('name').notNull(),
-	stock: integer('stock').notNull().default(0),
-	trackStock: boolean('track_stock').notNull().default(true),
-	sortOrder: integer('sort_order').notNull().default(0),
-	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
-});
+export const productVariants = pgTable(
+	'product_variants',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		productId: uuid('product_id')
+			.notNull()
+			.references(() => products.id, { onDelete: 'cascade' }),
+		name: text('name').notNull(),
+		stock: integer('stock').notNull().default(0),
+		trackStock: boolean('track_stock').notNull().default(true),
+		sortOrder: integer('sort_order').notNull().default(0),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(table) => [index('product_variants_product_id_idx').on(table.productId)]
+);
 
 export const productVariantsRelations = relations(productVariants, ({ one }) => ({
 	product: one(products, {
@@ -159,18 +167,22 @@ export const productVariantsRelations = relations(productVariants, ({ one }) => 
 // PROMOS (Diskon kuantitas kelipatan per produk)
 // ─────────────────────────────────────────────
 
-export const productPromos = pgTable('product_promos', {
-	id: uuid('id').primaryKey().defaultRandom(),
-	productId: uuid('product_id')
-		.notNull()
-		.references(() => products.id, { onDelete: 'cascade' }),
-	name: text('name').notNull(), // e.g. "Beli 3 Diskon 3rb"
-	minQty: integer('min_qty').notNull().default(1),
-	discountAmount: integer('discount_amount').notNull().default(0), // dalam integer Rupiah
-	active: boolean('active').notNull().default(true),
-	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
-});
+export const productPromos = pgTable(
+	'product_promos',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		productId: uuid('product_id')
+			.notNull()
+			.references(() => products.id, { onDelete: 'cascade' }),
+		name: text('name').notNull(), // e.g. "Beli 3 Diskon 3rb"
+		minQty: integer('min_qty').notNull().default(1),
+		discountAmount: integer('discount_amount').notNull().default(0), // dalam integer Rupiah
+		active: boolean('active').notNull().default(true),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(table) => [index('product_promos_product_id_idx').on(table.productId)]
+);
 
 export const productPromosRelations = relations(productPromos, ({ one }) => ({
 	product: one(products, {
@@ -236,26 +248,33 @@ export const ordersRelations = relations(orders, ({ many }) => ({
 // ORDER ITEMS
 // ─────────────────────────────────────────────
 
-export const orderItems = pgTable('order_items', {
-	id: uuid('id').primaryKey().defaultRandom(),
+export const orderItems = pgTable(
+	'order_items',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
 
-	orderId: uuid('order_id')
-		.notNull()
-		.references(() => orders.id, { onDelete: 'cascade' }),
+		orderId: uuid('order_id')
+			.notNull()
+			.references(() => orders.id, { onDelete: 'cascade' }),
 
-	productId: uuid('product_id').references(() => products.id, { onDelete: 'set null' }),
+		productId: uuid('product_id').references(() => products.id, { onDelete: 'set null' }),
 
-	categorySnapshot: text('category_snapshot').notNull(),
-	nameSnapshot: text('name_snapshot').notNull(),
-	variantNameSnapshot: text('variant_name_snapshot'),
-	priceSnapshot: integer('price_snapshot').notNull(),
+		categorySnapshot: text('category_snapshot').notNull(),
+		nameSnapshot: text('name_snapshot').notNull(),
+		variantNameSnapshot: text('variant_name_snapshot'),
+		priceSnapshot: integer('price_snapshot').notNull(),
 
-	qty: integer('qty').notNull(),
-	subtotal: integer('subtotal').notNull(),
-	sortOrder: integer('sort_order').notNull().default(0),
+		qty: integer('qty').notNull(),
+		subtotal: integer('subtotal').notNull(),
+		sortOrder: integer('sort_order').notNull().default(0),
 
-	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
-});
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(table) => [
+		index('order_items_order_id_idx').on(table.orderId),
+		index('order_items_product_id_idx').on(table.productId)
+	]
+);
 
 export const orderItemsRelations = relations(orderItems, ({ one }) => ({
 	order: one(orders, {

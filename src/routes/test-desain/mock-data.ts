@@ -80,20 +80,9 @@ export const mockInvoice: InvoiceData = {
 	]
 };
 
-export const mockPaymentStatuses = [
-	'PENDING',
-	'UNCONFIRMED',
-	'PAID',
-	'EXPIRED'
-] as const;
+export const mockPaymentStatuses = ['PENDING', 'UNCONFIRMED', 'PAID', 'EXPIRED'] as const;
 
-export const mockInvoiceStatuses = [
-	'PENDING',
-	'GENERATING',
-	'READY',
-	'SENT',
-	'FAILED'
-] as const;
+export const mockInvoiceStatuses = ['PENDING', 'GENERATING', 'READY', 'SENT', 'FAILED'] as const;
 
 export const mockStatuses = [
 	{ invoice: 'PENDING', payment: 'PENDING' },
@@ -166,7 +155,9 @@ export const mockReorderProducts: MockReorderProduct[] = [
 		trackStock: true,
 		active: true,
 		description: 'Bahan akrilik 4mm dengan gantungan putar warna emas dan efek hologram pelangi.',
-		imageUrls: ['https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80'],
+		imageUrls: [
+			'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80'
+		],
 		variants: [
 			{ name: 'Chibi Cat', stock: 14 },
 			{ name: 'Chibi Fox', stock: 10 }
@@ -180,7 +171,9 @@ export const mockReorderProducts: MockReorderProduct[] = [
 		trackStock: true,
 		active: true,
 		description: 'Kertas stiker vinyl anti air dengan laminasi doff, isi 8 karakter lucu.',
-		imageUrls: ['https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=200&auto=format&fit=crop&q=80'],
+		imageUrls: [
+			'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=200&auto=format&fit=crop&q=80'
+		],
 		variants: []
 	},
 	{
@@ -191,7 +184,9 @@ export const mockReorderProducts: MockReorderProduct[] = [
 		trackStock: true,
 		active: true,
 		description: 'Cetak digital offset art carton 260gsm warna tajam dan tidak mudah pudar.',
-		imageUrls: ['https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=200&auto=format&fit=crop&q=80'],
+		imageUrls: [
+			'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=200&auto=format&fit=crop&q=80'
+		],
 		variants: []
 	},
 	{
@@ -213,7 +208,9 @@ export const mockReorderProducts: MockReorderProduct[] = [
 		trackStock: true,
 		active: true,
 		description: 'Hard enamel pin dengan pelapisan emas 18k dan peniti ganda karet hitam.',
-		imageUrls: ['https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=200&auto=format&fit=crop&q=80'],
+		imageUrls: [
+			'https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=200&auto=format&fit=crop&q=80'
+		],
 		variants: []
 	},
 	{
@@ -234,8 +231,11 @@ export const mockReorderProducts: MockReorderProduct[] = [
 		stock: 18,
 		trackStock: true,
 		active: true,
-		description: 'Hardcover spiral binding 100 lembar kertas bookpaper 90gsm ramah pensil & drawing pen.',
-		imageUrls: ['https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=200&auto=format&fit=crop&q=80'],
+		description:
+			'Hardcover spiral binding 100 lembar kertas bookpaper 90gsm ramah pensil & drawing pen.',
+		imageUrls: [
+			'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=200&auto=format&fit=crop&q=80'
+		],
 		variants: []
 	},
 	{
@@ -267,7 +267,8 @@ export const mockReorderProducts: MockReorderProduct[] = [
 		stock: 25,
 		trackStock: false,
 		active: true,
-		description: 'Pembatas buku lipat magnetik tahan air isi 3 karakter dengan ilustrasi kedai kopi retro.',
+		description:
+			'Pembatas buku lipat magnetik tahan air isi 3 karakter dengan ilustrasi kedai kopi retro.',
 		imageUrls: [],
 		variants: []
 	}

@@ -8,6 +8,7 @@
 	import ReorderLab from './components/ReorderLab.svelte';
 	import NavigationLab from './components/NavigationLab.svelte';
 	import ColorPaletteLab from './components/ColorPaletteLab.svelte';
+	import OgBannerLab from './components/OgBannerLab.svelte';
 	import {
 		Palette,
 		Layers,
@@ -15,11 +16,12 @@
 		ArrowUpDown,
 		Compass,
 		ArrowLeft,
-		SwatchBook
+		SwatchBook,
+		Sparkles
 	} from '@lucide/svelte';
 
 	let activeTab = $state<
-		'primitives' | 'cards' | 'templates' | 'reorder-dnd' | 'navigation' | 'palette'
+		'primitives' | 'cards' | 'templates' | 'reorder-dnd' | 'navigation' | 'palette' | 'og-banner'
 	>('primitives');
 </script>
 
@@ -32,7 +34,9 @@
 	>
 		<div class="mx-auto flex max-w-5xl items-center justify-between gap-4">
 			<div>
-				<h1 class="font-serif text-2xl sm:text-3xl font-black tracking-tight text-[#262626] dark:text-[#f2efe9]">
+				<h1
+					class="font-serif text-2xl font-black tracking-tight text-[#262626] sm:text-3xl dark:text-[#f2efe9]"
+				>
 					SANDBOX
 				</h1>
 			</div>
@@ -48,7 +52,7 @@
 					<span><span class="hidden sm:inline">Kembali ke </span>Beranda</span>
 				</a>
 
-				<div class="hidden xs:block h-4 w-px bg-[#262626]/20 dark:bg-[#f2efe9]/20"></div>
+				<div class="xs:block hidden h-4 w-px bg-[#262626]/20 dark:bg-[#f2efe9]/20"></div>
 
 				<div class="flex items-center gap-1.5 text-xs font-bold text-[#262626] dark:text-[#f2efe9]">
 					<span class="hidden sm:inline">Tema:</span>
@@ -58,15 +62,18 @@
 		</div>
 	</header>
 
-	<main class="mx-auto max-w-5xl px-4 py-8 space-y-8">
+	<main class="mx-auto max-w-5xl space-y-8 px-4 py-8">
 		<!-- Navigation Tabs -->
-		<nav class="no-print flex flex-wrap items-center gap-2 border-b-[1.5px] border-[#262626] pb-4 dark:border-[#f2efe9]/30" aria-label="Sub-laboratorium Desain">
+		<nav
+			class="no-print flex flex-wrap items-center gap-2 border-b-[1.5px] border-[#262626] pb-4 dark:border-[#f2efe9]/30"
+			aria-label="Sub-laboratorium Desain"
+		>
 			<button
 				type="button"
 				onclick={() => (activeTab = 'primitives')}
 				class="inline-flex items-center gap-2 rounded-md border-[1.5px] border-[#262626] px-4 py-2 font-sans text-sm font-bold transition-all {activeTab ===
 				'primitives'
-					? 'bg-[#b4a6d5] text-[#262626] shadow-[2px_2px_0px_#262626] -translate-y-0.5'
+					? '-translate-y-0.5 bg-[#b4a6d5] text-[#262626] shadow-[2px_2px_0px_#262626]'
 					: 'bg-white text-[#262626] hover:bg-[#b4a6d5]/30 dark:bg-[#252331] dark:text-[#f2efe9]'}"
 			>
 				<Palette size={16} />
@@ -78,7 +85,7 @@
 				onclick={() => (activeTab = 'cards')}
 				class="inline-flex items-center gap-2 rounded-md border-[1.5px] border-[#262626] px-4 py-2 font-sans text-sm font-bold transition-all {activeTab ===
 				'cards'
-					? 'bg-[#b4a6d5] text-[#262626] shadow-[2px_2px_0px_#262626] -translate-y-0.5'
+					? '-translate-y-0.5 bg-[#b4a6d5] text-[#262626] shadow-[2px_2px_0px_#262626]'
 					: 'bg-white text-[#262626] hover:bg-[#b4a6d5]/30 dark:bg-[#252331] dark:text-[#f2efe9]'}"
 			>
 				<Layers size={16} />
@@ -90,7 +97,7 @@
 				onclick={() => (activeTab = 'templates')}
 				class="inline-flex items-center gap-2 rounded-md border-[1.5px] border-[#262626] px-4 py-2 font-sans text-sm font-bold transition-all {activeTab ===
 				'templates'
-					? 'bg-[#b4a6d5] text-[#262626] shadow-[2px_2px_0px_#262626] -translate-y-0.5'
+					? '-translate-y-0.5 bg-[#b4a6d5] text-[#262626] shadow-[2px_2px_0px_#262626]'
 					: 'bg-white text-[#262626] hover:bg-[#b4a6d5]/30 dark:bg-[#252331] dark:text-[#f2efe9]'}"
 			>
 				<FileText size={16} />
@@ -102,7 +109,7 @@
 				onclick={() => (activeTab = 'reorder-dnd')}
 				class="inline-flex items-center gap-2 rounded-md border-[1.5px] border-[#262626] px-4 py-2 font-sans text-sm font-bold transition-all {activeTab ===
 				'reorder-dnd'
-					? 'bg-[#b4a6d5] text-[#262626] shadow-[2px_2px_0px_#262626] -translate-y-0.5'
+					? '-translate-y-0.5 bg-[#b4a6d5] text-[#262626] shadow-[2px_2px_0px_#262626]'
 					: 'bg-white text-[#262626] hover:bg-[#b4a6d5]/30 dark:bg-[#252331] dark:text-[#f2efe9]'}"
 			>
 				<ArrowUpDown size={16} />
@@ -114,7 +121,7 @@
 				onclick={() => (activeTab = 'navigation')}
 				class="inline-flex items-center gap-2 rounded-md border-[1.5px] border-[#262626] px-4 py-2 font-sans text-sm font-bold transition-all {activeTab ===
 				'navigation'
-					? 'bg-[#b4a6d5] text-[#262626] shadow-[2px_2px_0px_#262626] -translate-y-0.5'
+					? '-translate-y-0.5 bg-[#b4a6d5] text-[#262626] shadow-[2px_2px_0px_#262626]'
 					: 'bg-white text-[#262626] hover:bg-[#b4a6d5]/30 dark:bg-[#252331] dark:text-[#f2efe9]'}"
 			>
 				<Compass size={16} />
@@ -126,11 +133,23 @@
 				onclick={() => (activeTab = 'palette')}
 				class="inline-flex items-center gap-2 rounded-md border-[1.5px] border-[#262626] px-4 py-2 font-sans text-sm font-bold transition-all {activeTab ===
 				'palette'
-					? 'bg-[#b4a6d5] text-[#262626] shadow-[2px_2px_0px_#262626] -translate-y-0.5'
+					? '-translate-y-0.5 bg-[#b4a6d5] text-[#262626] shadow-[2px_2px_0px_#262626]'
 					: 'bg-white text-[#262626] hover:bg-[#b4a6d5]/30 dark:bg-[#252331] dark:text-[#f2efe9]'}"
 			>
 				<SwatchBook size={16} />
 				<span>6. Color Palette</span>
+			</button>
+
+			<button
+				type="button"
+				onclick={() => (activeTab = 'og-banner')}
+				class="inline-flex items-center gap-2 rounded-md border-[1.5px] border-[#262626] px-4 py-2 font-sans text-sm font-bold transition-all {activeTab ===
+				'og-banner'
+					? '-translate-y-0.5 bg-[#b4a6d5] text-[#262626] shadow-[2px_2px_0px_#262626]'
+					: 'bg-white text-[#262626] hover:bg-[#b4a6d5]/30 dark:bg-[#252331] dark:text-[#f2efe9]'}"
+			>
+				<Sparkles size={16} />
+				<span>7. OG Banner Studio</span>
 			</button>
 		</nav>
 
@@ -147,6 +166,8 @@
 			<NavigationLab />
 		{:else if activeTab === 'palette'}
 			<ColorPaletteLab />
+		{:else if activeTab === 'og-banner'}
+			<OgBannerLab />
 		{/if}
 	</main>
 </div>

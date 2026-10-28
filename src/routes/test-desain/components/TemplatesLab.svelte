@@ -27,6 +27,9 @@
 	let simStatus = $state<404 | 403 | 500 | 503>(404);
 	let simCustomMsg = $state<string>('');
 
+	// State Switcher Eksperimen Invoice Web
+	let invoiceVariant = $state<'original' | 'client-experiment'>('original');
+
 	const errorMessages: Record<number, string> = {
 		404: 'Halaman tidak ditemukan.',
 		403: 'Kamu tidak punya akses ke halaman ini.',
@@ -75,7 +78,9 @@
 					>
 						FULL TEMPLATE
 					</span>
-					<h2 class="font-serif text-lg sm:text-xl font-bold tracking-tight text-[#262626] dark:text-[#f2efe9]">
+					<h2
+						class="font-serif text-lg font-bold tracking-tight text-[#262626] sm:text-xl dark:text-[#f2efe9]"
+					>
 						Error Page Simulator (+error.svelte)
 					</h2>
 				</div>
@@ -85,12 +90,15 @@
 			</div>
 
 			<!-- Status Selector Buttons -->
-			<div class="flex flex-wrap items-center gap-1.5 rounded-md border-[1.5px] border-[#262626] bg-white p-1.5 shadow-[2px_2px_0px_#262626] dark:border-[#f2efe9]/30 dark:bg-[#252331]">
+			<div
+				class="flex flex-wrap items-center gap-1.5 rounded-md border-[1.5px] border-[#262626] bg-white p-1.5 shadow-[2px_2px_0px_#262626] dark:border-[#f2efe9]/30 dark:bg-[#252331]"
+			>
 				{#each [404, 403, 500, 503] as const as code (code)}
 					<button
 						type="button"
 						onclick={() => (simStatus = code)}
-						class="rounded-md border-[1.5px] px-2.5 py-1 font-mono text-xs font-bold transition-all {simStatus === code
+						class="rounded-md border-[1.5px] px-2.5 py-1 font-mono text-xs font-bold transition-all {simStatus ===
+						code
 							? code >= 500
 								? 'border-[#991b1b] bg-[#fee2e2] text-[#991b1b] shadow-[1px_1px_0px_#991b1b]'
 								: 'border-[#262626] bg-[#fea770] text-[#262626] shadow-[1px_1px_0px_#262626]'
@@ -104,33 +112,35 @@
 
 		<!-- Error Frame Preview Sandbox -->
 		<div
-			class="relative flex min-h-[460px] items-center justify-center overflow-hidden rounded-md border-[1.5px] border-[#262626] bg-[#f2efe9] p-6 shadow-[2px_2px_0px_#262626] dark:border-[#f2efe9]/30 dark:bg-[#1a1825]"
+			class="drafting-grid relative flex min-h-[460px] items-center justify-center overflow-hidden rounded-md border-[1.5px] border-[#262626] bg-[#f2efe9] p-6 shadow-[2px_2px_0px_#262626] dark:border-[#a2e1db] dark:bg-[#1a1825]"
 		>
 			<!-- Error Card (Monoline Container) -->
 			<div class="relative z-10 w-full max-w-lg">
 				<div
-					class="relative rounded-md border-[1.5px] border-[#262626] bg-white p-6 sm:p-8 shadow-[3px_3px_0px_#262626] dark:border-[#f2efe9]/30 dark:bg-[#252331]"
+					class="relative rounded-xl border-2 border-[#262626] bg-white p-6 shadow-[4px_4px_0px_#262626] sm:p-8 dark:border-[#a2e1db] dark:bg-[#252331] dark:shadow-[4px_4px_0px_#b4a6d5]"
 				>
 					<!-- Header: Status Badge -->
-					<div class="flex flex-col items-center text-center space-y-3 pb-2">
+					<div class="flex flex-col items-center space-y-3 pb-2 text-center">
 						<div class="flex items-center gap-2">
 							<div
-								class="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1 font-mono text-xs font-bold tracking-widest uppercase {isServerError
-									? 'border-[#991b1b] bg-[#fee2e2] text-[#991b1b]'
-									: 'border-[#92400e] bg-[#fef3c7] text-[#92400e]'}"
+								class="inline-flex items-center gap-1.5 rounded-full border-2 px-3.5 py-1 font-mono text-xs font-bold tracking-widest uppercase {isServerError
+									? 'border-[#991b1b] bg-[#fee2e2] text-[#991b1b] shadow-[1.5px_1.5px_0px_#991b1b]'
+									: 'border-[#262626] bg-[#fea770] text-[#262626] shadow-[1.5px_1.5px_0px_#262626] dark:border-[#a2e1db]'}"
 							>
 								<AlertTriangle size={14} strokeWidth={2.5} />
 								<span>KODE STATUS: {simStatus}</span>
 							</div>
 						</div>
 
-						<h3 class="font-serif text-2xl sm:text-3xl font-bold leading-tight text-[#262626] dark:text-[#f2efe9]">
+						<h3
+							class="font-serif text-2xl leading-tight font-bold text-[#262626] sm:text-3xl dark:text-[#f2efe9]"
+						>
 							{errorMessages[simStatus]}
 						</h3>
 
 						{#if simCustomMsg || simStatus >= 500}
 							<p
-								class="font-mono text-xs font-bold text-[#991b1b] bg-[#fee2e2] px-3 py-1.5 rounded-md border border-[#991b1b]/30 max-w-full break-all"
+								class="max-w-full rounded-md border border-[#991b1b]/30 bg-[#fee2e2] px-3 py-1.5 font-mono text-xs font-bold break-all text-[#991b1b]"
 							>
 								{simCustomMsg ||
 									(simStatus === 500
@@ -145,7 +155,7 @@
 
 					<!-- Contact Help Desk Panel -->
 					<div
-						class="rounded-md border border-[#262626]/20 bg-[#f2efe9] p-4 text-left dark:border-[#f2efe9]/20 dark:bg-[#1a1825]"
+						class="rounded-lg border-2 border-[#262626] bg-[#f2efe9] p-4 text-left dark:border-[#a2e1db]/40 dark:bg-[#1a1825]"
 					>
 						<p class="font-serif text-sm font-bold text-[#262626] dark:text-[#f2efe9]">
 							{contactTitle}
@@ -164,7 +174,7 @@
 										e.preventDefault();
 										toast.info('[Sandbox] Simulasi: Menghubungi admin via WhatsApp');
 									}}
-									class="inline-flex items-center gap-1.5 rounded-md border border-[#065f46] bg-[#d1fae5] text-[#065f46] px-3.5 py-2 font-mono text-xs font-bold shadow-[1px_1px_0px_#065f46] transition-all hover:bg-[#a7f3d0] active:translate-y-0.5 active:shadow-none"
+									class="inline-flex items-center gap-1.5 rounded-md border-2 border-[#065f46] bg-[#a2e1db] px-3.5 py-2 font-mono text-xs font-bold text-[#065f46] shadow-[2px_2px_0px_#065f46] transition-all hover:bg-[#86d4cc] active:translate-y-0.5 active:shadow-none"
 								>
 									<MessageCircle size={15} />
 									<span>Chat WhatsApp</span>
@@ -180,7 +190,7 @@
 										e.preventDefault();
 										toast.info('[Sandbox] Simulasi: Membuka profil Instagram');
 									}}
-									class="inline-flex items-center gap-1.5 rounded-md border border-[#262626] bg-white text-[#262626] px-3.5 py-2 font-mono text-xs font-bold shadow-[1px_1px_0px_#262626] transition-all hover:bg-[#f2efe9] active:translate-y-0.5 active:shadow-none dark:border-[#f2efe9]/30 dark:bg-[#252331] dark:text-[#f2efe9]"
+									class="inline-flex items-center gap-1.5 rounded-md border border-[#262626] bg-white px-3.5 py-2 font-mono text-xs font-bold text-[#262626] shadow-[1px_1px_0px_#262626] transition-all hover:bg-[#f2efe9] active:translate-y-0.5 active:shadow-none dark:border-[#f2efe9]/30 dark:bg-[#252331] dark:text-[#f2efe9]"
 								>
 									<InstagramIcon class="h-4 w-4" />
 									<span>@{igHandle}</span>
@@ -194,7 +204,7 @@
 										e.preventDefault();
 										toast.info('[Sandbox] Simulasi: Mengirim email laporan kendala');
 									}}
-									class="inline-flex items-center gap-1.5 rounded-md border border-[#262626] bg-white text-[#262626] px-3 py-2 font-mono text-xs font-bold shadow-[1px_1px_0px_#262626] transition-all hover:bg-[#f2efe9] active:translate-y-0.5 active:shadow-none dark:border-[#f2efe9]/30 dark:bg-[#252331] dark:text-[#f2efe9]"
+									class="inline-flex items-center gap-1.5 rounded-md border border-[#262626] bg-white px-3 py-2 font-mono text-xs font-bold text-[#262626] shadow-[1px_1px_0px_#262626] transition-all hover:bg-[#f2efe9] active:translate-y-0.5 active:shadow-none dark:border-[#f2efe9]/30 dark:bg-[#252331] dark:text-[#f2efe9]"
 								>
 									<Mail size={15} />
 									<span>Email</span>
@@ -208,7 +218,7 @@
 						<button
 							type="button"
 							onclick={() => toast.info('[Sandbox] Simulasi: Memuat ulang halaman error')}
-							class="inline-flex items-center justify-center gap-2 rounded-md border-[1.5px] border-[#262626] bg-[#262626] px-5 py-2.5 font-sans text-sm font-bold text-[#f2efe9] shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#3d3a37] active:translate-y-0.5 active:shadow-none"
+							class="inline-flex items-center justify-center gap-2 rounded-md border-2 border-[#262626] bg-[#fea770] px-5 py-2.5 font-sans text-sm font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#f99252] active:translate-y-0.5 active:shadow-none dark:border-[#a2e1db] dark:bg-[#fea770] dark:text-[#262626] dark:shadow-[2px_2px_0px_#b4a6d5]"
 						>
 							<RotateCcw size={16} />
 							<span>Coba Muat Ulang</span>
@@ -220,7 +230,7 @@
 								e.preventDefault();
 								toast.info('[Sandbox] Navigasi: Menuju Beranda ("/")');
 							}}
-							class="inline-flex items-center justify-center gap-2 rounded-md border-[1.5px] border-[#262626] bg-white px-5 py-2.5 font-sans text-sm font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#b4a6d5]/30 active:translate-y-0.5 active:shadow-none dark:border-[#f2efe9]/30 dark:bg-[#252331] dark:text-[#f2efe9]"
+							class="inline-flex items-center justify-center gap-2 rounded-md border-2 border-[#262626] bg-white px-5 py-2.5 font-sans text-sm font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#b4a6d5]/30 active:translate-y-0.5 active:shadow-none dark:border-[#f2efe9] dark:bg-[#1a1825] dark:text-[#f2efe9] dark:shadow-[2px_2px_0px_#f2efe9]"
 						>
 							<Home size={16} />
 							<span>Kembali ke Beranda</span>
@@ -243,12 +253,15 @@
 					>
 						DOCUMENT & EXPORT
 					</span>
-					<h2 class="font-serif text-lg sm:text-xl font-bold tracking-tight text-[#262626] dark:text-[#f2efe9]">
+					<h2
+						class="font-serif text-lg font-bold tracking-tight text-[#262626] sm:text-xl dark:text-[#f2efe9]"
+					>
 						Invoice Template & Direct PDF Export
 					</h2>
 				</div>
 				<p class="mt-1 text-xs text-[#404040] dark:text-[#b8b5ad]">
-					Pratinjau render web dari InvoiceDocument beserta tombol direct unduh berkas PDF server-side dan print media cetak faktur.
+					Pratinjau render web dari InvoiceDocument beserta tombol direct unduh berkas PDF
+					server-side dan print media cetak faktur.
 				</p>
 			</div>
 
@@ -285,16 +298,66 @@
 				<span>Spesifikasi Desain Warm Monoline Editorial (DESIGN.md):</span>
 			</div>
 			<ul class="mt-2 list-inside list-disc space-y-1 text-[#404040] dark:text-[#b8b5ad]">
-				<li>Background dokumen bernuansa Warm Cream (#f2efe9) dengan kisi berpetak (thin grid lines 16pt).</li>
-				<li>Kartu konten invoice warna putih solid (#ffffff) dengan garis tepi tunggal arang #262626.</li>
-				<li>Tipografi: Helvetica Bold untuk judul, Courier monospaced retro untuk angka harga & kode invoice.</li>
+				<li>
+					Background dokumen bernuansa Warm Cream (#f2efe9) dengan kisi berpetak (thin grid lines
+					16pt).
+				</li>
+				<li>
+					Kartu konten invoice warna putih solid (#ffffff) dengan garis tepi tunggal arang #262626.
+				</li>
+				<li>
+					Tipografi: Helvetica Bold untuk judul, Courier monospaced retro untuk angka harga & kode
+					invoice.
+				</li>
 				<li>Bagian total akhir diapit garis ganda akuntansi (*double underline*).</li>
 			</ul>
 		</div>
 
+		<!-- Switcher Eksperimen Varian Invoice Web -->
+		<div
+			class="no-print flex flex-col gap-3 rounded-md border-[1.5px] border-[#262626] bg-[#fbf9f5] p-3.5 shadow-[2px_2px_0px_#262626] sm:flex-row sm:items-center sm:justify-between dark:border-[#f2efe9]/30 dark:bg-[#252331]"
+		>
+			<div class="space-y-0.5">
+				<p class="font-serif text-sm font-bold text-[#262626] dark:text-[#f2efe9]">
+					Eksperimen Gaya Invoice Web
+				</p>
+				<p class="font-sans text-xs text-[#404040] dark:text-[#b8b5ad]">
+					Bandingkan tampilan invoice web standar dengan usulan estetika klien (4 warna
+					MonolineLoader: badge mint, header lavender, & cluster ornamen).
+				</p>
+			</div>
+
+			<div
+				class="inline-flex rounded-md border-[1.5px] border-[#262626] bg-white p-1 shadow-[1px_1px_0px_#262626] dark:border-[#f2efe9]/30 dark:bg-[#1a1825]"
+			>
+				<button
+					type="button"
+					onclick={() => (invoiceVariant = 'original')}
+					class="rounded px-3 py-1 font-mono text-xs font-bold transition-all {invoiceVariant ===
+					'original'
+						? 'border border-[#262626] bg-[#f2efe9] text-[#262626] shadow-[1px_1px_0px_#262626] dark:border-[#f2efe9] dark:bg-[#343044] dark:text-[#f2efe9]'
+						: 'text-[#404040] hover:text-[#262626] dark:text-[#b8b5ad] dark:hover:text-[#f2efe9]'}"
+				>
+					Original Monoline
+				</button>
+				<button
+					type="button"
+					onclick={() => (invoiceVariant = 'client-experiment')}
+					class="rounded px-3 py-1 font-mono text-xs font-bold transition-all {invoiceVariant ===
+					'client-experiment'
+						? 'border border-[#262626] bg-[#a2e1db] text-[#262626] shadow-[1px_1px_0px_#262626] dark:border-[#f2efe9] dark:bg-[#a2e1db] dark:text-[#1a1825]'
+						: 'text-[#404040] hover:text-[#262626] dark:text-[#b8b5ad] dark:hover:text-[#f2efe9]'}"
+				>
+					Eksperimen Klien (4 Warna Loader)
+				</button>
+			</div>
+		</div>
+
 		<!-- Live Web Preview of InvoiceDocument (Drafting Grid Canvas) -->
-		<div class="drafting-grid rounded-md border-[1.5px] border-[#262626] bg-[#f2efe9] p-4 sm:p-8 shadow-[2px_2px_0px_#262626] dark:border-[#f2efe9]/30 dark:bg-[#1a1825] print:border-none print:shadow-none print:p-0 print:bg-transparent">
-			<InvoiceDocument {...invoice} mode="web" />
+		<div
+			class="drafting-grid rounded-md border-[1.5px] border-[#262626] bg-[#f2efe9] p-4 shadow-[2px_2px_0px_#262626] sm:p-8 dark:border-[#f2efe9]/30 dark:bg-[#1a1825] print:border-none print:bg-transparent print:p-0 print:shadow-none"
+		>
+			<InvoiceDocument {...invoice} mode="web" variant={invoiceVariant} />
 		</div>
 	</section>
 </div>

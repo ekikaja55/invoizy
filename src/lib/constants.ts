@@ -25,6 +25,7 @@ export type PublicRoute = '/' | '/order' | '/order/riwayat';
 
 export interface NavItem {
 	label: string;
+	hoverLabel?: string;
 	href: AdminRoute | PublicRoute;
 	icon: Component;
 }
@@ -44,22 +45,22 @@ export const ORDER_HOLD_TIMEOUT_MINUTES = 30;
 // pada hal yang bisa gagal, dan ganti env Vercel pun butuh redeploy juga.
 // GANTI nilainya dengan kontak asli.
 export const EMERGENCY_CONTACT = {
-	wa: '6280000000000',
-	email: 'onboarding@resend.dev', //nanti bakal diganti email client
+	wa: '6282275890763',
+	email: 'brendaviolint@gmail.com', //nanti bakal diganti email client
 	instagram: '@cho.lazey'
 };
 
 export const adminNavItems: NavItem[] = [
-	{ label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-	{ label: 'Orders', href: '/admin/orders', icon: ShoppingCart },
-	{ label: 'Products', href: '/admin/products', icon: Package },
-	{ label: 'Categories', href: '/admin/categories', icon: FolderTree },
-	{ label: 'Promo', href: '/admin/promo', icon: Tag },
-	{ label: 'Settings', href: '/admin/settings', icon: Settings }
+	{ label: 'Dashboard', hoverLabel: 'Cek Rekap', href: '/admin', icon: LayoutDashboard },
+	{ label: 'Orders', hoverLabel: 'Cek Pesanan', href: '/admin/orders', icon: ShoppingCart },
+	{ label: 'Products', hoverLabel: 'Kelola Katalog', href: '/admin/products', icon: Package },
+	{ label: 'Categories', hoverLabel: 'Atur Kategori', href: '/admin/categories', icon: FolderTree },
+	{ label: 'Promo', hoverLabel: 'Kupon Diskon', href: '/admin/promo', icon: Tag },
+	{ label: 'Settings', hoverLabel: 'Atur Toko', href: '/admin/settings', icon: Settings }
 ];
 
 export const publicNavItems: NavItem[] = [
-	{ label: 'Beranda', href: '/', icon: Home },
-	{ label: 'Order', href: '/order', icon: ShoppingBag },
-	{ label: 'Riwayat', href: '/order/riwayat', icon: History }
+	{ label: 'Beranda', hoverLabel: 'Ke Beranda', href: '/', icon: Home },
+	{ label: 'Order', hoverLabel: 'Katalog Belanja', href: '/order', icon: ShoppingBag },
+	{ label: 'Riwayat', hoverLabel: 'Cek Status', href: '/order/riwayat', icon: History }
 ];

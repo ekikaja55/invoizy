@@ -11,22 +11,48 @@ const WINDOW = '10 m';
 const url = env.UPSTASH_REDIS_REST_URL;
 const token = env.UPSTASH_REDIS_REST_TOKEN;
 
+// Ephemeral cache in-memory untuk memblokir IP spam langsung di RAM server
+// tanpa melakukan HTTP round-trip ke Redis berulang kali saat IP sudah terblokir.
+const ephemeralCache = new Map<string, number>();
+
 let limiter: Ratelimit | null = null;
 let shippingLimiter: Ratelimit | null = null;
+let paymentProofLimiter: Ratelimit | null = null;
+let verifyHistoryLimiter: Ratelimit | null = null;
 
 if (url && token) {
 	const redis = new Redis({ url, token });
 	limiter = new Ratelimit({
 		redis,
 		limiter: Ratelimit.slidingWindow(REQUEST_LIMIT, WINDOW),
-		prefix: 'invoizy:order-submit'
+		prefix: 'invoizy:order-submit',
+		ephemeralCache,
+		timeout: 2000
 	});
 	// Endpoint ongkir publik (search/quote) — dibatasi terpisah agar
 	// iseng autocomplete tidak memakan jatah submit order.
 	shippingLimiter = new Ratelimit({
 		redis,
 		limiter: Ratelimit.slidingWindow(30, '1 m'),
-		prefix: 'invoizy:shipping'
+		prefix: 'invoizy:shipping',
+		ephemeralCache,
+		timeout: 2000
+	});
+	// Proteksi upload bukti bayar — cegah spam multi-megabyte ke Supabase Storage.
+	paymentProofLimiter = new Ratelimit({
+		redis,
+		limiter: Ratelimit.slidingWindow(5, '10 m'),
+		prefix: 'invoizy:payment-proof',
+		ephemeralCache,
+		timeout: 2000
+	});
+	// Proteksi verifikasi riwayat pesanan — cegah brute-force scraping order ID.
+	verifyHistoryLimiter = new Ratelimit({
+		redis,
+		limiter: Ratelimit.slidingWindow(20, '1 m'),
+		prefix: 'invoizy:verify-history',
+		ephemeralCache,
+		timeout: 2000
 	});
 }
 
@@ -59,6 +85,36 @@ export async function checkShippingRateLimit(identifier: string): Promise<RateLi
 	}
 
 	const result = await shippingLimiter.limit(identifier);
+	return {
+		success: result.success,
+		limit: result.limit,
+		remaining: result.remaining,
+		reset: result.reset
+	};
+}
+
+export async function checkPaymentProofRateLimit(identifier: string): Promise<RateLimitResult> {
+	// Fail open — tanpa Upstash, jangan halangi pembeli mengirim bukti bayar.
+	if (!paymentProofLimiter) {
+		return { success: true, limit: 5, remaining: 5, reset: 0 };
+	}
+
+	const result = await paymentProofLimiter.limit(identifier);
+	return {
+		success: result.success,
+		limit: result.limit,
+		remaining: result.remaining,
+		reset: result.reset
+	};
+}
+
+export async function checkVerifyHistoryRateLimit(identifier: string): Promise<RateLimitResult> {
+	// Fail open — tanpa Upstash, jangan blokir pengecekan riwayat.
+	if (!verifyHistoryLimiter) {
+		return { success: true, limit: 20, remaining: 20, reset: 0 };
+	}
+
+	const result = await verifyHistoryLimiter.limit(identifier);
 	return {
 		success: result.success,
 		limit: result.limit,

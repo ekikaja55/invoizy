@@ -51,7 +51,8 @@
 		isDownloadingQris = true;
 		const toastId = toast.loading('Mengunduh kode QRIS...');
 		try {
-			const res = await fetch(url);
+			const downloadUrl = `/api/qris/download?url=${encodeURIComponent(url)}`;
+			const res = await fetch(downloadUrl);
 			if (!res.ok) throw new Error('Gagal mengunduh file gambar');
 			const blob = await res.blob();
 			const blobUrl = URL.createObjectURL(blob);
@@ -62,9 +63,9 @@
 			a.click();
 			document.body.removeChild(a);
 			URL.revokeObjectURL(blobUrl);
-			toast.success('Kode QRIS berhasil diunduh!', { id: toastId });
+			toast.success('Kode QRIS berhasil diunduh ke galeri!', { id: toastId });
 		} catch {
-			toast.error('Gagal mengunduh QRIS langsung, membuka gambar...', { id: toastId });
+			toast.error('Gagal mengunduh otomatis, membuka gambar langsung...', { id: toastId });
 			window.open(url, '_blank');
 		} finally {
 			isDownloadingQris = false;
@@ -106,9 +107,7 @@
 
 	const isExpired = $derived(targetTimestamp > 0 && remainingSeconds <= 0);
 
-	const minutesDisplay = $derived(
-		String(Math.floor(remainingSeconds / 60)).padStart(2, '0')
-	);
+	const minutesDisplay = $derived(String(Math.floor(remainingSeconds / 60)).padStart(2, '0'));
 	const secondsDisplay = $derived(String(remainingSeconds % 60).padStart(2, '0'));
 
 	function handleFileSelect(e: Event) {
@@ -156,19 +155,20 @@
 </script>
 
 <div class="mx-auto max-w-2xl space-y-6 pb-28">
-	<!-- Scrapbook Header -->
+	<!-- Page Header: Warm Monoline Editorial -->
 	<header class="space-y-3">
 		<div
-			class="inline-block -rotate-2 rounded-[6px_2px_5px_1px] border-2 border-brandy bg-papaya px-3.5 py-1.5 font-mono text-xs font-bold tracking-widest text-brandy uppercase shadow-[2px_2px_0px_#78290f] md:text-sm dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[2px_2px_0px_rgba(255,236,209,0.2)]"
+			class="inline-flex items-center gap-2 rounded-full border-2 border-[#262626] bg-[#fea770] px-3.5 py-1 font-mono text-xs font-bold tracking-widest text-[#262626] uppercase shadow-[2px_2px_0px_#262626] dark:border-[#f2efe9] dark:bg-[#fea770] dark:text-[#262626] dark:shadow-[2px_2px_0px_#f2efe9]"
 		>
-			{data.isReupload ? 'UNGGAH ULANG BUKTI' : 'INSTRUKSI PEMBAYARAN'}
+			<span class="inline-block h-2 w-2 rounded-full border border-[#262626] bg-white"></span>
+			<span>{data.isReupload ? 'UNGGAH ULANG BUKTI' : 'INSTRUKSI PEMBAYARAN'}</span>
 		</div>
 		<h1
-			class="font-serif text-3xl font-bold tracking-normal text-ink md:text-4xl dark:text-papaya"
+			class="font-serif text-3xl font-black tracking-tight text-[#262626] md:text-4xl dark:text-[#f2efe9]"
 		>
 			{data.isReupload ? 'Kirim Ulang Bukti Transfer' : 'Selesaikan Pembayaran'}
 		</h1>
-		<p class="font-handwriting text-2xl font-semibold leading-snug text-teal md:text-3xl dark:text-papaya/90">
+		<p class="font-mono text-xs text-[#404040] md:text-sm dark:text-[#b8b5ad]">
 			{data.isReupload
 				? 'Bukti sebelumnya belum jelas atau nominal belum sesuai. Silakan kirimkan foto bukti transfer yang valid.'
 				: 'Stok produk Anda telah dikunci sementara. Silakan transfer dan unggah bukti pembayaran.'}
@@ -177,42 +177,57 @@
 
 	<!-- Countdown Timer Card -->
 	<div
-		class="relative -rotate-1 rounded-[14px_6px_12px_8px] border-2 p-5 shadow-[4px_4px_0px_#78290f] transition-transform duration-150 hover:rotate-0 {isExpired
-			? 'border-crimson bg-crimson/10 text-crimson dark:border-crimson/60 dark:bg-crimson/20 dark:shadow-[4px_4px_0px_rgba(193,18,31,0.3)]'
-			: 'border-brandy bg-papaya text-ink dark:border-papaya/30 dark:bg-ink dark:text-papaya dark:shadow-[4px_4px_0px_rgba(255,236,209,0.2)]'}"
+		class="relative rounded-[14px_4px_14px_4px] border-2 p-5 shadow-[4px_4px_0px_#262626] transition-transform duration-150 {isExpired
+			? 'border-[#991b1b] bg-[#fee2e2]/30 text-[#991b1b] dark:border-[#f87171] dark:bg-[#450a0a]/40 dark:text-[#f87171]'
+			: 'border-[#262626] bg-white text-[#262626] dark:border-[#a2e1db] dark:bg-[#252331] dark:text-[#f2efe9] dark:shadow-[4px_4px_0px_#b4a6d5]'}"
 	>
-		<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+		<span
+			class="absolute top-2 right-2 font-mono text-[10px] text-[#262626]/30 dark:text-[#f2efe9]/30"
+			aria-hidden="true">+</span
+		>
+		<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 			<div class="flex items-center gap-3">
 				<div
-					class="flex h-11 w-11 shrink-0 items-center justify-center rounded-[8px_3px_7px_2px] border-2 border-brandy {isExpired
-						? 'bg-crimson text-white'
-						: 'bg-tangerine text-white'} shadow-[2px_2px_0px_#78290f]"
+					class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border-2 border-[#262626] {isExpired
+						? 'bg-[#fee2e2] text-[#991b1b]'
+						: 'bg-[#fea770] text-[#262626]'} shadow-[2px_2px_0px_#262626] dark:border-[#f2efe9]"
 				>
 					<Clock size={20} strokeWidth={2.5} />
 				</div>
 				<div>
-					<p class="font-mono text-xs font-bold uppercase tracking-wider text-brandy/80 dark:text-papaya/80">
+					<p
+						class="font-mono text-xs font-bold tracking-wider text-[#404040] uppercase dark:text-[#b8b5ad]"
+					>
 						{isExpired ? 'Batas Waktu Telah Habis' : 'Selesaikan Pembayaran Dalam'}
 					</p>
-					<p class="font-mono text-2xl font-black {isExpired ? 'text-crimson' : 'text-brandy dark:text-papaya'}">
+					<p
+						class="font-mono text-2xl font-black {isExpired
+							? 'text-[#991b1b] dark:text-[#f87171]'
+							: 'text-[#262626] dark:text-[#a2e1db]'}"
+					>
 						{isExpired ? '00:00 (Kedaluwarsa)' : `${minutesDisplay}:${secondsDisplay}`}
 					</p>
 				</div>
 			</div>
 
 			<div class="text-left sm:text-right">
-				<span class="font-mono text-xs text-brandy/70 dark:text-papaya/70">ID Pesanan</span>
-				<p class="font-mono text-base font-bold text-ink dark:text-papaya">#{data.order.orderId}</p>
+				<span class="font-mono text-xs text-[#404040] dark:text-[#b8b5ad]">ID Pesanan</span>
+				<p class="font-mono text-base font-bold text-[#262626] dark:text-[#f2efe9]">
+					#{data.order.orderId}
+				</p>
 			</div>
 		</div>
 
 		{#if isExpired}
-			<div class="mt-4 border-t border-crimson/30 pt-3 text-xs leading-relaxed text-crimson">
-				Waktu pembayaran telah habis. Pesanan ini telah kedaluwarsa dan stok barang telah dikembalikan ke inventaris toko. Silakan buat pesanan baru di katalog.
+			<div
+				class="mt-4 border-t border-[#991b1b]/30 pt-3 font-mono text-xs leading-relaxed text-[#991b1b] dark:text-[#f87171]"
+			>
+				Waktu pembayaran telah habis. Pesanan ini telah kedaluwarsa dan stok barang telah
+				dikembalikan ke inventaris toko. Silakan buat pesanan baru di katalog.
 				<div class="mt-3">
 					<a
 						href={resolve('/(public)/order')}
-						class="inline-flex items-center gap-1.5 rounded-[6px_2px_5px_1px] border-2 border-crimson bg-crimson px-3 py-1.5 font-mono text-xs font-bold text-white shadow-[2px_2px_0px_#78290f]"
+						class="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#991b1b] bg-[#fee2e2] px-3 py-1.5 font-mono text-xs font-bold text-[#991b1b] shadow-[2px_2px_0px_#991b1b] transition-all hover:bg-[#fecaca] active:translate-y-0.5 active:shadow-none"
 					>
 						<ShoppingBag size={14} />
 						<span>Kembali ke Katalog</span>
@@ -224,19 +239,33 @@
 
 	<!-- Total Tagihan -->
 	<div
-		class="rounded-[14px_6px_12px_8px] border-2 border-brandy bg-papaya/50 p-5 shadow-[4px_4px_0px_#78290f] dark:border-papaya/30 dark:bg-ink/60 dark:shadow-[4px_4px_0px_rgba(255,236,209,0.2)]"
+		class="relative rounded-[14px_4px_14px_4px] border-2 border-[#262626] bg-white p-5 shadow-[3px_3px_0px_#262626] dark:border-[#a2e1db] dark:bg-[#252331] dark:shadow-[3px_3px_0px_#b4a6d5]"
 	>
-		<div class="flex items-center justify-between border-b border-brandy/20 pb-3 dark:border-papaya/20">
-			<span class="font-mono text-xs font-bold text-brandy/80 dark:text-papaya/80 uppercase">
+		<span
+			class="absolute top-2 right-2 font-mono text-[10px] text-[#262626]/30 dark:text-[#f2efe9]/30"
+			aria-hidden="true">+</span
+		>
+		<div
+			class="flex items-center justify-between border-b border-[#262626]/15 pb-3 dark:border-[#f2efe9]/15"
+		>
+			<span
+				class="font-mono text-xs font-bold tracking-wider text-[#404040] uppercase dark:text-[#b8b5ad]"
+			>
 				Total yang Harus Ditransfer
 			</span>
-			<span class="font-mono text-xs font-medium text-brandy/60 dark:text-papaya/60">
+			<span
+				class="rounded border border-[#262626] bg-[#f2efe9] px-2 py-0.5 font-mono text-xs font-bold text-[#262626] dark:border-[#f2efe9] dark:bg-[#1a1825] dark:text-[#f2efe9]"
+			>
 				{data.order.items.length} item
 			</span>
 		</div>
-		<div class="mt-3 flex items-baseline justify-between">
-			<span class="font-serif text-sm font-bold text-ink dark:text-papaya">Total Tagihan Final</span>
-			<span class="font-mono text-2xl font-black text-brandy dark:text-tangerine">
+		<div
+			class="mt-3.5 flex items-baseline justify-between border-b-2 border-double border-[#262626]/40 pb-2 dark:border-[#f2efe9]/40"
+		>
+			<span class="font-serif text-sm font-bold text-[#262626] dark:text-[#f2efe9]"
+				>Total Tagihan Final</span
+			>
+			<span class="font-mono text-2xl font-black text-[#065f46] dark:text-[#a2e1db]">
 				{formatRupiah(data.order.total)}
 			</span>
 		</div>
@@ -245,18 +274,31 @@
 	<!-- Pilihan Metode Pembayaran (QRIS & Transfer Bank) -->
 	{#if !isExpired}
 		<div class="space-y-4">
-			<h2 class="font-serif text-lg font-bold text-ink dark:text-papaya">
-				Rekening & Saluran Pembayaran
-			</h2>
+			<div class="flex items-center gap-2">
+				<span class="font-mono text-xs font-bold text-[#404040] dark:text-[#b8b5ad]">◈</span>
+				<h2 class="font-serif text-lg font-bold text-[#262626] dark:text-[#f2efe9]">
+					Rekening & Saluran Pembayaran
+				</h2>
+			</div>
 
 			<!-- QRIS Codes -->
 			{#if data.qrisCodes.length > 0}
 				<div
-					class="rounded-[14px_6px_12px_8px] border-2 border-brandy bg-white p-5 shadow-[4px_4px_0px_#78290f] dark:border-papaya/30 dark:bg-neutral-900"
+					class="relative rounded-[14px_4px_14px_4px] border-2 border-[#262626] bg-white p-5 shadow-[4px_4px_0px_#262626] dark:border-[#a2e1db] dark:bg-[#252331] dark:shadow-[4px_4px_0px_#b4a6d5]"
 				>
-					<div class="flex items-center gap-2 border-b border-neutral-200 pb-3 dark:border-neutral-800">
-						<QrCode size={18} class="text-brandy dark:text-papaya" />
-						<h3 class="font-serif text-sm font-bold text-ink dark:text-papaya">
+					<span
+						class="absolute top-2 right-2 font-mono text-[10px] text-[#262626]/30 dark:text-[#f2efe9]/30"
+						aria-hidden="true">+</span
+					>
+					<div
+						class="flex items-center gap-2.5 border-b border-[#262626]/15 pb-3 dark:border-[#f2efe9]/15"
+					>
+						<div
+							class="flex h-7 w-7 items-center justify-center rounded-lg border-2 border-[#262626] bg-[#b4a6d5] text-[#262626] shadow-[1px_1px_0px_#262626]"
+						>
+							<QrCode size={15} />
+						</div>
+						<h3 class="font-serif text-sm font-bold text-[#262626] dark:text-[#f2efe9]">
 							Scan QRIS (Mendukung Semua Bank & E-Wallet)
 						</h3>
 					</div>
@@ -267,9 +309,9 @@
 								<img
 									src={qris.imageUrl}
 									alt={qris.label}
-									class="mx-auto max-h-64 rounded-lg border-2 border-brandy object-contain shadow-xs dark:border-papaya/40"
+									class="mx-auto max-h-64 rounded-lg border-2 border-[#262626] object-contain shadow-[2px_2px_0px_#262626] dark:border-[#f2efe9]"
 								/>
-								<p class="mt-2 font-mono text-xs font-semibold text-brandy dark:text-papaya">
+								<p class="mt-2.5 font-mono text-xs font-bold text-[#262626] dark:text-[#f2efe9]">
 									{qris.label}
 								</p>
 								<div class="mt-2">
@@ -277,7 +319,7 @@
 										type="button"
 										onclick={() => downloadQris(qris.imageUrl)}
 										disabled={isDownloadingQris}
-										class="inline-flex items-center gap-1.5 rounded-[6px_2px_5px_1px] border border-neutral-300 bg-neutral-50 px-3 py-1.5 font-mono text-xs font-semibold text-neutral-700 transition-colors hover:bg-neutral-100 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
+										class="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#262626] bg-white px-3 py-1.5 font-mono text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#a2e1db] active:translate-y-0.5 active:shadow-none disabled:opacity-50 dark:border-[#f2efe9] dark:bg-[#343044] dark:text-[#f2efe9] dark:shadow-[2px_2px_0px_#f2efe9]"
 									>
 										<Download size={14} />
 										<span>{isDownloadingQris ? 'Mengunduh...' : 'Unduh QRIS'}</span>
@@ -285,8 +327,9 @@
 								</div>
 							</div>
 						{/each}
-						<p class="text-center font-sans text-xs text-neutral-500">
-							Buka aplikasi BCA / Mandiri / GoPay / OVO / Dana / ShopeePay Anda, lalu scan QRIS di atas.
+						<p class="text-center font-mono text-xs text-[#404040] dark:text-[#b8b5ad]">
+							Buka aplikasi BCA / Mandiri / GoPay / OVO / Dana / ShopeePay Anda, lalu scan QRIS di
+							atas.
 						</p>
 					</div>
 				</div>
@@ -295,41 +338,61 @@
 			<!-- Bank Accounts -->
 			{#if data.paymentMethods.length > 0}
 				<div
-					class="rounded-[14px_6px_12px_8px] border-2 border-brandy bg-white p-5 shadow-[4px_4px_0px_#78290f] dark:border-papaya/30 dark:bg-neutral-900"
+					class="relative rounded-[14px_4px_14px_4px] border-2 border-[#262626] bg-white p-5 shadow-[4px_4px_0px_#262626] dark:border-[#a2e1db] dark:bg-[#252331] dark:shadow-[4px_4px_0px_#b4a6d5]"
 				>
-					<div class="flex items-center gap-2 border-b border-neutral-200 pb-3 dark:border-neutral-800">
-						<CreditCard size={18} class="text-brandy dark:text-papaya" />
-						<h3 class="font-serif text-sm font-bold text-ink dark:text-papaya">
+					<span
+						class="absolute top-2 right-2 font-mono text-[10px] text-[#262626]/30 dark:text-[#f2efe9]/30"
+						aria-hidden="true">+</span
+					>
+					<div
+						class="flex items-center gap-2.5 border-b border-[#262626]/15 pb-3 dark:border-[#f2efe9]/15"
+					>
+						<div
+							class="flex h-7 w-7 items-center justify-center rounded-lg border-2 border-[#262626] bg-[#a2e1db] text-[#262626] shadow-[1px_1px_0px_#262626]"
+						>
+							<CreditCard size={15} />
+						</div>
+						<h3 class="font-serif text-sm font-bold text-[#262626] dark:text-[#f2efe9]">
 							Transfer Rekening Bank
 						</h3>
 					</div>
 
-					<div class="mt-4 divide-y divide-neutral-200 dark:divide-neutral-800">
+					<div class="mt-4 divide-y divide-[#262626]/15 dark:divide-[#f2efe9]/15">
 						{#each data.paymentMethods as method, idx (method.id)}
-							<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-3">
+							<div class="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
 								<div>
 									<div class="flex items-center gap-2">
-										<span class="rounded bg-papaya px-2 py-0.5 font-mono text-xs font-bold text-brandy dark:bg-ink dark:text-papaya">
+										<span
+											class="rounded border border-[#262626] bg-[#fea770] px-2 py-0.5 font-mono text-xs font-bold text-[#262626]"
+										>
 											{method.label}
 										</span>
-										<span class="text-xs text-neutral-500">a.n. {method.accountHolder}</span>
+										<span class="font-mono text-xs text-[#404040] dark:text-[#b8b5ad]"
+											>a.n. {method.accountHolder}</span
+										>
 									</div>
-									<p class="mt-1 font-mono text-sm font-bold tracking-wider text-ink dark:text-neutral-100">
+									<p
+										class="mt-1 font-mono text-base font-bold tracking-wider text-[#262626] dark:text-[#f2efe9]"
+									>
 										{method.accountNumber}
 									</p>
 									{#if method.note}
-										<p class="mt-0.5 text-[11px] text-neutral-400">{method.note}</p>
+										<p
+											class="mt-0.5 font-mono text-[11px] text-[#404040]/70 dark:text-[#b8b5ad]/70"
+										>
+											{method.note}
+										</p>
 									{/if}
 								</div>
 
 								<button
 									type="button"
 									onclick={() => copyToClipboard(method.accountNumber, idx)}
-									class="inline-flex items-center gap-1.5 self-start rounded-[6px_2px_5px_1px] border border-neutral-300 bg-neutral-50 px-3 py-1.5 font-mono text-xs font-semibold text-neutral-700 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
+									class="inline-flex items-center gap-1.5 self-start rounded-lg border-2 border-[#262626] bg-white px-3 py-1.5 font-mono text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#b4a6d5] active:translate-y-0.5 active:shadow-none dark:border-[#f2efe9] dark:bg-[#343044] dark:text-[#f2efe9] dark:shadow-[2px_2px_0px_#f2efe9]"
 								>
 									{#if copiedIndex === idx}
-										<Check size={14} class="text-emerald-600" />
-										<span class="text-emerald-600">Tersalin</span>
+										<Check size={14} class="text-[#065f46] dark:text-[#a2e1db]" />
+										<span class="text-[#065f46] dark:text-[#a2e1db]">Tersalin</span>
 									{:else}
 										<Copy size={14} />
 										<span>Salin No. Rek</span>
@@ -361,21 +424,40 @@
 					await applyAction(result);
 				};
 			}}
-			class="space-y-4 rounded-[14px_6px_12px_8px] border-2 border-brandy bg-papaya/50 p-5 shadow-[4px_4px_0px_#78290f] dark:border-papaya/30 dark:bg-ink/60 dark:shadow-[4px_4px_0px_rgba(255,236,209,0.2)]"
+			class="relative space-y-4 rounded-[14px_4px_14px_4px] border-2 border-[#262626] bg-white p-5 shadow-[4px_4px_0px_#262626] dark:border-[#a2e1db] dark:bg-[#252331] dark:shadow-[4px_4px_0px_#b4a6d5]"
 		>
+			<span
+				class="absolute top-2 right-2 font-mono text-[10px] text-[#262626]/30 dark:text-[#f2efe9]/30"
+				aria-hidden="true">+</span
+			>
 			<input type="hidden" name="token" value={data.order.accessToken} />
-			<div class="border-b border-brandy/20 pb-3 dark:border-papaya/20">
-				<h2 class="font-serif text-lg font-bold text-ink dark:text-papaya">
-					Unggah Bukti Transfer
-				</h2>
-				<p class="font-sans text-xs text-brandy/80 dark:text-papaya/70">
-					Setelah transfer berhasil, unggah foto tangkapan layar (screenshot) bukti transfer m-banking atau struk pembayaran Anda.
+			<div class="border-b border-[#262626]/15 pb-3.5 dark:border-[#f2efe9]/15">
+				<div class="flex items-center gap-2.5">
+					<div
+						class="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-[#262626] bg-[#fea770] text-[#262626] shadow-[2px_2px_0px_#262626]"
+					>
+						<UploadCloud size={16} strokeWidth={2.5} />
+					</div>
+					<div>
+						<h2
+							class="font-serif text-lg leading-tight font-bold text-[#262626] dark:text-[#f2efe9]"
+						>
+							Unggah Bukti Transfer
+						</h2>
+					</div>
+				</div>
+				<p class="mt-1.5 font-mono text-xs text-[#404040] dark:text-[#b8b5ad]">
+					Setelah transfer berhasil, unggah foto tangkapan layar (screenshot) bukti transfer
+					m-banking atau struk pembayaran Anda.
 				</p>
 			</div>
 
 			<!-- Pilihan Metode Pembayaran Digunakan -->
 			<div>
-				<label for="paymentMethod" class="block font-mono text-xs font-bold text-ink dark:text-papaya">
+				<label
+					for="paymentMethod"
+					class="block font-mono text-xs font-bold tracking-wider text-[#262626] uppercase dark:text-[#f2efe9]"
+				>
 					Metode yang Digunakan untuk Membayar
 				</label>
 				<select
@@ -383,19 +465,23 @@
 					name="paymentMethod"
 					bind:value={selectedPaymentMethod}
 					disabled={isBusy}
-					class="mt-1 w-full rounded-[8px_3px_7px_2px] border-2 border-brandy bg-white px-3.5 py-2 font-sans text-xs text-ink focus:border-brandy focus:outline-none dark:border-papaya/40 dark:bg-ink dark:text-papaya"
+					class="mt-1.5 w-full rounded-lg border-2 border-[#262626] bg-white px-3.5 py-2 font-mono text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] focus:ring-2 focus:ring-[#fea770] focus:outline-none dark:border-[#f2efe9] dark:bg-[#252331] dark:text-[#f2efe9] dark:shadow-[2px_2px_0px_#f2efe9]"
 				>
 					<option value="QRIS">QRIS Toko</option>
 					{#each data.paymentMethods as m (m.id)}
-						<option value={`Transfer Bank ${m.label}`}>Transfer Bank {m.label} ({m.accountNumber})</option>
+						<option value={`Transfer Bank ${m.label}`}
+							>Transfer Bank {m.label} ({m.accountNumber})</option
+						>
 					{/each}
 				</select>
 			</div>
 
 			<!-- Area Upload Bukti -->
 			<div>
-				<span class="block font-mono text-xs font-bold text-ink dark:text-papaya">
-					Foto Bukti Pembayaran <span class="text-crimson">*</span>
+				<span
+					class="block font-mono text-xs font-bold tracking-wider text-[#262626] uppercase dark:text-[#f2efe9]"
+				>
+					Foto Bukti Pembayaran <span class="text-[#991b1b] dark:text-[#f87171]">*</span>
 				</span>
 
 				<!-- Elemen input file tunggal dan persisten di form -->
@@ -412,15 +498,21 @@
 
 				{#if previewUrl}
 					<div class="mt-2 space-y-2">
-						<div class="relative rounded-lg border-2 border-brandy overflow-hidden max-w-xs shadow-[2px_2px_0px_#78290f]">
-							<img src={previewUrl} alt="Preview Bukti Transfer" class="w-full object-contain max-h-60" />
+						<div
+							class="relative max-w-xs overflow-hidden rounded-lg border-2 border-[#262626] shadow-[2px_2px_0px_#262626] dark:border-[#f2efe9]"
+						>
+							<img
+								src={previewUrl}
+								alt="Preview Bukti Transfer"
+								class="max-h-60 w-full object-contain"
+							/>
 						</div>
 						<div class="flex items-center gap-2">
 							<button
 								type="button"
 								onclick={() => fileInputEl?.click()}
 								disabled={isBusy}
-								class="rounded-[6px_2px_5px_1px] border-2 border-brandy bg-papaya px-3 py-1.5 font-mono text-xs font-bold text-ink shadow-[2px_2px_0px_#78290f] hover:bg-tangerine hover:text-white"
+								class="rounded-lg border-2 border-[#262626] bg-[#f2efe9] px-3 py-1.5 font-mono text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#fea770] active:translate-y-0.5 active:shadow-none dark:border-[#f2efe9] dark:bg-[#343044] dark:text-[#f2efe9]"
 							>
 								Ganti Foto
 							</button>
@@ -428,7 +520,7 @@
 								type="button"
 								onclick={clearProofFile}
 								disabled={isBusy}
-								class="rounded-[6px_2px_5px_1px] border-2 border-crimson/50 bg-crimson/10 px-3 py-1.5 font-mono text-xs font-bold text-crimson hover:bg-crimson hover:text-white"
+								class="rounded-lg border-2 border-[#991b1b] bg-[#fee2e2] px-3 py-1.5 font-mono text-xs font-bold text-[#991b1b] shadow-[2px_2px_0px_#991b1b] transition-all hover:bg-[#fecaca] active:translate-y-0.5 active:shadow-none dark:border-[#f87171] dark:bg-[#450a0a] dark:text-[#f87171]"
 							>
 								Hapus
 							</button>
@@ -439,13 +531,13 @@
 						type="button"
 						onclick={() => fileInputEl?.click()}
 						disabled={isBusy}
-						class="mt-2 flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-brandy/50 bg-white/60 p-6 text-center cursor-pointer transition-colors hover:border-brandy hover:bg-white dark:border-papaya/40 dark:bg-ink/60"
+						class="mt-2 flex w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#262626]/40 bg-[#f9f7f2] p-6 text-center transition-colors hover:border-[#262626] hover:bg-[#f2efe9] dark:border-[#f2efe9]/40 dark:bg-[#1a1825]"
 					>
-						<UploadCloud size={32} class="text-brandy/60 dark:text-papaya/60" />
-						<span class="mt-2 font-mono text-xs font-bold text-ink dark:text-papaya">
+						<UploadCloud size={32} class="text-[#262626]/60 dark:text-[#f2efe9]/60" />
+						<span class="mt-2 font-mono text-xs font-bold text-[#262626] dark:text-[#f2efe9]">
 							Pilih Foto Bukti Transfer
 						</span>
-						<span class="text-[11px] text-brandy/60 dark:text-papaya/60">
+						<span class="font-mono text-[11px] text-[#404040] dark:text-[#b8b5ad]">
 							Format PNG, JPG, JPEG, atau WebP (Maksimal 5MB)
 						</span>
 					</button>
@@ -454,13 +546,37 @@
 
 			<input type="hidden" name="isReupload" value={data.isReupload ? 'true' : 'false'} />
 
+			<!-- Submit Button with Rolling Ticker -->
 			<button
 				type="submit"
 				disabled={isBusy || !proofFile}
-				class="flex w-full items-center justify-center gap-2 rounded-[10px_5px_9px_4px] border-2 border-brandy bg-tangerine px-5 py-3.5 font-mono text-base font-bold text-white shadow-[4px_4px_0px_#78290f] transition-all hover:bg-[#e06d00] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none disabled:cursor-not-allowed disabled:border-brandy/30 disabled:bg-brandy/20 disabled:text-brandy/40 disabled:shadow-none"
+				class="group relative flex w-full items-center justify-center overflow-hidden rounded-lg border-2 border-[#262626] bg-[#fea770] py-3.5 font-mono text-base font-bold text-[#262626] shadow-[3px_3px_0px_#262626] transition-all hover:-translate-y-0.5 hover:bg-[#f99252] active:translate-y-0.5 active:shadow-none disabled:cursor-not-allowed disabled:border-[#262626]/30 disabled:bg-[#262626]/10 disabled:text-[#262626]/40 disabled:shadow-none dark:border-[#a2e1db] dark:bg-[#fea770] dark:text-[#262626] dark:shadow-[3px_3px_0px_#b4a6d5]"
 			>
-				<Send size={18} strokeWidth={2.5} />
-				<span>{isBusy ? 'Mengunggah Bukti Pembayaran...' : (data.isReupload ? 'Kirim Ulang Bukti Pembayaran' : 'Kirim Bukti Pembayaran')}</span>
+				<span
+					class="inline-flex items-center gap-2 transition-transform duration-300 ease-out group-hover:-translate-y-[150%]"
+				>
+					<Send size={18} strokeWidth={2.5} />
+					<span
+						>{isBusy
+							? 'Mengunggah Bukti Pembayaran...'
+							: data.isReupload
+								? 'Kirim Ulang Bukti Pembayaran'
+								: 'Kirim Bukti Pembayaran'}</span
+					>
+				</span>
+				<span
+					class="absolute inset-0 inline-flex translate-y-[150%] items-center justify-center gap-2 transition-transform duration-300 ease-out group-hover:translate-y-0"
+					aria-hidden="true"
+				>
+					<Send size={18} strokeWidth={2.5} />
+					<span
+						>{isBusy
+							? 'Mengunggah Bukti Pembayaran...'
+							: data.isReupload
+								? 'Kirim Ulang Bukti Pembayaran'
+								: 'Kirim Bukti Pembayaran'}</span
+					>
+				</span>
 			</button>
 		</form>
 	{/if}
@@ -468,7 +584,7 @@
 
 {#if isBusy}
 	<div
-		class="fixed inset-0 z-[999] flex flex-col items-center justify-center bg-black/60 backdrop-blur-xs p-4 text-center select-none touch-none overscroll-none"
+		class="fixed inset-0 z-[999] flex touch-none flex-col items-center justify-center overscroll-none bg-[#262626]/60 p-4 text-center backdrop-blur-xs select-none"
 		role="dialog"
 		aria-modal="true"
 		tabindex="-1"
@@ -476,16 +592,20 @@
 		ontouchmove={preventScroll}
 	>
 		<div
-			class="-rotate-1 rounded-[16px_8px_14px_6px] border-2 border-brandy bg-papaya p-6 shadow-[6px_6px_0px_#78290f] max-w-sm w-full space-y-4 dark:border-papaya/40 dark:bg-ink dark:shadow-[6px_6px_0px_rgba(255,236,209,0.3)]"
+			class="relative w-full max-w-sm space-y-4 rounded-[14px_4px_14px_4px] border-2 border-[#262626] bg-[#f2efe9] p-6 shadow-[5px_5px_0px_#262626] dark:border-[#f2efe9] dark:bg-[#252331] dark:shadow-[5px_5px_0px_#f2efe9]"
 		>
+			<span
+				class="absolute top-2 right-2 font-mono text-[10px] text-[#262626]/30 dark:text-[#f2efe9]/30"
+				aria-hidden="true">+</span
+			>
 			<div
-				class="mx-auto h-10 w-10 animate-spin rounded-full border-3 border-brandy/30 border-t-tangerine"
+				class="mx-auto h-10 w-10 animate-spin rounded-full border-3 border-[#262626]/20 border-t-[#fea770]"
 			></div>
 			<div class="space-y-1">
-				<p class="font-headline text-lg font-bold text-ink dark:text-papaya">
+				<p class="font-serif text-lg font-bold text-[#262626] dark:text-[#f2efe9]">
 					Mengunggah Bukti Pembayaran...
 				</p>
-				<p class="font-sans text-xs text-brandy/80 dark:text-papaya/70">
+				<p class="font-mono text-xs text-[#404040] dark:text-[#b8b5ad]">
 					Sedang menyimpan foto dan memperbarui status pesanan Anda.
 				</p>
 			</div>

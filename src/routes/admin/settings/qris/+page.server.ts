@@ -5,7 +5,8 @@ import {
 	updateQrisLabel,
 	getQrisCode,
 	deleteQrisCode,
-	reorderQrisCode
+	reorderQrisCode,
+	reorderQrisCodesBatch
 } from '$lib/server/db/queries/qris';
 import { validateQrisFile, uploadQrisImage, deleteQrisImage } from '$lib/server/storage/supabase';
 import { logger } from '$lib/server/logger';
@@ -100,6 +101,28 @@ export const actions: Actions = {
 		} catch (err) {
 			logger.error('qris.reorder-failed', { error: err, id });
 			return fail(500, { error: 'Gagal mengubah urutan.' });
+		}
+	},
+
+	reorderBatch: async ({ request }) => {
+		const formData = await request.formData();
+		const rawOrderedIds = formData.get('orderedIds');
+
+		if (typeof rawOrderedIds !== 'string') {
+			return fail(400, { error: 'Data urutan tidak valid.' });
+		}
+
+		try {
+			const orderedIds: string[] = JSON.parse(rawOrderedIds);
+			if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
+				return fail(400, { error: 'Daftar ID QRIS kosong.' });
+			}
+
+			await reorderQrisCodesBatch(orderedIds);
+			return { success: true };
+		} catch (err) {
+			logger.error('qris.reorder-batch-failed', { error: err });
+			return fail(500, { error: 'Gagal menyimpan susunan urutan QRIS.' });
 		}
 	}
 };

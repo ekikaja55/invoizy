@@ -3,10 +3,7 @@ import { getActivePromoRules } from '$lib/server/db/queries/order';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async () => {
-	const [settings, promoRules] = await Promise.all([
-		getSettings(),
-		getActivePromoRules()
-	]);
+	const [settings, promoRules] = await Promise.all([getSettings(), getActivePromoRules()]);
 
 	return {
 		contactInfo: {

@@ -128,7 +128,11 @@ export const actions: Actions = {
 		const files = formData.getAll('images') as File[];
 		const newUploadedUrls: string[] = [];
 		for (const file of files) {
-			if (file instanceof File && file.size > 0 && retainedUrls.length + newUploadedUrls.length < 4) {
+			if (
+				file instanceof File &&
+				file.size > 0 &&
+				retainedUrls.length + newUploadedUrls.length < 4
+			) {
 				try {
 					const res = await uploadProductImage(file);
 					newUploadedUrls.push(res.url);

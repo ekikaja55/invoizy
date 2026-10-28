@@ -121,7 +121,12 @@
 				variants?: { id: string; name: string; stock: number }[];
 			}
 		>();
-		const promoRules: { productId: string; name: string; minQty: number; discountAmount: number }[] = [];
+		const promoRules: {
+			productId: string;
+			name: string;
+			minQty: number;
+			discountAmount: number;
+		}[] = [];
 
 		for (const category of [...data.productCategories]) {
 			for (const product of category.products) {
@@ -167,75 +172,103 @@
 	<div>
 		<a
 			href={resolve('/(public)/order')}
-			class="inline-flex items-center gap-2 rounded-[8px_3px_7px_2px] border-2 border-brandy/50 bg-papaya px-3.5 py-1.5 font-mono text-xs font-bold text-ink shadow-[2px_2px_0px_#78290f] transition-all hover:-translate-y-0.5 hover:border-brandy hover:bg-brandy/10 dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[2px_2px_0px_rgba(255,236,209,0.2)]"
+			class="inline-flex items-center gap-2 rounded-lg border-2 border-[#262626] bg-white px-3.5 py-1.5 font-mono text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:-translate-y-0.5 hover:bg-[#b4a6d5] active:translate-y-0.5 active:shadow-none dark:border-[#f2efe9] dark:bg-[#252331] dark:text-[#f2efe9] dark:shadow-[2px_2px_0px_#f2efe9]"
 		>
 			<ArrowLeft size={14} strokeWidth={2.5} />
 			<span>Kembali ke Katalog Merchandise</span>
 		</a>
 	</div>
 
-	<!-- Page Header / Scrapbook Title -->
+	<!-- Page Header: Warm Monoline Editorial -->
 	<header class="space-y-3">
 		<div
-			class="inline-block -rotate-2 rounded-[6px_2px_5px_1px] border-2 border-brandy bg-papaya px-3.5 py-1.5 font-mono text-xs font-bold tracking-widest text-brandy uppercase shadow-[2px_2px_0px_#78290f] md:text-sm dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[2px_2px_0px_rgba(255,236,209,0.2)]"
+			class="inline-flex items-center gap-2 rounded-full border-2 border-[#262626] bg-[#a2e1db] px-3.5 py-1 font-mono text-xs font-bold tracking-widest text-[#262626] uppercase shadow-[2px_2px_0px_#262626] dark:border-[#f2efe9] dark:bg-[#a2e1db] dark:text-[#262626] dark:shadow-[2px_2px_0px_#f2efe9]"
 		>
-			CHECKOUT PESANAN
+			<span class="inline-block h-2 w-2 rounded-full border border-[#262626] bg-[#fea770]"></span>
+			<span>CHECKOUT PESANAN</span>
 		</div>
 		<h1
-			class="font-headline text-3xl font-extrabold tracking-normal text-ink md:text-4xl dark:text-papaya"
+			class="font-serif text-3xl font-black tracking-tight text-[#262626] md:text-4xl dark:text-[#f2efe9]"
 		>
 			Lengkapi Pesanan Anda
 		</h1>
-		<p class="font-handwriting text-2xl font-semibold leading-snug text-teal md:text-3xl dark:text-papaya/90">
-			Pilih metode penerimaan barang dan isi kontak Anda untuk faktur resmi.
+		<p class="font-mono text-xs text-[#404040] md:text-sm dark:text-[#b8b5ad]">
+			Pilih metode penerimaan barang dan lengkapi kontak Anda untuk faktur resmi.
 		</p>
 	</header>
 
 	{#if cart.isEmpty}
 		<div
-			class="mx-auto max-w-md rounded-[16px_8px_14px_6px] border-2 border-dashed border-brandy/40 bg-papaya/40 p-10 text-center shadow-[4px_4px_0px_#78290f] dark:border-papaya/30 dark:bg-ink/40 dark:shadow-[4px_4px_0px_rgba(255,236,209,0.15)]"
+			class="relative mx-auto max-w-md rounded-[14px_4px_14px_4px] border-2 border-[#262626] bg-white p-10 text-center shadow-[4px_4px_0px_#262626] dark:border-[#a2e1db] dark:bg-[#252331] dark:shadow-[4px_4px_0px_#b4a6d5]"
 		>
+			<span
+				class="absolute top-2 right-2 font-mono text-[10px] text-[#262626]/30 dark:text-[#f2efe9]/30"
+				aria-hidden="true">+</span
+			>
 			<div
-				class="mx-auto flex h-16 w-16 items-center justify-center rounded-[12px_4px_10px_3px] border-2 border-brandy bg-papaya text-brandy shadow-[3px_3px_0px_#78290f] dark:border-papaya/40 dark:bg-ink dark:text-papaya"
+				class="mx-auto flex h-16 w-16 items-center justify-center rounded-lg border-2 border-[#262626] bg-[#fea770] text-[#262626] shadow-[2px_2px_0px_#262626]"
 			>
 				<ShoppingBag size={28} strokeWidth={2.25} />
 			</div>
-			<h2 class="mt-4 font-headline text-xl font-bold text-ink dark:text-papaya">
+			<h2 class="mt-4 font-serif text-xl font-bold text-[#262626] dark:text-[#f2efe9]">
 				Keranjang Masih Kosong
 			</h2>
-			<p class="mt-1 font-sans text-xs text-brandy/80 dark:text-papaya/70">
-				Belum ada produk yang dipilih untuk dicheckout. Silakan jelajahi katalog merchandise terlebih dahulu.
+			<p class="mt-1 font-mono text-xs text-[#404040] dark:text-[#b8b5ad]">
+				Belum ada produk yang dipilih untuk dicheckout. Silakan jelajahi katalog merchandise
+				terlebih dahulu.
 			</p>
 			<div class="mt-6">
 				<a
 					href={resolve('/(public)/order')}
-					class="inline-flex items-center gap-2 rounded-[10px_5px_9px_4px] border-2 border-brandy bg-tangerine px-5 py-2.5 font-sans text-sm font-bold text-white shadow-[3px_3px_0px_#78290f] transition-all hover:bg-[#e06d00] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none"
+					class="group relative inline-flex items-center justify-center overflow-hidden rounded-lg border-2 border-[#262626] bg-[#fea770] px-5 py-2.5 font-mono text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:-translate-y-0.5 hover:bg-[#f99252] active:translate-y-0.5 active:shadow-none dark:border-[#a2e1db] dark:bg-[#fea770] dark:text-[#262626] dark:shadow-[2px_2px_0px_#b4a6d5]"
 				>
-					<span>Buka Katalog Merchandise</span>
-					<ArrowRight size={16} strokeWidth={2.5} />
+					<span
+						class="inline-flex items-center gap-2 transition-transform duration-300 ease-out group-hover:-translate-y-[150%]"
+					>
+						<span>Buka Katalog Merchandise</span>
+						<ArrowRight size={14} strokeWidth={2.5} />
+					</span>
+					<span
+						class="absolute inset-0 inline-flex translate-y-[150%] items-center justify-center gap-2 transition-transform duration-300 ease-out group-hover:translate-y-0"
+						aria-hidden="true"
+					>
+						<span>Buka Katalog Merchandise</span>
+						<ArrowRight size={14} strokeWidth={2.5} />
+					</span>
 				</a>
 			</div>
 		</div>
 	{:else}
 		<!-- Step 1: Metode Pengambilan / Pengiriman Barang -->
 		<div
-			class="space-y-4 rounded-[14px_6px_12px_8px] border-2 border-brandy bg-papaya/50 p-5 shadow-[4px_4px_0px_#78290f] dark:border-papaya/30 dark:bg-ink/60 dark:shadow-[4px_4px_0px_rgba(255,236,209,0.2)]"
+			class="relative space-y-4 rounded-[14px_4px_14px_4px] border-2 border-[#262626] bg-white p-5 shadow-[4px_4px_0px_#262626] dark:border-[#a2e1db] dark:bg-[#252331] dark:shadow-[4px_4px_0px_#b4a6d5]"
 		>
-			<div class="border-b-2 border-brandy/20 pb-3 dark:border-papaya/20">
-				<div class="flex items-center gap-2">
+			<span
+				class="absolute top-2 right-2 font-mono text-[10px] text-[#262626]/30 dark:text-[#f2efe9]/30"
+				aria-hidden="true">+</span
+			>
+			<div class="border-b-2 border-[#262626]/15 pb-3.5 dark:border-[#f2efe9]/15">
+				<div class="flex items-center gap-2.5">
 					<div
-						class="flex h-8 w-8 items-center justify-center rounded-[6px_2px_5px_1px] border-2 border-brandy bg-tangerine text-white shadow-[2px_2px_0px_#78290f]"
+						class="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-[#262626] bg-[#fea770] text-[#262626] shadow-[2px_2px_0px_#262626]"
 					>
 						<Truck size={16} strokeWidth={2.5} />
 					</div>
 					<div>
-						<h2 class="font-headline text-lg font-bold text-ink dark:text-papaya">
+						<span
+							class="font-mono text-[10px] font-bold tracking-wider text-[#404040] uppercase dark:text-[#b8b5ad]"
+							>Langkah #01</span
+						>
+						<h2
+							class="font-serif text-lg leading-tight font-bold text-[#262626] dark:text-[#f2efe9]"
+						>
 							Metode Pengiriman / Pengambilan
 						</h2>
 					</div>
 				</div>
-				<p class="mt-1 font-sans text-xs text-brandy/80 dark:text-papaya/70">
-					Pilih apakah barang ingin dikirim lewat ekspedisi atau diambil langsung di booth pameran.
+				<p class="mt-1.5 font-mono text-xs text-[#404040] dark:text-[#b8b5ad]">
+					Pilih apakah barang ingin dikirim via ekspedisi Shopee atau diambil langsung di booth
+					pameran ChibiconXI.
 				</p>
 			</div>
 
@@ -243,9 +276,10 @@
 			<div class="grid gap-3 sm:grid-cols-1">
 				<!-- Opsi 1: Mail Order (Shopee Link) -->
 				<label
-					class="flex cursor-pointer items-start justify-between gap-3 rounded-[12px_5px_10px_4px] border-2 p-4 transition-all duration-150 {cart.shipping?.kind === 'mail_order'
-						? 'border-brandy bg-tangerine/15 shadow-[3px_3px_0px_#78290f] dark:border-papaya dark:bg-tangerine/25'
-						: 'border-brandy/30 bg-white/70 hover:border-brandy hover:bg-papaya/40 dark:border-papaya/25 dark:bg-ink/70'}"
+					class="flex cursor-pointer items-start justify-between gap-3 rounded-lg border-2 p-4 transition-all duration-150 {cart
+						.shipping?.kind === 'mail_order'
+						? 'border-[#262626] bg-[#fea770]/15 shadow-[2px_2px_0px_#262626] dark:border-[#a2e1db] dark:bg-[#fea770]/20'
+						: 'border-[#262626]/20 bg-[#f9f7f2] hover:border-[#262626] hover:bg-[#f2efe9] dark:border-[#f2efe9]/20 dark:bg-[#1a1825]'}"
 				>
 					<div class="flex items-start gap-3">
 						<input
@@ -254,32 +288,34 @@
 							checked={cart.shipping?.kind === 'mail_order'}
 							onchange={() => selectShippingKind('mail_order')}
 							disabled={isBusy}
-							class="mt-1 accent-tangerine"
+							class="mt-1 accent-[#262626] dark:accent-[#a2e1db]"
 						/>
 						<div class="space-y-1">
 							<div class="flex flex-wrap items-center gap-2">
-								<span class="font-headline text-sm font-bold text-ink dark:text-papaya">
+								<span class="font-serif text-sm font-bold text-[#262626] dark:text-[#f2efe9]">
 									Mail Order (Kirim Paket via Shopee)
 								</span>
 								<span
-									class="rounded-[4px_2px_4px_2px] border border-forest/40 bg-forest/20 px-2 py-0.5 font-mono text-[10px] font-black text-forest tracking-wider uppercase"
+									class="rounded border border-[#065f46] bg-[#a2e1db] px-2 py-0.5 font-mono text-xs font-bold tracking-wider text-[#065f46] uppercase"
 								>
 									Gratis Ongkir di Web (Rp 0)
 								</span>
 							</div>
-							<p class="font-sans text-xs leading-relaxed text-brandy/80 dark:text-papaya/70">
-								Barang dibayar di website ini. Tautan checkout khusus Shopee (Rp 1 / bebas ongkir Shopee) akan dikirimkan ke WhatsApp/Email Anda untuk keperluan ekspedisi.
+							<p class="font-mono text-xs leading-relaxed text-[#404040] dark:text-[#b8b5ad]">
+								Barang dibayar di website ini. Tautan checkout khusus Shopee (Rp 1 / bebas ongkir
+								Shopee) akan dikirimkan ke WhatsApp/Email Anda untuk keperluan ekspedisi.
 							</p>
 						</div>
 					</div>
-					<span class="font-mono text-sm font-black text-teal dark:text-teal/90">Rp 0</span>
+					<span class="font-mono text-sm font-black text-[#065f46] dark:text-[#a2e1db]">Rp 0</span>
 				</label>
 
 				<!-- Opsi 2: Self Pickup Day 1 -->
 				<label
-					class="flex cursor-pointer items-start justify-between gap-3 rounded-[12px_5px_10px_4px] border-2 p-4 transition-all duration-150 {cart.shipping?.kind === 'pickup_day_1'
-						? 'border-brandy bg-tangerine/15 shadow-[3px_3px_0px_#78290f] dark:border-papaya dark:bg-tangerine/25'
-						: 'border-brandy/30 bg-white/70 hover:border-brandy hover:bg-papaya/40 dark:border-papaya/25 dark:bg-ink/70'}"
+					class="flex cursor-pointer items-start justify-between gap-3 rounded-lg border-2 p-4 transition-all duration-150 {cart
+						.shipping?.kind === 'pickup_day_1'
+						? 'border-[#262626] bg-[#fea770]/15 shadow-[2px_2px_0px_#262626] dark:border-[#a2e1db] dark:bg-[#fea770]/20'
+						: 'border-[#262626]/20 bg-[#f9f7f2] hover:border-[#262626] hover:bg-[#f2efe9] dark:border-[#f2efe9]/20 dark:bg-[#1a1825]'}"
 				>
 					<div class="flex items-start gap-3">
 						<input
@@ -288,32 +324,34 @@
 							checked={cart.shipping?.kind === 'pickup_day_1'}
 							onchange={() => selectShippingKind('pickup_day_1')}
 							disabled={isBusy}
-							class="mt-1 accent-tangerine"
+							class="mt-1 accent-[#262626] dark:accent-[#a2e1db]"
 						/>
 						<div class="space-y-1">
 							<div class="flex flex-wrap items-center gap-2">
-								<span class="font-headline text-sm font-bold text-ink dark:text-papaya">
+								<span class="font-serif text-sm font-bold text-[#262626] dark:text-[#f2efe9]">
 									Self-Pickup: Chibiconxi Day 1
 								</span>
 								<span
-									class="rounded-[4px_2px_4px_2px] border border-teal/40 bg-teal/20 px-2 py-0.5 font-mono text-[10px] font-black text-teal tracking-wider uppercase"
+									class="rounded border border-[#262626] bg-[#b4a6d5]/40 px-2 py-0.5 font-mono text-xs font-bold tracking-wider text-[#262626] uppercase dark:border-[#f2efe9] dark:text-[#f2efe9]"
 								>
 									Ambil di Booth (Rp 0)
 								</span>
 							</div>
-							<p class="font-sans text-xs leading-relaxed text-brandy/80 dark:text-papaya/70">
-								Ambil pesanan langsung di meja booth cho.lazey pada event Chibiconxi hari pertama (Sabtu, 12 Desember 2026).
+							<p class="font-mono text-xs leading-relaxed text-[#404040] dark:text-[#b8b5ad]">
+								Ambil pesanan langsung di meja booth cho.lazey pada event Chibiconxi hari pertama
+								(Sabtu, 12 Desember 2026).
 							</p>
 						</div>
 					</div>
-					<span class="font-mono text-sm font-black text-teal dark:text-teal/90">Rp 0</span>
+					<span class="font-mono text-sm font-black text-[#065f46] dark:text-[#a2e1db]">Rp 0</span>
 				</label>
 
 				<!-- Opsi 3: Self Pickup Day 2 -->
 				<label
-					class="flex cursor-pointer items-start justify-between gap-3 rounded-[12px_5px_10px_4px] border-2 p-4 transition-all duration-150 {cart.shipping?.kind === 'pickup_day_2'
-						? 'border-brandy bg-tangerine/15 shadow-[3px_3px_0px_#78290f] dark:border-papaya dark:bg-tangerine/25'
-						: 'border-brandy/30 bg-white/70 hover:border-brandy hover:bg-papaya/40 dark:border-papaya/25 dark:bg-ink/70'}"
+					class="flex cursor-pointer items-start justify-between gap-3 rounded-lg border-2 p-4 transition-all duration-150 {cart
+						.shipping?.kind === 'pickup_day_2'
+						? 'border-[#262626] bg-[#fea770]/15 shadow-[2px_2px_0px_#262626] dark:border-[#a2e1db] dark:bg-[#fea770]/20'
+						: 'border-[#262626]/20 bg-[#f9f7f2] hover:border-[#262626] hover:bg-[#f2efe9] dark:border-[#f2efe9]/20 dark:bg-[#1a1825]'}"
 				>
 					<div class="flex items-start gap-3">
 						<input
@@ -322,47 +360,64 @@
 							checked={cart.shipping?.kind === 'pickup_day_2'}
 							onchange={() => selectShippingKind('pickup_day_2')}
 							disabled={isBusy}
-							class="mt-1 accent-tangerine"
+							class="mt-1 accent-[#262626] dark:accent-[#a2e1db]"
 						/>
 						<div class="space-y-1">
 							<div class="flex flex-wrap items-center gap-2">
-								<span class="font-headline text-sm font-bold text-ink dark:text-papaya">
+								<span class="font-serif text-sm font-bold text-[#262626] dark:text-[#f2efe9]">
 									Self-Pickup: Chibiconxi Day 2
 								</span>
 								<span
-									class="rounded-[4px_2px_4px_2px] border border-teal/40 bg-teal/20 px-2 py-0.5 font-mono text-[10px] font-black text-teal tracking-wider uppercase"
+									class="rounded border border-[#262626] bg-[#b4a6d5]/40 px-2 py-0.5 font-mono text-xs font-bold tracking-wider text-[#262626] uppercase dark:border-[#f2efe9] dark:text-[#f2efe9]"
 								>
 									Ambil di Booth (Rp 0)
 								</span>
 							</div>
-							<p class="font-sans text-xs leading-relaxed text-brandy/80 dark:text-papaya/70">
-								Ambil pesanan langsung di meja booth cho.lazey pada event Chibiconxi hari kedua (Minggu, 13 Desember 2026).
+							<p class="font-mono text-xs leading-relaxed text-[#404040] dark:text-[#b8b5ad]">
+								Ambil pesanan langsung di meja booth cho.lazey pada event Chibiconxi hari kedua
+								(Minggu, 13 Desember 2026).
 							</p>
 						</div>
 					</div>
-					<span class="font-mono text-sm font-black text-teal dark:text-teal/90">Rp 0</span>
+					<span class="font-mono text-sm font-black text-[#065f46] dark:text-[#a2e1db]">Rp 0</span>
 				</label>
 			</div>
 		</div>
 
 		<!-- Step 2: Ringkasan Belanja -->
 		<div
-			class="space-y-4 rounded-[14px_6px_12px_8px] border-2 border-brandy bg-papaya/50 p-5 shadow-[4px_4px_0px_#78290f] dark:border-papaya/30 dark:bg-ink/60 dark:shadow-[4px_4px_0px_rgba(255,236,209,0.2)]"
+			class="relative space-y-4 rounded-[14px_4px_14px_4px] border-2 border-[#262626] bg-white p-5 shadow-[4px_4px_0px_#262626] dark:border-[#a2e1db] dark:bg-[#252331] dark:shadow-[4px_4px_0px_#b4a6d5]"
 		>
-			<div class="flex items-center justify-between">
-				<div class="flex items-center gap-2">
+			<span
+				class="absolute top-2 right-2 font-mono text-[10px] text-[#262626]/30 dark:text-[#f2efe9]/30"
+				aria-hidden="true">+</span
+			>
+			<div
+				class="flex items-center justify-between border-b-2 border-[#262626]/15 pb-3.5 dark:border-[#f2efe9]/15"
+			>
+				<div class="flex items-center gap-2.5">
 					<div
-						class="flex h-8 w-8 items-center justify-center rounded-[6px_2px_5px_1px] border-2 border-brandy bg-tangerine text-white shadow-[2px_2px_0px_#78290f]"
+						class="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-[#262626] bg-[#a2e1db] text-[#262626] shadow-[2px_2px_0px_#262626]"
 					>
 						<ShoppingBag size={16} strokeWidth={2.5} />
 					</div>
-					<h2 class="font-headline text-lg font-bold text-ink dark:text-papaya">Ringkasan Belanja</h2>
+					<div>
+						<span
+							class="font-mono text-[10px] font-bold tracking-wider text-[#404040] uppercase dark:text-[#b8b5ad]"
+							>Langkah #02</span
+						>
+						<h2
+							class="font-serif text-lg leading-tight font-bold text-[#262626] dark:text-[#f2efe9]"
+						>
+							Ringkasan Belanja
+						</h2>
+					</div>
 				</div>
 				<button
 					type="button"
 					onclick={() => (confirmClearOpen = true)}
 					disabled={isBusy}
-					class="flex items-center gap-1.5 rounded-[6px_2px_5px_1px] border border-crimson/30 bg-crimson/10 px-2.5 py-1 font-mono text-xs font-bold text-crimson transition-colors hover:bg-crimson/20 disabled:opacity-50"
+					class="flex items-center gap-1.5 rounded-lg border-2 border-[#991b1b] bg-[#fee2e2] px-2.5 py-1 font-mono text-xs font-bold text-[#991b1b] shadow-[1px_1px_0px_#991b1b] transition-all hover:bg-[#fecaca] active:translate-y-0.5 active:shadow-none disabled:opacity-50 dark:border-[#f87171] dark:bg-[#450a0a] dark:text-[#f87171]"
 				>
 					<Trash2 size={13} strokeWidth={2.5} />
 					<span>Kosongkan</span>
@@ -372,25 +427,29 @@
 			<ul class="space-y-2.5">
 				{#each cart.items as item (item.variantId ? `${item.productId}:${item.variantId}` : item.productId)}
 					<li
-						class="flex items-start justify-between gap-3 rounded-[10px_4px_8px_3px] border-2 border-brandy/30 bg-white/70 p-3 shadow-[2px_2px_0px_#78290f] dark:border-papaya/25 dark:bg-ink/80 dark:shadow-[2px_2px_0px_rgba(255,236,209,0.15)]"
+						class="flex items-start justify-between gap-3 rounded-lg border-2 border-[#262626]/20 bg-[#f9f7f2] p-3 shadow-[2px_2px_0px_#262626]/15 dark:border-[#f2efe9]/20 dark:bg-[#1a1825]"
 					>
-						<div class="flex-1 min-w-0">
-							<span class="font-headline text-sm font-bold text-ink truncate block dark:text-papaya">
+						<div class="min-w-0 flex-1">
+							<span
+								class="block truncate font-serif text-sm font-bold text-[#262626] dark:text-[#f2efe9]"
+							>
 								{item.name}
 							</span>
 							<div class="mt-0.5 flex flex-wrap items-center gap-2">
 								{#if item.variantName}
 									<span
-										class="rounded-[4px_2px_4px_2px] border border-forest/30 bg-forest/15 px-1.5 py-0.5 font-mono text-[11px] font-bold text-forest"
+										class="rounded border border-[#262626] bg-[#b4a6d5]/30 px-1.5 py-0.5 font-mono text-xs font-bold text-[#262626] dark:border-[#f2efe9] dark:text-[#f2efe9]"
 									>
 										{item.variantName}
 									</span>
 								{/if}
-								<span class="font-mono text-xs text-brandy/80 dark:text-papaya/70">
+								<span class="font-mono text-xs text-[#404040] dark:text-[#b8b5ad]">
 									{formatRupiah(item.price)}
 								</span>
 							</div>
-							<span class="mt-1 block font-mono text-xs font-bold text-teal dark:text-teal/90">
+							<span
+								class="mt-1 block font-mono text-xs font-bold text-[#065f46] dark:text-[#a2e1db]"
+							>
 								Subtotal: {formatRupiah(item.price * item.qty)}
 							</span>
 						</div>
@@ -400,24 +459,26 @@
 								type="button"
 								onclick={() => (itemToDelete = item)}
 								disabled={isBusy}
-								class="text-brandy/50 transition-colors hover:text-crimson disabled:opacity-50 dark:text-papaya/50 dark:hover:text-crimson"
+								class="text-[#404040] transition-colors hover:text-[#991b1b] disabled:opacity-50 dark:text-[#b8b5ad] dark:hover:text-[#f87171]"
 								aria-label={`Hapus ${item.name}`}
 							>
 								<Trash2 size={14} strokeWidth={2.5} />
 							</button>
 
-							<div class="flex items-center gap-1">
+							<div
+								class="flex items-center rounded-lg border-2 border-[#262626] bg-white shadow-[1px_1px_0px_#262626] dark:border-[#f2efe9] dark:bg-[#252331]"
+							>
 								<button
 									type="button"
 									onclick={() => handleDecrement(item)}
 									disabled={isBusy}
-									class="flex h-6 w-6 items-center justify-center rounded-[3px_1px_3px_1px] border-2 border-brandy bg-papaya text-ink shadow-[1px_1px_0px_#78290f] hover:bg-brandy/10 active:translate-y-0.5 active:shadow-none disabled:opacity-50 dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[1px_1px_0px_rgba(255,236,209,0.2)]"
+									class="p-1 text-[#262626] hover:bg-neutral-200 active:bg-neutral-300 disabled:opacity-50 dark:text-[#f2efe9] dark:hover:bg-neutral-800"
 									aria-label="Kurangi jumlah"
 								>
 									<Minus size={11} strokeWidth={2.75} />
 								</button>
 								<span
-									class="w-6 text-center font-mono text-xs font-bold text-ink dark:text-papaya"
+									class="w-6 text-center font-mono text-xs font-bold text-[#262626] dark:text-[#f2efe9]"
 								>
 									{item.qty}
 								</span>
@@ -425,7 +486,7 @@
 									type="button"
 									onclick={() => handleIncrement(item)}
 									disabled={isBusy}
-									class="flex h-6 w-6 items-center justify-center rounded-[3px_1px_3px_1px] border-2 border-brandy bg-papaya text-ink shadow-[1px_1px_0px_#78290f] hover:bg-brandy/10 active:translate-y-0.5 active:shadow-none disabled:opacity-50 dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[1px_1px_0px_rgba(255,236,209,0.2)]"
+									class="p-1 text-[#262626] hover:bg-neutral-200 active:bg-neutral-300 disabled:opacity-50 dark:text-[#f2efe9] dark:hover:bg-neutral-800"
 									aria-label="Tambah jumlah"
 								>
 									<Plus size={11} strokeWidth={2.75} />
@@ -437,16 +498,18 @@
 
 				<!-- Baris Subtotal -->
 				<li
-					class="flex items-center justify-between border-t-2 border-dashed border-brandy/20 pt-3 text-xs font-mono dark:border-papaya/20"
+					class="flex items-center justify-between border-t-2 border-dashed border-[#262626]/20 pt-3 font-mono text-xs dark:border-[#f2efe9]/20"
 				>
-					<span class="text-brandy/80 dark:text-papaya/70">Subtotal Barang</span>
-					<span class="font-bold text-ink dark:text-papaya">{formatRupiah(cart.subtotal)}</span>
+					<span class="text-[#404040] dark:text-[#b8b5ad]">Subtotal Barang</span>
+					<span class="font-bold text-[#262626] dark:text-[#f2efe9]"
+						>{formatRupiah(cart.subtotal)}</span
+					>
 				</li>
 
 				<!-- Baris Diskon Promo (Jika Ada) -->
 				{#if cart.discountTotal > 0}
 					<li
-						class="flex items-center justify-between text-xs font-mono text-crimson dark:text-red-400"
+						class="flex items-center justify-between font-mono text-xs text-[#991b1b] dark:text-[#f87171]"
 					>
 						<span class="flex items-center gap-1 font-bold">
 							<Sparkles size={13} />
@@ -458,24 +521,22 @@
 
 				<!-- Baris Opsi Pengiriman -->
 				{#if cart.shipping}
-					<li
-						class="flex items-center justify-between text-xs font-mono dark:border-papaya/20"
-					>
-						<span class="text-brandy/80 dark:text-papaya/70">
+					<li class="flex items-center justify-between font-mono text-xs dark:border-[#f2efe9]/20">
+						<span class="text-[#404040] dark:text-[#b8b5ad]">
 							{shippingLabel(cart.shipping)}
 						</span>
-						<span class="font-bold text-forest">Rp 0</span>
+						<span class="font-bold text-[#065f46] dark:text-[#a2e1db]">Rp 0</span>
 					</li>
 				{/if}
 
-				<!-- Baris Total Akhir -->
+				<!-- Baris Total Akhir: Accounting Double Underline -->
 				<li
-					class="flex items-center justify-between border-t-2 border-brandy pt-3 dark:border-papaya/30"
+					class="flex items-center justify-between border-t-2 border-b-2 border-double border-[#262626]/40 py-3 dark:border-[#f2efe9]/40"
 				>
-					<span class="font-headline text-base font-extrabold text-ink dark:text-papaya">
+					<span class="font-serif text-base font-bold text-[#262626] dark:text-[#f2efe9]">
 						Total Pembayaran
 					</span>
-					<span class="font-mono text-xl font-black text-teal dark:text-teal/90">
+					<span class="font-mono text-xl font-black text-[#065f46] dark:text-[#a2e1db]">
 						{formatRupiah(cart.total)}
 					</span>
 				</li>
@@ -506,8 +567,12 @@
 					isBusy = false;
 				};
 			}}
-			class="space-y-5 rounded-[14px_6px_12px_8px] border-2 border-brandy bg-papaya/50 p-5 shadow-[4px_4px_0px_#78290f] dark:border-papaya/30 dark:bg-ink/60 dark:shadow-[4px_4px_0px_rgba(255,236,209,0.2)]"
+			class="relative space-y-5 rounded-[14px_4px_14px_4px] border-2 border-[#262626] bg-white p-5 shadow-[4px_4px_0px_#262626] dark:border-[#a2e1db] dark:bg-[#252331] dark:shadow-[4px_4px_0px_#b4a6d5]"
 		>
+			<span
+				class="absolute top-2 right-2 font-mono text-[10px] text-[#262626]/30 dark:text-[#f2efe9]/30"
+				aria-hidden="true">+</span
+			>
 			<input type="hidden" name="items" value={itemsJson} />
 			<input type="hidden" name="shipping" value={shippingJson} />
 			<input type="hidden" name="address" value="" />
@@ -518,21 +583,43 @@
 				<input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
 			</div>
 
-			<div class="border-b-2 border-brandy/20 pb-3 dark:border-papaya/20">
-				<h2 class="font-headline text-lg font-bold text-ink dark:text-papaya">Data Pemesan</h2>
-				<p class="font-handwriting text-xl font-semibold text-teal dark:text-papaya/90">
+			<div class="border-b-2 border-[#262626]/15 pb-3.5 dark:border-[#f2efe9]/15">
+				<div class="flex items-center gap-2.5">
+					<div
+						class="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-[#262626] bg-[#b4a6d5] text-[#262626] shadow-[2px_2px_0px_#262626]"
+					>
+						<span class="font-mono text-sm font-bold">◈</span>
+					</div>
+					<div>
+						<span
+							class="font-mono text-[10px] font-bold tracking-wider text-[#404040] uppercase dark:text-[#b8b5ad]"
+							>Langkah #03</span
+						>
+						<h2
+							class="font-serif text-lg leading-tight font-bold text-[#262626] dark:text-[#f2efe9]"
+						>
+							Data Pemesan
+						</h2>
+					</div>
+				</div>
+				<p class="mt-1.5 font-mono text-xs text-[#404040] dark:text-[#b8b5ad]">
 					Informasi ini akan tertera pada faktur resmi pesanan Anda.
 				</p>
 			</div>
 
 			<!-- Handle Media Sosial -->
 			<div>
-				<label for="handle" class="block font-headline text-sm font-bold text-ink dark:text-papaya">
+				<label
+					for="handle"
+					class="block font-mono text-xs font-bold tracking-wider text-[#262626] uppercase dark:text-[#f2efe9]"
+				>
 					Handle Media Sosial / Nama Panggilan
 				</label>
-				<div class="mt-1.5 flex">
+				<div
+					class="mt-1.5 flex overflow-hidden rounded-lg shadow-[2px_2px_0px_#262626] dark:shadow-[2px_2px_0px_#f2efe9]"
+				>
 					<span
-						class="inline-flex items-center rounded-l-[8px_3px_0px_2px] border-2 border-r-0 border-brandy bg-papaya px-3 font-mono text-sm font-bold text-brandy dark:border-papaya/40 dark:bg-ink dark:text-papaya"
+						class="inline-flex items-center border-2 border-r-0 border-[#262626] bg-[#f2efe9] px-3 font-mono text-sm font-bold text-[#262626] dark:border-[#f2efe9] dark:bg-[#1a1825] dark:text-[#f2efe9]"
 					>
 						@
 					</span>
@@ -543,17 +630,20 @@
 						required
 						placeholder="username_kamu"
 						disabled={isBusy}
-						class="w-full rounded-r-[0px_3px_8px_0px] border-2 border-brandy bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-brandy/40 focus:border-brandy focus:ring-2 focus:ring-tangerine focus:outline-none disabled:opacity-50 dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:placeholder:text-papaya/40"
+						class="w-full border-2 border-[#262626] bg-white px-3.5 py-2.5 font-sans text-sm text-[#262626] placeholder:text-[#404040]/40 focus:ring-2 focus:ring-[#fea770] focus:outline-none disabled:opacity-50 dark:border-[#f2efe9] dark:bg-[#252331] dark:text-[#f2efe9] dark:placeholder:text-[#b8b5ad]/40"
 					/>
 				</div>
-				<p class="mt-1 font-mono text-[11px] text-brandy/70 dark:text-papaya/60">
+				<p class="mt-1 font-mono text-xs text-[#404040] dark:text-[#b8b5ad]">
 					Akun Instagram atau X aktif untuk verifikasi pesanan Anda.
 				</p>
 			</div>
 
 			<!-- Email -->
 			<div>
-				<label for="email" class="block font-headline text-sm font-bold text-ink dark:text-papaya">
+				<label
+					for="email"
+					class="block font-mono text-xs font-bold tracking-wider text-[#262626] uppercase dark:text-[#f2efe9]"
+				>
 					Alamat Email Aktif
 				</label>
 				<input
@@ -563,16 +653,19 @@
 					required
 					placeholder="kamu@email.com"
 					disabled={isBusy}
-					class="mt-1.5 w-full rounded-[8px_3px_7px_2px] border-2 border-brandy bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-brandy/40 focus:border-brandy focus:ring-2 focus:ring-tangerine focus:outline-none disabled:opacity-50 dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:placeholder:text-papaya/40"
+					class="mt-1.5 w-full rounded-lg border-2 border-[#262626] bg-white px-3.5 py-2.5 font-sans text-sm text-[#262626] shadow-[2px_2px_0px_#262626] placeholder:text-[#404040]/40 focus:ring-2 focus:ring-[#fea770] focus:outline-none disabled:opacity-50 dark:border-[#f2efe9] dark:bg-[#252331] dark:text-[#f2efe9] dark:shadow-[2px_2px_0px_#f2efe9] dark:placeholder:text-[#b8b5ad]/40"
 				/>
-				<p class="mt-1 font-mono text-[11px] text-brandy/70 dark:text-papaya/60">
+				<p class="mt-1 font-mono text-xs text-[#404040] dark:text-[#b8b5ad]">
 					Faktur invoice PDF resmi otomatis dikirimkan ke alamat email ini.
 				</p>
 			</div>
 
 			<!-- WhatsApp -->
 			<div>
-				<label for="phone" class="block font-headline text-sm font-bold text-ink dark:text-papaya">
+				<label
+					for="phone"
+					class="block font-mono text-xs font-bold tracking-wider text-[#262626] uppercase dark:text-[#f2efe9]"
+				>
 					Nomor WhatsApp Aktif
 				</label>
 				<input
@@ -582,16 +675,20 @@
 					required
 					placeholder="08123456789"
 					disabled={isBusy}
-					class="mt-1.5 w-full rounded-[8px_3px_7px_2px] border-2 border-brandy bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-brandy/40 focus:border-brandy focus:ring-2 focus:ring-tangerine focus:outline-none disabled:opacity-50 dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:placeholder:text-papaya/40"
+					class="mt-1.5 w-full rounded-lg border-2 border-[#262626] bg-white px-3.5 py-2.5 font-sans text-sm text-[#262626] shadow-[2px_2px_0px_#262626] placeholder:text-[#404040]/40 focus:ring-2 focus:ring-[#fea770] focus:outline-none disabled:opacity-50 dark:border-[#f2efe9] dark:bg-[#252331] dark:text-[#f2efe9] dark:shadow-[2px_2px_0px_#f2efe9] dark:placeholder:text-[#b8b5ad]/40"
 				/>
-				<p class="mt-1 font-mono text-[11px] text-brandy/70 dark:text-papaya/60">
-					Nomor WhatsApp aktif untuk konfirmasi pesanan dan tautan checkout Shopee (bagi opsi Mail Order).
+				<p class="mt-1 font-mono text-xs text-[#404040] dark:text-[#b8b5ad]">
+					Nomor WhatsApp aktif untuk konfirmasi pesanan dan tautan checkout Shopee (bagi opsi Mail
+					Order).
 				</p>
 			</div>
 
 			<!-- Catatan Tambahan -->
 			<div>
-				<label for="note" class="block font-headline text-sm font-bold text-ink dark:text-papaya">
+				<label
+					for="note"
+					class="block font-mono text-xs font-bold tracking-wider text-[#262626] uppercase dark:text-[#f2efe9]"
+				>
 					Catatan Tambahan (Opsional)
 				</label>
 				<textarea
@@ -600,17 +697,29 @@
 					rows="2"
 					placeholder="Permintaan khusus atau pesan untuk penjual"
 					disabled={isBusy}
-					class="mt-1.5 w-full rounded-[8px_3px_7px_2px] border-2 border-brandy bg-white px-3.5 py-2.5 text-sm leading-relaxed text-ink placeholder:text-brandy/40 focus:border-brandy focus:ring-2 focus:ring-tangerine focus:outline-none disabled:opacity-50 dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:placeholder:text-papaya/40"
+					class="mt-1.5 w-full rounded-lg border-2 border-[#262626] bg-white px-3.5 py-2.5 font-sans text-sm leading-relaxed text-[#262626] shadow-[2px_2px_0px_#262626] placeholder:text-[#404040]/40 focus:ring-2 focus:ring-[#fea770] focus:outline-none disabled:opacity-50 dark:border-[#f2efe9] dark:bg-[#252331] dark:text-[#f2efe9] dark:shadow-[2px_2px_0px_#f2efe9] dark:placeholder:text-[#b8b5ad]/40"
 				></textarea>
 			</div>
 
+			<!-- Primary Submit Button: Dual-Span Rolling Ticker -->
 			<button
 				type="submit"
 				disabled={isBusy}
-				class="flex w-full items-center justify-center gap-2 rounded-[10px_5px_9px_4px] border-2 border-brandy bg-tangerine px-5 py-3.5 font-mono text-base font-bold text-white shadow-[4px_4px_0px_#78290f] transition-all hover:bg-[#e06d00] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none disabled:cursor-not-allowed disabled:border-brandy/30 disabled:bg-brandy/20 disabled:text-brandy/40 disabled:shadow-none"
+				class="group relative flex w-full items-center justify-center overflow-hidden rounded-lg border-2 border-[#262626] bg-[#fea770] py-3.5 font-mono text-base font-bold text-[#262626] shadow-[3px_3px_0px_#262626] transition-all hover:-translate-y-0.5 hover:bg-[#f99252] active:translate-y-0.5 active:shadow-none disabled:cursor-not-allowed disabled:border-[#262626]/30 disabled:bg-[#262626]/10 disabled:text-[#262626]/40 disabled:shadow-none dark:border-[#a2e1db] dark:bg-[#fea770] dark:text-[#262626] dark:shadow-[3px_3px_0px_#b4a6d5]"
 			>
-				<span>{isBusy ? 'Memproses Pesanan...' : 'Lanjut ke Pembayaran & Bukti Transfer'}</span>
-				<ArrowRight size={18} strokeWidth={2.5} />
+				<span
+					class="inline-flex items-center gap-2 transition-transform duration-300 ease-out group-hover:-translate-y-[150%]"
+				>
+					<span>{isBusy ? 'Memproses Pesanan...' : 'Lanjut ke Pembayaran & Bukti Transfer'}</span>
+					{#if !isBusy}<ArrowRight size={18} strokeWidth={2.5} />{/if}
+				</span>
+				<span
+					class="absolute inset-0 inline-flex translate-y-[150%] items-center justify-center gap-2 transition-transform duration-300 ease-out group-hover:translate-y-0"
+					aria-hidden="true"
+				>
+					<span>{isBusy ? 'Memproses Pesanan...' : 'Lanjut ke Pembayaran & Bukti Transfer'}</span>
+					{#if !isBusy}<ArrowRight size={18} strokeWidth={2.5} />{/if}
+				</span>
 			</button>
 		</form>
 	{/if}
@@ -618,7 +727,7 @@
 
 {#if isBusy}
 	<div
-		class="fixed inset-0 z-[999] flex flex-col items-center justify-center bg-black/60 backdrop-blur-xs p-4 text-center select-none touch-none overscroll-none"
+		class="fixed inset-0 z-[999] flex touch-none flex-col items-center justify-center overscroll-none bg-[#262626]/60 p-4 text-center backdrop-blur-xs select-none"
 		role="dialog"
 		aria-modal="true"
 		aria-label="Memproses pesanan"
@@ -627,16 +736,20 @@
 		ontouchmove={preventScroll}
 	>
 		<div
-			class="-rotate-1 rounded-[16px_8px_14px_6px] border-2 border-brandy bg-papaya p-6 shadow-[6px_6px_0px_#78290f] max-w-sm w-full space-y-4 dark:border-papaya/40 dark:bg-ink dark:shadow-[6px_6px_0px_rgba(255,236,209,0.3)]"
+			class="relative w-full max-w-sm space-y-4 rounded-[14px_4px_14px_4px] border-2 border-[#262626] bg-[#f2efe9] p-6 shadow-[5px_5px_0px_#262626] dark:border-[#f2efe9] dark:bg-[#252331] dark:shadow-[5px_5px_0px_#f2efe9]"
 		>
+			<span
+				class="absolute top-2 right-2 font-mono text-[10px] text-[#262626]/30 dark:text-[#f2efe9]/30"
+				aria-hidden="true">+</span
+			>
 			<div
-				class="mx-auto h-10 w-10 animate-spin rounded-full border-3 border-brandy/30 border-t-tangerine"
+				class="mx-auto h-10 w-10 animate-spin rounded-full border-3 border-[#262626]/20 border-t-[#fea770]"
 			></div>
 			<div class="space-y-1">
-				<p class="font-headline text-lg font-bold text-ink dark:text-papaya">
+				<p class="font-serif text-lg font-bold text-[#262626] dark:text-[#f2efe9]">
 					Memverifikasi Pesanan Anda...
 				</p>
-				<p class="font-sans text-xs text-brandy/80 dark:text-papaya/70">
+				<p class="font-mono text-xs text-[#404040] dark:text-[#b8b5ad]">
 					Menyiapkan detail pembayaran, tunggu sebentar
 				</p>
 			</div>

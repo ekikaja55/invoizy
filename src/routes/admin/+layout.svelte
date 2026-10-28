@@ -9,12 +9,12 @@
 	const isAdmin = $derived(Boolean(data.user));
 </script>
 
-<div class="min-h-screen bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
+<div class="drafting-grid min-h-screen text-neutral-900 dark:text-neutral-100">
 	<SidebarNav items={adminNavItems} {isAdmin} />
 	<MobileFab items={adminNavItems} {isAdmin} />
 	<NavigatingOverlay />
 
-	<main class="min-w-0 w-full px-4 py-8 sm:px-6 md:pl-72 md:pr-8 lg:pl-72 lg:pr-8">
+	<main class="w-full min-w-0 px-4 py-8 sm:px-6 md:pr-8 md:pl-40 lg:pr-8 lg:pl-40">
 		<div class="mx-auto w-full max-w-7xl min-w-0">
 			{@render children()}
 		</div>

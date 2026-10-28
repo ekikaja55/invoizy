@@ -3,12 +3,32 @@
 		size?: 'sm' | 'md' | 'lg' | 'xl';
 		label?: string;
 		showLabel?: boolean;
+		showTimer?: boolean;
 	}
 
-	let { size = 'md', label = 'Please wait...', showLabel = true }: Props = $props();
+	let { size = 'md', label = 'Preparing', showLabel = true, showTimer = true }: Props = $props();
+
+	let elapsedSeconds = $state(0.0);
+
+	$effect(() => {
+		// Stopwatch elapsed time format 0.00 presisi tinggi (update setiap 30ms)
+		// Cleanup function mencegah kebocoran timer (memory leak) saat unmount/sembunyi
+		const startTime = performance.now();
+		const intervalId = window.setInterval(() => {
+			elapsedSeconds = (performance.now() - startTime) / 1000;
+		}, 30);
+
+		return () => {
+			window.clearInterval(intervalId);
+		};
+	});
 </script>
 
-<div class="flex flex-col items-center justify-center gap-4 text-center" role="status" aria-live="polite">
+<div
+	class="flex flex-col items-center justify-center gap-4 text-center"
+	role="status"
+	aria-live="polite"
+>
 	<!-- 4 Chasing Monoline Brand Squares -->
 	<div
 		class="relative {size === 'sm'
@@ -23,54 +43,63 @@
 		<div
 			class="absolute top-0 left-0 rounded-[3.5px] border-2 border-[#262626] bg-[#b4a6d5] shadow-[1.5px_1.5px_0px_#262626] dark:border-[#f2efe9] dark:shadow-[1.5px_1.5px_0px_#f2efe9] {size ===
 			'sm'
-				? 'h-[13px] w-[13px] box-sm-1'
+				? 'box-sm-1 h-[13px] w-[13px]'
 				: size === 'md'
-					? 'h-[19px] w-[19px] box-md-1'
+					? 'box-md-1 h-[19px] w-[19px]'
 					: size === 'lg'
-						? 'h-[25px] w-[25px] sm:h-[31px] sm:w-[31px] box-lg-1 sm:box-xl-1'
-						: 'h-[31px] w-[31px] box-xl-1'}"
+						? 'box-lg-1 sm:box-xl-1 h-[25px] w-[25px] sm:h-[31px] sm:w-[31px]'
+						: 'box-xl-1 h-[31px] w-[31px]'}"
 		></div>
 
 		<!-- Box 2: Mint (Top-Right) -->
 		<div
 			class="absolute top-0 {size === 'sm'
-				? 'left-[17px] h-[13px] w-[13px] box-sm-2'
+				? 'box-sm-2 left-[17px] h-[13px] w-[13px]'
 				: size === 'md'
-					? 'left-[25px] h-[19px] w-[19px] box-md-2'
+					? 'box-md-2 left-[25px] h-[19px] w-[19px]'
 					: size === 'lg'
-						? 'left-[33px] sm:left-[41px] h-[25px] w-[25px] sm:h-[31px] sm:w-[31px] box-lg-2 sm:box-xl-2'
-						: 'left-[41px] h-[31px] w-[31px] box-xl-2'} rounded-[3.5px] border-2 border-[#262626] bg-[#a2e1db] shadow-[1.5px_1.5px_0px_#262626] dark:border-[#f2efe9] dark:shadow-[1.5px_1.5px_0px_#f2efe9]"
+						? 'box-lg-2 sm:box-xl-2 left-[33px] h-[25px] w-[25px] sm:left-[41px] sm:h-[31px] sm:w-[31px]'
+						: 'box-xl-2 left-[41px] h-[31px] w-[31px]'} rounded-[3.5px] border-2 border-[#262626] bg-[#a2e1db] shadow-[1.5px_1.5px_0px_#262626] dark:border-[#f2efe9] dark:shadow-[1.5px_1.5px_0px_#f2efe9]"
 		></div>
 
 		<!-- Box 3: Peach (Bottom-Right) -->
 		<div
 			class="absolute {size === 'sm'
-				? 'top-[17px] left-[17px] h-[13px] w-[13px] box-sm-3'
+				? 'box-sm-3 top-[17px] left-[17px] h-[13px] w-[13px]'
 				: size === 'md'
-					? 'top-[25px] left-[25px] h-[19px] w-[19px] box-md-3'
+					? 'box-md-3 top-[25px] left-[25px] h-[19px] w-[19px]'
 					: size === 'lg'
-						? 'top-[33px] sm:top-[41px] left-[33px] sm:left-[41px] h-[25px] w-[25px] sm:h-[31px] sm:w-[31px] box-lg-3 sm:box-xl-3'
-						: 'top-[41px] left-[41px] h-[31px] w-[31px] box-xl-3'} rounded-[3.5px] border-2 border-[#262626] bg-[#fea770] shadow-[1.5px_1.5px_0px_#262626] dark:border-[#f2efe9] dark:shadow-[1.5px_1.5px_0px_#f2efe9]"
+						? 'box-lg-3 sm:box-xl-3 top-[33px] left-[33px] h-[25px] w-[25px] sm:top-[41px] sm:left-[41px] sm:h-[31px] sm:w-[31px]'
+						: 'box-xl-3 top-[41px] left-[41px] h-[31px] w-[31px]'} rounded-[3.5px] border-2 border-[#262626] bg-[#fea770] shadow-[1.5px_1.5px_0px_#262626] dark:border-[#f2efe9] dark:shadow-[1.5px_1.5px_0px_#f2efe9]"
 		></div>
 
 		<!-- Box 4: Charcoal / Cream (Bottom-Left) -->
 		<div
 			class="absolute {size === 'sm'
-				? 'top-[17px] left-0 h-[13px] w-[13px] box-sm-4'
+				? 'box-sm-4 top-[17px] left-0 h-[13px] w-[13px]'
 				: size === 'md'
-					? 'top-[25px] left-0 h-[19px] w-[19px] box-md-4'
+					? 'box-md-4 top-[25px] left-0 h-[19px] w-[19px]'
 					: size === 'lg'
-						? 'top-[33px] sm:top-[41px] left-0 h-[25px] w-[25px] sm:h-[31px] sm:w-[31px] box-lg-4 sm:box-xl-4'
-						: 'top-[41px] left-0 h-[31px] w-[31px] box-xl-4'} rounded-[3.5px] border-2 border-[#262626] bg-[#262626] shadow-[1.5px_1.5px_0px_#262626] dark:border-[#f2efe9] dark:bg-[#f2efe9] dark:shadow-[1.5px_1.5px_0px_#f2efe9]"
+						? 'box-lg-4 sm:box-xl-4 top-[33px] left-0 h-[25px] w-[25px] sm:top-[41px] sm:h-[31px] sm:w-[31px]'
+						: 'box-xl-4 top-[41px] left-0 h-[31px] w-[31px]'} rounded-[3.5px] border-2 border-[#262626] bg-[#262626] shadow-[1.5px_1.5px_0px_#262626] dark:border-[#f2efe9] dark:bg-[#f2efe9] dark:shadow-[1.5px_1.5px_0px_#f2efe9]"
 		></div>
 	</div>
 
 	{#if showLabel}
-		<p class="w-full text-center font-mono text-xs sm:text-sm font-bold tracking-[0.2em] text-[#262626] uppercase dark:text-[#f2efe9]">
-			{label}
-		</p>
+		<div
+			class="flex items-center justify-center gap-3 font-mono text-base font-black tracking-[0.2em] text-[#262626] uppercase sm:text-lg md:text-xl dark:text-[#f2efe9]"
+		>
+			<span>{label}</span>
+			{#if showTimer}
+				<span
+					class="font-mono text-base font-black tracking-normal text-[#d9532f] tabular-nums sm:text-lg md:text-xl dark:text-[#fea770]"
+				>
+					{elapsedSeconds.toFixed(2)}s
+				</span>
+			{/if}
+		</div>
 	{:else}
-		<span class="sr-only">{label}</span>
+		<span class="sr-only">{label} {elapsedSeconds.toFixed(2)}s</span>
 	{/if}
 </div>
 

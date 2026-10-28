@@ -13,24 +13,38 @@
 	import { ModeWatcher } from 'mode-watcher';
 	import { dev } from '$app/environment';
 	import { injectAnalytics } from '@vercel/analytics/sveltekit';
+	import { injectSpeedInsights } from '@vercel/speed-insights/sveltekit';
 	import { CheckCircle, XCircle, AlertTriangle, Info } from '@lucide/svelte';
 
 	let { children } = $props();
 
 	if (!dev) {
 		injectAnalytics();
+		injectSpeedInsights();
 	}
 </script>
 
 <svelte:head>
 	<link rel="icon" type="image/png" href="/cholazey_icon.png" />
+	<link rel="apple-touch-icon" href="/cholazey_icon.png" />
+	<meta property="og:title" content="cho.lazey — Katalog & Invoice Merchandise Resmi" />
+	<meta
+		property="og:description"
+		content="Pesan standee, keychain, sticker, dan art print original. Bayar via QRIS instan dan terima faktur invoice PDF otomatis."
+	/>
+	<meta property="og:image" content="https://cholazey.store/og.png" />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:image" content="https://cholazey.store/og.png" />
 </svelte:head>
 <ModeWatcher defaultMode="light" />
 <Toaster
 	position="top-center"
 	toastOptions={{
 		classes: {
-			toast: 'border-[1.5px] border-[#262626] bg-[#fbf9f5] text-[#262626] shadow-[3px_3px_0px_#262626] rounded-md font-sans text-xs font-semibold dark:border-[#f2efe9] dark:bg-[#252331] dark:text-[#f2efe9] dark:shadow-[3px_3px_0px_#f2efe9]',
+			toast:
+				'border-[1.5px] border-[#262626] bg-[#fbf9f5] text-[#262626] shadow-[3px_3px_0px_#262626] rounded-md font-sans text-xs font-semibold dark:border-[#f2efe9] dark:bg-[#252331] dark:text-[#f2efe9] dark:shadow-[3px_3px_0px_#f2efe9]',
 			title: 'font-bold text-[#262626] dark:text-[#f2efe9]',
 			description: 'text-[#595959] dark:text-[#a3a099]'
 		}

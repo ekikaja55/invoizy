@@ -24,7 +24,10 @@ export const GET: RequestHandler = async ({ request }) => {
 	};
 
 	const pdfBytes = await renderTestInvoicePdf(testData);
-	const body = pdfBytes.buffer.slice(pdfBytes.byteOffset, pdfBytes.byteOffset + pdfBytes.byteLength) as ArrayBuffer;
+	const body = pdfBytes.buffer.slice(
+		pdfBytes.byteOffset,
+		pdfBytes.byteOffset + pdfBytes.byteLength
+	) as ArrayBuffer;
 
 	return new Response(new Blob([body], { type: 'application/pdf' }), {
 		headers: {

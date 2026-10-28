@@ -13,7 +13,7 @@
 	let {
 		active,
 		children,
-		message = 'Please wait...',
+		message = 'Preparing',
 		scope = 'global',
 		showLabel = true
 	}: Props = $props();
@@ -44,7 +44,7 @@
 	{#if active}
 		{#if scope === 'global'}
 			<div
-				class="fixed inset-0 z-[999] flex flex-col items-center justify-center bg-[#f2efe9]/85 backdrop-blur-xs touch-none select-none overscroll-none dark:bg-[#1a1825]/90"
+				class="fixed inset-0 z-[999] flex touch-none flex-col items-center justify-center overscroll-none bg-[#f2efe9]/85 backdrop-blur-xs select-none dark:bg-[#1a1825]/90"
 				role="status"
 				aria-live="polite"
 				onwheel={preventScroll}
@@ -54,7 +54,7 @@
 			</div>
 		{:else}
 			<div
-				class="absolute inset-0 z-20 flex flex-col items-center justify-center rounded-inherit bg-[#f2efe9]/85 backdrop-blur-[1px] dark:bg-[#1a1825]/85"
+				class="rounded-inherit absolute inset-0 z-20 flex flex-col items-center justify-center bg-[#f2efe9]/85 backdrop-blur-[1px] dark:bg-[#1a1825]/85"
 				role="status"
 				aria-live="polite"
 			>

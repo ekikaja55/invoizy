@@ -37,6 +37,17 @@ export async function deleteQrisCode(id: string) {
 	await db.delete(qrisCodes).where(eq(qrisCodes.id, id));
 }
 
+export async function reorderQrisCodesBatch(orderedIds: string[]) {
+	await db.transaction(async (tx) => {
+		for (let i = 0; i < orderedIds.length; i++) {
+			await tx
+				.update(qrisCodes)
+				.set({ sortOrder: i, updatedAt: new Date() })
+				.where(eq(qrisCodes.id, orderedIds[i]));
+		}
+	});
+}
+
 export async function reorderQrisCode(id: string, direction: 'up' | 'down') {
 	const all = await db.query.qrisCodes.findMany({
 		orderBy: [asc(qrisCodes.sortOrder)]

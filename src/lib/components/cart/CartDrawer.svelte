@@ -13,9 +13,9 @@
 	const currentPath = $derived(page.url.pathname);
 	const isExcludedRoute = $derived(
 		currentPath.startsWith('/order/checkout') ||
-		currentPath.startsWith('/order/sukses') ||
-		currentPath.startsWith('/invoice') ||
-		currentPath.startsWith('/admin')
+			currentPath.startsWith('/order/sukses') ||
+			currentPath.startsWith('/invoice') ||
+			currentPath.startsWith('/admin')
 	);
 
 	function openDrawer() {
@@ -67,11 +67,13 @@
 <svelte:window onkeydown={onKeydown} />
 
 {#if !cart.isEmpty && !isExcludedRoute}
-	<!-- Floating Bottom Cart Bar -->
+	<!-- Floating Bottom Cart Bar: Warm Monoline Bar -->
 	<div
-		class="fixed inset-x-0 bottom-0 z-40 border-t-2 border-brandy bg-papaya/95 p-3.5 backdrop-blur-xs shadow-[0_-4px_12px_rgba(120,41,15,0.15)] dark:border-papaya/30 dark:bg-ink/95"
+		class="drafting-grid fixed inset-x-0 bottom-0 z-40 border-t-2 border-[#262626] bg-[#f2efe9]/95 p-3.5 shadow-[0_-4px_0px_#262626] backdrop-blur-xs dark:border-[#a2e1db] dark:bg-[#1a1825]/95 dark:shadow-[0_-4px_0px_#b4a6d5]"
 	>
-		<div class="mx-auto flex max-w-3xl items-center justify-between pr-16 md:pl-24 md:pr-0">
+		<div
+			class="mx-auto flex max-w-4xl items-center justify-between pr-16 md:pr-4 md:pl-24 lg:pl-32"
+		>
 			<!-- Klik sisi kiri untuk membuka Drawer Keranjang -->
 			<button
 				type="button"
@@ -80,35 +82,46 @@
 				aria-label="Buka keranjang belanja"
 			>
 				<div
-					class="flex h-11 w-11 items-center justify-center rounded-[8px_3px_7px_2px] border-2 border-brandy bg-tangerine text-white shadow-[2px_2px_0px_#78290f] transition-transform group-hover:scale-105"
+					class="flex h-11 w-11 items-center justify-center rounded-lg border-2 border-[#262626] bg-[#fea770] text-[#262626] shadow-[2px_2px_0px_#262626] transition-transform group-hover:scale-105 dark:border-[#a2e1db] dark:bg-[#fea770] dark:text-[#262626]"
 				>
 					<ShoppingBag size={20} strokeWidth={2.5} />
 				</div>
 				<div>
-					<p class="font-mono text-xs font-bold text-brandy/80 dark:text-papaya/70">
+					<p class="font-mono text-xs font-bold text-[#404040] dark:text-[#b8b5ad]">
 						{cart.itemCount} item · <span class="underline underline-offset-2">Cek rincian</span>
 					</p>
-					<p class="font-mono text-base font-bold text-teal leading-tight dark:text-teal/90">
+					<p class="font-mono text-base leading-tight font-bold text-[#065f46] dark:text-[#a2e1db]">
 						{formatRupiah(cart.total)}
 					</p>
 				</div>
 			</button>
 
-			<!-- Tombol Cek & Tombol Lanjut Checkout -->
+			<!-- Tombol Cek & Tombol Lanjut Checkout (Rolling Ticker) -->
 			<div class="flex items-center gap-2.5">
 				<button
 					type="button"
 					onclick={openDrawer}
-					class="hidden sm:inline-flex items-center rounded-[8px_3px_7px_2px] border-2 border-brandy bg-papaya px-3.5 py-2 font-mono text-xs font-bold text-ink shadow-[2px_2px_0px_#78290f] transition-all hover:bg-brandy/10 active:translate-y-0.5 active:shadow-none dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[2px_2px_0px_rgba(255,236,209,0.2)]"
+					class="hidden items-center rounded-lg border-2 border-[#262626] bg-white px-3.5 py-2 font-mono text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#b4a6d5] active:translate-y-0.5 active:shadow-none sm:inline-flex dark:border-[#f2efe9] dark:bg-[#252331] dark:text-[#f2efe9] dark:shadow-[2px_2px_0px_#f2efe9]"
 				>
 					Cek Keranjang
 				</button>
 				<a
 					href={resolve('/(public)/order/checkout')}
-					class="flex items-center gap-2 rounded-[8px_3px_7px_2px] border-2 border-brandy bg-tangerine px-4 py-2 font-mono text-xs font-bold text-white shadow-[3px_3px_0px_#78290f] transition-all hover:bg-[#e06d00] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none"
+					class="group relative inline-flex items-center justify-center overflow-hidden rounded-lg border-2 border-[#262626] bg-[#fea770] px-4 py-2 font-mono text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:-translate-y-0.5 hover:bg-[#f99252] active:translate-y-0.5 active:shadow-none dark:border-[#a2e1db] dark:bg-[#fea770] dark:text-[#262626] dark:shadow-[2px_2px_0px_#b4a6d5]"
 				>
-					<span>Checkout</span>
-					<ArrowRight size={15} strokeWidth={2.5} />
+					<span
+						class="inline-flex items-center gap-1.5 transition-transform duration-300 ease-out group-hover:-translate-y-[150%]"
+					>
+						<span>Checkout</span>
+						<ArrowRight size={14} strokeWidth={2.5} />
+					</span>
+					<span
+						class="absolute inset-0 inline-flex translate-y-[150%] items-center justify-center gap-1.5 transition-transform duration-300 ease-out group-hover:translate-y-0"
+						aria-hidden="true"
+					>
+						<span>Checkout</span>
+						<ArrowRight size={14} strokeWidth={2.5} />
+					</span>
 				</a>
 			</div>
 		</div>
@@ -123,7 +136,7 @@
 			type="button"
 			aria-label="Tutup keranjang"
 			onclick={closeDrawer}
-			class="fixed inset-0 cursor-default bg-ink/70 backdrop-blur-xs transition-opacity dark:bg-ink/85"
+			class="fixed inset-0 cursor-default bg-[#262626]/70 backdrop-blur-xs transition-opacity dark:bg-black/85"
 		></button>
 
 		<!-- Drawer Panel: Bottom sheet di mobile, right-drawer di tablet/desktop -->
@@ -131,18 +144,16 @@
 			role="dialog"
 			aria-modal="true"
 			aria-label="Keranjang Belanja"
-			class="relative flex w-full flex-col bg-papaya shadow-2xl transition-all dark:bg-ink
-			       max-h-[85vh] rounded-t-[20px_16px_0px_0px] border-t-2 border-x-2 border-brandy shadow-[0_-8px_0px_#78290f]
-			       sm:max-h-full sm:h-full sm:max-w-md sm:rounded-none sm:rounded-l-[20px_0px_0px_16px] sm:border-l-2 sm:border-t-0 sm:border-r-0 sm:border-b-0 sm:border-brandy sm:shadow-[-8px_0px_0px_#78290f] dark:border-papaya/30 dark:shadow-[-8px_0px_0px_rgba(255,236,209,0.2)]"
+			class="drafting-grid relative flex max-h-[85vh] w-full flex-col rounded-t-2xl border-x-2 border-t-2 border-[#262626] bg-[#f2efe9] text-[#262626] shadow-[0_-8px_0px_#262626] transition-all sm:h-full sm:max-h-full sm:max-w-md sm:rounded-none sm:rounded-l-2xl sm:border-t-0 sm:border-r-0 sm:border-b-0 sm:border-l-2 sm:border-[#262626] sm:shadow-[-8px_0px_0px_#262626] dark:border-[#a2e1db] dark:bg-[#1a1825] dark:text-[#f2efe9] dark:shadow-[-8px_0px_0px_#b4a6d5]"
 		>
-			<!-- Header -->
+			<!-- Header: Apricot Monoline Header -->
 			<div
-				class="flex items-center justify-between border-b-2 border-brandy/20 px-5 py-4 dark:border-papaya/20"
+				class="flex items-center justify-between border-b-2 border-[#262626] bg-[#fea770] px-5 py-4 text-[#262626]"
 			>
 				<div class="flex items-center gap-2.5">
-					<h2 class="font-serif text-lg font-bold text-ink dark:text-papaya">Keranjang Belanja</h2>
+					<h2 class="font-serif text-lg font-bold">Keranjang Belanja</h2>
 					<span
-						class="rounded-[5px_2px_4px_1px] border border-brandy/40 bg-brandy/10 px-2 py-0.5 font-mono text-xs font-bold text-brandy dark:border-papaya/40 dark:bg-papaya/10 dark:text-papaya"
+						class="rounded-md border-2 border-[#262626] bg-[#a2e1db] px-2 py-0.5 font-mono text-xs font-bold shadow-[1px_1px_0px_#262626]"
 					>
 						{cart.itemCount}
 					</span>
@@ -153,7 +164,7 @@
 						<button
 							type="button"
 							onclick={() => (confirmClearOpen = true)}
-							class="flex items-center gap-1.5 rounded-[6px_2px_5px_1px] border border-crimson/30 bg-crimson/10 px-2.5 py-1.5 font-mono text-xs font-bold text-crimson transition-colors hover:bg-crimson/20"
+							class="flex items-center gap-1.5 rounded-md border-2 border-[#262626] bg-[#fee2e2] px-2.5 py-1.5 font-mono text-xs font-bold text-[#991b1b] shadow-[1px_1px_0px_#262626] transition-colors hover:bg-red-200"
 						>
 							<Trash2 size={13} strokeWidth={2.5} />
 							<span>Kosongkan</span>
@@ -162,7 +173,7 @@
 					<button
 						type="button"
 						onclick={closeDrawer}
-						class="flex h-8 w-8 items-center justify-center rounded-[6px_2px_5px_1px] border-2 border-brandy bg-papaya text-ink shadow-[2px_2px_0px_#78290f] transition-all hover:bg-brandy/10 active:translate-y-0.5 active:shadow-none dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[2px_2px_0px_rgba(255,236,209,0.2)]"
+						class="flex h-8 w-8 items-center justify-center rounded-md border-2 border-[#262626] bg-white text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#b4a6d5] active:translate-y-0.5 active:shadow-none"
 						aria-label="Tutup"
 					>
 						<X size={16} strokeWidth={2.75} />
@@ -171,35 +182,45 @@
 			</div>
 
 			<!-- Body: Daftar Item -->
-			<div class="flex-1 overflow-y-auto p-4 space-y-3">
+			<div class="flex-1 space-y-3 overflow-y-auto p-4">
 				{#if cart.isEmpty}
 					<div class="flex flex-col items-center justify-center py-16 text-center">
-						<ShoppingBag size={40} strokeWidth={2} class="text-brandy/40 dark:text-papaya/30" />
-						<p class="mt-3 font-serif text-base font-bold text-ink dark:text-papaya">Keranjang belanja kosong</p>
-						<p class="mt-1 font-handwriting text-xl font-semibold text-teal dark:text-papaya/90">Pilih produk di katalog untuk ditambahkan.</p>
+						<ShoppingBag
+							size={40}
+							strokeWidth={2}
+							class="text-[#404040]/40 dark:text-[#b8b5ad]/30"
+						/>
+						<p class="mt-3 font-serif text-base font-bold text-[#262626] dark:text-[#f2efe9]">
+							Keranjang belanja kosong
+						</p>
+						<p class="mt-1 font-sans text-sm text-[#404040] dark:text-[#b8b5ad]">
+							Pilih produk di katalog untuk ditambahkan.
+						</p>
 					</div>
 				{:else}
 					{#each cart.items as item (item.variantId ? `${item.productId}:${item.variantId}` : item.productId)}
 						<div
-							class="flex items-start justify-between gap-3 rounded-[12px_5px_10px_4px] border-2 border-brandy bg-white/70 p-3.5 shadow-[3px_3px_0px_#78290f] transition-colors dark:border-papaya/25 dark:bg-ink/80 dark:shadow-[3px_3px_0px_rgba(255,236,209,0.15)]"
+							class="group relative flex items-start justify-between gap-3 rounded-lg border-2 border-[#262626] bg-white p-3.5 shadow-[3px_3px_0px_#262626] transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#262626] dark:border-[#a2e1db]/40 dark:bg-[#252331] dark:shadow-[3px_3px_0px_#b4a6d5]"
 						>
-							<div class="flex-1 min-w-0">
-								<h3 class="font-serif text-sm font-bold text-ink truncate dark:text-papaya">
+							<div class="min-w-0 flex-1">
+								<h3
+									class="truncate font-serif text-sm font-bold text-[#262626] dark:text-[#f2efe9]"
+								>
 									{item.name}
 								</h3>
 								<div class="mt-1 flex flex-wrap items-center gap-2">
 									{#if item.variantName}
 										<span
-											class="rounded-[4px_2px_4px_2px] border border-forest/30 bg-forest/15 px-1.5 py-0.5 font-mono text-[11px] font-bold text-forest"
+											class="rounded-md border border-[#262626] bg-[#b4a6d5]/30 px-1.5 py-0.5 font-mono text-[11px] font-bold text-[#262626] dark:border-[#a2e1db]/40 dark:bg-[#b4a6d5]/20 dark:text-[#f2efe9]"
 										>
 											{item.variantName}
 										</span>
 									{/if}
-									<span class="font-mono text-xs text-brandy/80 dark:text-papaya/70">
+									<span class="font-mono text-xs text-[#404040] dark:text-[#b8b5ad]">
 										{formatRupiah(item.price)}
 									</span>
 								</div>
-								<p class="mt-1.5 font-mono text-xs font-bold text-teal dark:text-teal/90">
+								<p class="mt-1.5 font-mono text-xs font-bold text-[#065f46] dark:text-[#a2e1db]">
 									Subtotal: {formatRupiah(item.price * item.qty)}
 								</p>
 							</div>
@@ -209,30 +230,33 @@
 								<button
 									type="button"
 									onclick={() => (itemToDelete = item)}
-									class="text-brandy/50 transition-colors hover:text-crimson dark:text-papaya/50 dark:hover:text-crimson"
+									class="-mr-1 p-1.5 text-[#404040]/50 transition-colors hover:text-[#991b1b] dark:text-[#b8b5ad]/50 dark:hover:text-red-400"
 									aria-label={`Hapus ${item.name}`}
 								>
 									<Trash2 size={15} strokeWidth={2.5} />
 								</button>
 
+								<!-- Stepper Monoline persis CardsLab (Touch Target Nyaman Jempol >= 28px) -->
 								<div
-									class="flex items-center gap-1"
+									class="flex items-center rounded-md border border-[#262626] bg-[#f9f7f2] dark:border-[#f2efe9]/30 dark:bg-[#1a1825]"
 								>
 									<button
 										type="button"
 										onclick={() => handleDecrement(item)}
-										class="flex h-7 w-7 items-center justify-center rounded-[4px_2px_3px_1px] border-2 border-brandy bg-papaya text-ink shadow-[1px_1px_0px_#78290f] transition-all hover:bg-brandy/10 active:translate-y-0.5 active:shadow-none dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[1px_1px_0px_rgba(255,236,209,0.2)]"
+										class="flex h-7 w-7 items-center justify-center text-[#262626] transition-colors hover:bg-neutral-200 active:bg-neutral-300 dark:text-[#f2efe9] dark:hover:bg-neutral-800"
 										aria-label="Kurangi jumlah"
 									>
 										<Minus size={13} strokeWidth={2.75} />
 									</button>
-									<span class="w-7 text-center font-mono text-xs font-bold text-ink dark:text-papaya">
+									<span
+										class="w-7 text-center font-mono text-xs font-bold text-[#262626] dark:text-[#f2efe9]"
+									>
 										{item.qty}
 									</span>
 									<button
 										type="button"
 										onclick={() => handleIncrement(item)}
-										class="flex h-7 w-7 items-center justify-center rounded-[4px_2px_3px_1px] border-2 border-brandy bg-papaya text-ink shadow-[1px_1px_0px_#78290f] transition-all hover:bg-brandy/10 active:translate-y-0.5 active:shadow-none dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[1px_1px_0px_rgba(255,236,209,0.2)]"
+										class="flex h-7 w-7 items-center justify-center text-[#262626] transition-colors hover:bg-neutral-200 active:bg-neutral-300 dark:text-[#f2efe9] dark:hover:bg-neutral-800"
 										aria-label="Tambah jumlah"
 									>
 										<Plus size={13} strokeWidth={2.75} />
@@ -244,33 +268,55 @@
 				{/if}
 			</div>
 
-			<!-- Footer -->
+			<!-- Footer: Double-Underline Accounting & Rolling Ticker CTA -->
 			{#if !cart.isEmpty}
-				<div class="border-t-2 border-brandy/20 bg-papaya/80 p-4 dark:border-papaya/20 dark:bg-ink/90">
+				<div
+					class="border-t-2 border-[#262626] bg-white p-4.5 dark:border-[#a2e1db] dark:bg-[#252331]"
+				>
 					{#if cart.discountTotal > 0}
-						<div class="mb-1.5 flex items-center justify-between text-xs font-mono">
-							<span class="text-brandy/80 dark:text-papaya/70">Subtotal</span>
-							<span class="font-bold text-ink dark:text-papaya">{formatRupiah(cart.subtotal)}</span>
+						<div class="mb-1.5 flex items-center justify-between font-mono text-xs">
+							<span class="text-[#404040] dark:text-[#b8b5ad]">Subtotal</span>
+							<span class="font-bold text-[#262626] dark:text-[#f2efe9]"
+								>{formatRupiah(cart.subtotal)}</span
+							>
 						</div>
-						<div class="mb-2 flex items-center justify-between text-xs font-mono text-crimson dark:text-red-400">
+						<div
+							class="mb-2.5 flex items-center justify-between font-mono text-xs text-[#991b1b] dark:text-[#f87171]"
+						>
 							<span class="font-bold">Hemat Diskon Promo</span>
 							<span class="font-bold">-{formatRupiah(cart.discountTotal)}</span>
 						</div>
 					{/if}
-					<div class="mb-3.5 flex items-center justify-between text-sm">
-						<span class="font-serif text-sm font-bold text-ink dark:text-papaya">Total Belanja</span>
-						<span class="font-mono text-xl font-bold text-teal dark:text-teal/90">
+					<div
+						class="mb-4 flex items-center justify-between border-b-2 border-double border-[#262626]/40 pb-2 dark:border-[#f2efe9]/40"
+					>
+						<span class="font-serif text-sm font-bold text-[#262626] dark:text-[#f2efe9]"
+							>Total Belanja</span
+						>
+						<span class="font-mono text-xl font-black text-[#065f46] dark:text-[#a2e1db]">
 							{formatRupiah(cart.total)}
 						</span>
 					</div>
 
+					<!-- Primary Checkout CTA with Rolling Ticker -->
 					<a
 						href={resolve('/(public)/order/checkout')}
 						onclick={closeDrawer}
-						class="flex w-full items-center justify-center gap-2 rounded-[10px_5px_9px_4px] border-2 border-brandy bg-tangerine px-4 py-3 font-mono text-sm font-bold text-white shadow-[4px_4px_0px_#78290f] transition-all hover:bg-[#e06d00] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none"
+						class="group relative flex w-full items-center justify-center overflow-hidden rounded-lg border-2 border-[#262626] bg-[#fea770] py-3 text-sm font-bold text-[#262626] shadow-[3px_3px_0px_#262626] transition-all hover:-translate-y-0.5 hover:bg-[#f99252] active:translate-y-0.5 active:shadow-none dark:border-[#a2e1db] dark:bg-[#fea770] dark:text-[#262626] dark:shadow-[3px_3px_0px_#b4a6d5]"
 					>
-						<span>Lanjut ke Checkout</span>
-						<ArrowRight size={16} strokeWidth={2.5} />
+						<span
+							class="inline-flex items-center gap-2 transition-transform duration-300 ease-out group-hover:-translate-y-[150%]"
+						>
+							<span>Lanjut ke Checkout</span>
+							<ArrowRight size={16} strokeWidth={2.5} />
+						</span>
+						<span
+							class="absolute inset-0 inline-flex translate-y-[150%] items-center justify-center gap-2 transition-transform duration-300 ease-out group-hover:translate-y-0"
+							aria-hidden="true"
+						>
+							<span>Lanjut ke Checkout</span>
+							<ArrowRight size={16} strokeWidth={2.5} />
+						</span>
 					</a>
 				</div>
 			{/if}

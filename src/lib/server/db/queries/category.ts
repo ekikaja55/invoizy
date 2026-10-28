@@ -24,6 +24,17 @@ export async function deleteCategory(id: string) {
 	await db.delete(categories).where(eq(categories.id, id));
 }
 
+export async function reorderCategoriesBatch(orderedIds: string[]) {
+	await db.transaction(async (tx) => {
+		for (let i = 0; i < orderedIds.length; i++) {
+			await tx
+				.update(categories)
+				.set({ sortOrder: i })
+				.where(eq(categories.id, orderedIds[i]));
+		}
+	});
+}
+
 export async function reorderCategory(id: string, direction: 'up' | 'down') {
 	const all = await db.query.categories.findMany({
 		orderBy: [asc(categories.sortOrder), asc(categories.name), asc(categories.id)]

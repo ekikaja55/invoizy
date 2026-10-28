@@ -2,9 +2,23 @@ import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { orders } from '$lib/server/db/schema';
 import { inArray } from 'drizzle-orm';
+import { checkVerifyHistoryRateLimit } from '$lib/server/ratelimit';
+import { logger } from '$lib/server/logger';
 import type { RequestHandler } from './$types';
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, getClientAddress }) => {
+	try {
+		const rl = await checkVerifyHistoryRateLimit(getClientAddress());
+		if (!rl.success) {
+			return json(
+				{ error: 'Terlalu banyak permintaan verifikasi riwayat. Coba lagi sebentar.' },
+				{ status: 429 }
+			);
+		}
+	} catch (err) {
+		logger.error('orders.verify-history.ratelimit-failed', { error: err });
+	}
+
 	let body: { entries?: { orderId: string; token: string }[] };
 	try {
 		body = await request.json();

@@ -81,17 +81,21 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div class="{staticPosition ? 'absolute right-4 bottom-4 z-50' : 'fixed right-4 bottom-4 z-50 md:hidden'} {className}">
+<div
+	class="{staticPosition
+		? 'absolute right-4 bottom-4 z-50'
+		: 'fixed right-4 bottom-4 z-50 md:hidden'} {className}"
+>
 	{#if open}
 		<div
-			class="mb-3 w-60 rounded-md border-[1.5px] border-[#262626] bg-[#f2efe9]/95 p-2.5 text-[#262626] shadow-[4px_4px_0px_#262626] backdrop-blur-xs dark:border-[#f2efe9]/30 dark:bg-[#1a1825]/95 dark:text-[#f2efe9] dark:shadow-[4px_4px_0px_#f2efe9]"
+			class="nav-drafting-grid relative mb-3 w-60 rounded-xl border-2 border-[#262626] bg-[#fea770]/95 p-3 text-[#262626] shadow-[4px_4px_0px_#262626] backdrop-blur-xs dark:border-[#a2e1db] dark:bg-[#1a1825]/95 dark:text-[#f2efe9] dark:shadow-[4px_4px_0px_#b4a6d5]"
 		>
 			<nav class="flex flex-col gap-1">
 				{#each items as item (item.href)}
 					{@const isActive = currentPath === item.href}
 					<a
 						href={resolve(item.href)}
-						class={navItemClass(isActive)}
+						class="{navItemClass(isActive)} flex items-center justify-between"
 						onclick={(e) => {
 							if (preventNavigation) {
 								e.preventDefault();
@@ -102,8 +106,17 @@
 							}
 						}}
 					>
-						<item.icon size={16} strokeWidth={2.5} />
-						<span>{item.label}</span>
+						<div class="flex items-center gap-2.5">
+							<item.icon size={16} strokeWidth={2.5} />
+							<span>{item.label}</span>
+						</div>
+						{#if isActive}
+							<!-- Active Diamond Badge (Opsi 1) -->
+							<span
+								class="h-2 w-2 shrink-0 rotate-45 rounded-[1px] border border-[#262626] bg-[#fea770] shadow-[1px_1px_0px_#262626] dark:border-[#1a1825] dark:bg-[#1a1825] dark:shadow-[1px_1px_0px_#a2e1db]"
+								title="Halaman aktif"
+							></span>
+						{/if}
 					</a>
 				{/each}
 
@@ -121,9 +134,7 @@
 							<ChevronDown
 								size={14}
 								strokeWidth={2.5}
-								class="transition-transform duration-200 {contactAccordionOpen
-									? 'rotate-180'
-									: ''}"
+								class="transition-transform duration-200 {contactAccordionOpen ? 'rotate-180' : ''}"
 							/>
 						</button>
 
@@ -145,7 +156,7 @@
 												close();
 											}
 										}}
-										class="flex items-center justify-between rounded-md border border-[#065f46]/40 bg-[#d1fae5] px-2 py-1.5 text-xs font-bold text-[#065f46] hover:bg-[#a7f3d0] transition-colors"
+										class="flex items-center justify-between rounded-md border border-[#065f46]/40 bg-[#d1fae5] px-2 py-1.5 text-xs font-bold text-[#065f46] transition-colors hover:bg-[#a7f3d0]"
 									>
 										<div class="flex items-center gap-2">
 											<MessageCircle size={14} strokeWidth={2.5} />
@@ -169,7 +180,7 @@
 												close();
 											}
 										}}
-										class="flex items-center justify-between rounded-md border border-[#c1121f]/40 bg-[#fee2e2] px-2 py-1.5 text-xs font-bold text-[#991b1b] hover:bg-red-200 transition-colors"
+										class="flex items-center justify-between rounded-md border border-[#c1121f]/40 bg-[#fee2e2] px-2 py-1.5 text-xs font-bold text-[#991b1b] transition-colors hover:bg-red-200"
 									>
 										<div class="flex items-center gap-2">
 											<InstagramIcon size={14} />
@@ -241,7 +252,7 @@
 
 	<button
 		onclick={() => (open = !open)}
-		class="flex h-12 w-12 items-center justify-center rounded-full border-[1.5px] border-[#262626] bg-[#fea770] text-[#262626] shadow-[3px_3px_0px_#262626] transition-transform duration-200 hover:scale-105 active:scale-95 active:shadow-none dark:border-[#f2efe9] dark:bg-[#fea770] dark:text-[#262626] dark:shadow-[3px_3px_0px_#f2efe9]"
+		class="relative flex h-12 w-12 items-center justify-center rounded-full border-2 border-[#262626] bg-[#fea770] text-[#262626] shadow-[3px_3px_0px_#262626] transition-transform duration-200 hover:scale-105 active:scale-95 active:shadow-none dark:border-[#a2e1db] dark:bg-[#1a1825] dark:text-[#f2efe9] dark:shadow-[3px_3px_0px_#b4a6d5]"
 		aria-label={open ? 'Close menu' : 'Open menu'}
 	>
 		{#if open}
@@ -254,7 +265,9 @@
 
 {#if open}
 	<button
-		class="{staticPosition ? 'absolute inset-0 z-40 rounded-[30px]' : 'fixed inset-0 z-40 md:hidden'} cursor-default bg-[#262626]/60 backdrop-blur-xs dark:bg-black/75"
+		class="{staticPosition
+			? 'absolute inset-0 z-40 rounded-[30px]'
+			: 'fixed inset-0 z-40 md:hidden'} cursor-default bg-[#262626]/60 backdrop-blur-xs dark:bg-black/75"
 		onclick={close}
 		aria-label="Close menu overlay"
 	></button>

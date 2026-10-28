@@ -11,14 +11,40 @@
 	--font-sans: 'Plus Jakarta Sans', sans-serif;
 	--font-mono: 'Space Mono', monospace;
 
-	/* Mapping palet warna baru */
-	--color-ink: #001524;
-	--color-papaya: #ffecd1;
-	--color-teal: #15616d;
-	--color-tangerine: #ff7d00;
-	--color-brandy: #78290f;
-	--color-crimson: #c1121f; /* Error / Failed */
-	--color-forest: #2b9348; /* Success / Paid */
+	/* Warm Monoline Core Palette */
+	--color-canvas: #f2efe9;
+	--color-surface: #ffffff;
+	--color-surface-sunken: #f9f7f2;
+
+	--color-mono-ink: #262626;
+	--color-mono-muted: #404040;
+
+	--color-brand-lavender: #b4a6d5;
+	--color-brand-mint: #a2e1db;
+	--color-brand-peach: #fea770;
+
+	/* Semantic Status Tokens (Light defaults) */
+	--color-mono-success: #065f46;
+	--color-mono-success-bg: #d1fae5;
+	--color-mono-warning: #92400e;
+	--color-mono-warning-bg: #fef3c7;
+	--color-mono-danger: #991b1b;
+	--color-mono-danger-bg: #fee2e2;
+
+	/* Tactile Monoline Shadows */
+	--shadow-mono-sm: 1.5px 1.5px 0px #262626;
+	--shadow-mono: 2px 2px 0px #262626;
+	--shadow-mono-md: 3px 3px 0px #262626;
+	--shadow-mono-lg: 4px 4px 0px #262626;
+
+	/* Legacy compatibility tokens (Smooth transition during rollout) */
+	--color-ink: #262626;
+	--color-papaya: #f2efe9;
+	--color-teal: #a2e1db;
+	--color-tangerine: #fea770;
+	--color-brandy: #262626;
+	--color-crimson: #991b1b;
+	--color-forest: #065f46;
 }
 
 /* Invoizy Warm Monoline: Sonner Toast Overrides */
@@ -28,6 +54,9 @@
 	--normal-text: #262626 !important;
 	--border-radius: 6px !important;
 	font-family: 'Plus Jakarta Sans', sans-serif !important;
+	font-size: 0.875rem !important;
+	line-height: 1.45 !important;
+	padding: 12px 16px !important;
 	border: 1.5px solid #262626 !important;
 	box-shadow: 3px 3px 0px #262626 !important;
 	background-color: #ffffff !important;
@@ -45,12 +74,16 @@
 }
 
 [data-sonner-toast] [data-title] {
+	font-size: 0.875rem !important;
 	font-weight: 700 !important;
+	line-height: 1.4 !important;
 	letter-spacing: -0.01em !important;
 	color: inherit !important;
 }
 
 [data-sonner-toast] [data-description] {
+	font-size: 0.8125rem !important;
+	line-height: 1.4 !important;
 	color: #404040 !important;
 }
 
@@ -112,10 +145,22 @@ html.dark [data-sonner-toast][data-type='error'] {
 }
 
 /* Warm Monoline Drafting Grid (Tekstur Kertas Kalkir Arsitektur) */
+/*Tiga nilai yang dapat disesuaikan:
+
+  1. Ketebalan / Kepekatan Garis (Alpha Opacity):
+      • Tema Terang: Ubah 0.085 pada rgba(38, 38, 38, 0.085). Jika ingin lebih tampak tebal lagi, naikkan ke 0.10 atau 0.
+      12. Jika terlalu mencolok, turunkan ke 0.06 atau 0.07.
+      • Tema Gelap: Ubah 0.075 pada rgba(242, 239, 233, 0.075). Bisa dinaikkan ke 0.09–0.10 jika ingin lebih kontras di
+      latar belakang gelap.
+  2. Kerapatan Kotak Grid (background-size):
+      • Ubah 40px 40px. Ubah ke 32px 32px untuk kotak yang lebih kecil dan rapat (kesan teknikal padat), atau 50px 50px
+      untuk kotak yang lebih lega.
+  3. Lebar Garis (1px):
+      • Nilai 1px menentukan ketebalan fisik garis stroke. Standar editorial monoline menggunakan 1px.*/
 .drafting-grid {
 	background-image:
-		linear-gradient(to right, rgba(38, 38, 38, 0.045) 1px, transparent 1px),
-		linear-gradient(to bottom, rgba(38, 38, 38, 0.045) 1px, transparent 1px);
+		linear-gradient(to right, rgba(38, 38, 38, 0.1) 1px, transparent 1.5px),
+		linear-gradient(to bottom, rgba(38, 38, 38, 0.1) 1px, transparent 1.5px);
 	background-size: 40px 40px;
 }
 
@@ -123,9 +168,26 @@ html.dark [data-sonner-toast][data-type='error'] {
 .dark .drafting-grid,
 html.dark .drafting-grid {
 	background-image:
-		linear-gradient(to right, rgba(242, 239, 233, 0.035) 1px, transparent 1px),
-		linear-gradient(to bottom, rgba(242, 239, 233, 0.035) 1px, transparent 1px);
+		linear-gradient(to right, rgba(242, 239, 233, 0.075) 1px, transparent 1px),
+		linear-gradient(to bottom, rgba(242, 239, 233, 0.075) 1px, transparent 1px);
 	background-size: 40px 40px;
+}
+
+/* Dense Technical Grid khusus elemen navigasi (Sidebar, FAB, Toolbar) */
+.nav-drafting-grid {
+	background-image:
+		linear-gradient(to right, rgba(38, 38, 38, 0.12) 1px, transparent 1px),
+		linear-gradient(to bottom, rgba(38, 38, 38, 0.12) 1px, transparent 1px);
+	background-size: 16px 16px;
+}
+
+:where(.dark) .nav-drafting-grid,
+.dark .nav-drafting-grid,
+html.dark .nav-drafting-grid {
+	background-image:
+		linear-gradient(to right, rgba(162, 225, 219, 0.12) 1px, transparent 1px),
+		linear-gradient(to bottom, rgba(162, 225, 219, 0.12) 1px, transparent 1px);
+	background-size: 16px 16px;
 }
 
 /* Global HTML & Body Canvas (Warm Monoline Material) */
@@ -141,6 +203,104 @@ html.dark,
 html.dark body {
 	background-color: #1a1825;
 	color: #f2efe9;
+}
+
+/* Custom Tactical Monoline Cursors (Offline SVG Data-URIs - 38px Retro Maximalist) */
+@media (hover: hover) and (pointer: fine) {
+	:root {
+		--cursor-idle-light:
+			url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='38' height='38' viewBox='0 0 24 24'%3E%3Cpath d='M9.791 8.21c-.978-.326-1.907.603-1.582 1.58l3.533 10.598c.357 1.072 1.84 1.158 2.319.134l2.055-4.406l4.406-2.055c1.024-.478.938-1.962-.134-2.319z' fill='%231a1825' stroke='%23ffffff' stroke-width='1.25' stroke-linejoin='round' paint-order='stroke fill'/%3E%3C/svg%3E")
+				13 13,
+			auto;
+		--cursor-hover-light:
+			url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='38' height='38' viewBox='0 0 24 24'%3E%3Cpath d='M10 3a1 1 0 0 0-2 0v2a1 1 0 0 0 2 0zM5.464 4.05A1 1 0 1 0 4.05 5.464L5.464 6.88A1 1 0 1 0 6.88 5.464zm8.486 0a1 1 0 0 1 0 1.414L12.536 6.88a1 1 0 1 1-1.415-1.415l1.415-1.414a1 1 0 0 1 1.414 0M2 9a1 1 0 0 1 1-1h2a1 1 0 1 1 0 2H3a1 1 0 0 1-1-1m4.879 3.536a1 1 0 1 0-1.415-1.415L4.05 12.536a1 1 0 1 0 1.414 1.414z' fill='%23d9532f' stroke='%23ffffff' stroke-width='0.75' stroke-linejoin='round' paint-order='stroke fill'/%3E%3Cpath d='M9.791 8.21c-.978-.326-1.907.603-1.582 1.58l3.533 10.598c.357 1.072 1.84 1.158 2.319.134l2.055-4.406l4.406-2.055c1.024-.478.938-1.962-.134-2.319z' fill='%231a1825' stroke='%23ffffff' stroke-width='1.25' stroke-linejoin='round' paint-order='stroke fill'/%3E%3C/svg%3E")
+				13 13,
+			pointer;
+
+		--cursor-idle-dark:
+			url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='38' height='38' viewBox='0 0 24 24'%3E%3Cpath d='M9.791 8.21c-.978-.326-1.907.603-1.582 1.58l3.533 10.598c.357 1.072 1.84 1.158 2.319.134l2.055-4.406l4.406-2.055c1.024-.478.938-1.962-.134-2.319z' fill='%23f2efe9' stroke='%231a1825' stroke-width='1.25' stroke-linejoin='round' paint-order='stroke fill'/%3E%3C/svg%3E")
+				13 13,
+			auto;
+		--cursor-hover-dark:
+			url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='38' height='38' viewBox='0 0 24 24'%3E%3Cpath d='M10 3a1 1 0 0 0-2 0v2a1 1 0 0 0 2 0zM5.464 4.05A1 1 0 1 0 4.05 5.464L5.464 6.88A1 1 0 1 0 6.88 5.464zm8.486 0a1 1 0 0 1 0 1.414L12.536 6.88a1 1 0 1 1-1.415-1.415l1.415-1.414a1 1 0 0 1 1.414 0M2 9a1 1 0 0 1 1-1h2a1 1 0 1 1 0 2H3a1 1 0 0 1-1-1m4.879 3.536a1 1 0 1 0-1.415-1.415L4.05 12.536a1 1 0 1 0 1.414 1.414z' fill='%23fea770' stroke='%231a1825' stroke-width='0.75' stroke-linejoin='round' paint-order='stroke fill'/%3E%3Cpath d='M9.791 8.21c-.978-.326-1.907.603-1.582 1.58l3.533 10.598c.357 1.072 1.84 1.158 2.319.134l2.055-4.406l4.406-2.055c1.024-.478.938-1.962-.134-2.319z' fill='%23f2efe9' stroke='%231a1825' stroke-width='1.25' stroke-linejoin='round' paint-order='stroke fill'/%3E%3C/svg%3E")
+				13 13,
+			pointer;
+	}
+
+	html,
+	body {
+		cursor: var(--cursor-idle-light);
+	}
+
+	a,
+	button,
+	summary,
+	select,
+	label[for],
+	[role='button'],
+	input[type='submit'],
+	input[type='button'],
+	input[type='reset'],
+	input[type='checkbox'],
+	input[type='radio'],
+	input[type='file'],
+	[tabindex='0'] {
+		cursor: var(--cursor-hover-light);
+	}
+
+	html.dark,
+	html.dark body,
+	:where(.dark) {
+		cursor: var(--cursor-idle-dark);
+	}
+
+	html.dark a,
+	html.dark button,
+	html.dark summary,
+	html.dark select,
+	html.dark label[for],
+	html.dark [role='button'],
+	html.dark input[type='submit'],
+	html.dark input[type='button'],
+	html.dark input[type='reset'],
+	html.dark input[type='checkbox'],
+	html.dark input[type='radio'],
+	html.dark input[type='file'],
+	html.dark [tabindex='0'],
+	:where(.dark) a,
+	:where(.dark) button,
+	:where(.dark) summary,
+	:where(.dark) select,
+	:where(.dark) label[for],
+	:where(.dark) [role='button'],
+	:where(.dark) input[type='submit'],
+	:where(.dark) input[type='button'],
+	:where(.dark) input[type='reset'],
+	:where(.dark) input[type='checkbox'],
+	:where(.dark) input[type='radio'],
+	:where(.dark) input[type='file'],
+	:where(.dark) [tabindex='0'] {
+		cursor: var(--cursor-hover-dark);
+	}
+
+	input[type='text'],
+	input[type='email'],
+	input[type='password'],
+	input[type='number'],
+	input[type='tel'],
+	input[type='url'],
+	input[type='search'],
+	textarea {
+		cursor: text !important;
+	}
+
+	button:disabled,
+	input:disabled,
+	select:disabled,
+	textarea:disabled,
+	[aria-disabled='true'] {
+		cursor: not-allowed !important;
+	}
 }
 
 /* Media Print Standardization (Cetak Dokumen & Faktur Bersih dengan Preservasi Warna Penuh) */
@@ -159,5 +319,3 @@ html.dark body {
 		color: #262626 !important;
 	}
 }
-
-

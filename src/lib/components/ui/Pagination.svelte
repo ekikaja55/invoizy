@@ -16,38 +16,34 @@
 		{#if page > 1}
 			<a
 				href={buildHref(page - 1)}
-				class="rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium
-				       hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-white/10"
+				class="inline-flex items-center rounded-lg border-2 border-[#262626] bg-white px-3.5 py-1.5 font-mono text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#b4a6d5] active:translate-y-0.5 active:shadow-none dark:border-[#f2efe9] dark:bg-[#343044] dark:text-[#f2efe9] dark:shadow-[2px_2px_0px_#f2efe9]"
 			>
-				← Prev
+				&larr; Prev
 			</a>
 		{:else}
 			<span
-				class="rounded-lg border border-neutral-200 px-4 py-2 text-sm text-neutral-400
-				       dark:border-neutral-800"
+				class="inline-flex items-center rounded-lg border-2 border-[#262626]/20 bg-[#f2efe9]/40 px-3.5 py-1.5 font-mono text-xs font-bold text-[#404040]/40 dark:border-[#f2efe9]/20 dark:bg-[#1a1825]/40 dark:text-[#b8b5ad]/40"
 			>
-				← Prev
+				&larr; Prev
 			</span>
 		{/if}
 
-		<p class="text-sm text-neutral-500">
+		<p class="font-mono text-xs font-bold text-[#404040] dark:text-[#b8b5ad]">
 			Halaman {page} dari {totalPages}
 		</p>
 
 		{#if page < totalPages}
 			<a
 				href={buildHref(page + 1)}
-				class="rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium
-				       hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-white/10"
+				class="inline-flex items-center rounded-lg border-2 border-[#262626] bg-white px-3.5 py-1.5 font-mono text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#b4a6d5] active:translate-y-0.5 active:shadow-none dark:border-[#f2efe9] dark:bg-[#343044] dark:text-[#f2efe9] dark:shadow-[2px_2px_0px_#f2efe9]"
 			>
-				Next →
+				Next &rarr;
 			</a>
 		{:else}
 			<span
-				class="rounded-lg border border-neutral-200 px-4 py-2 text-sm text-neutral-400
-				       dark:border-neutral-800"
+				class="inline-flex items-center rounded-lg border-2 border-[#262626]/20 bg-[#f2efe9]/40 px-3.5 py-1.5 font-mono text-xs font-bold text-[#404040]/40 dark:border-[#f2efe9]/20 dark:bg-[#1a1825]/40 dark:text-[#b8b5ad]/40"
 			>
-				Next →
+				Next &rarr;
 			</span>
 		{/if}
 	</nav>

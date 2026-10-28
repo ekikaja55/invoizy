@@ -6,6 +6,9 @@ export const supabaseAdmin = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE
 const MAX_QRIS_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
 const ALLOWED_QRIS_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 
+const MAX_PRODUCT_IMAGE_SIZE_BYTES = 3 * 1024 * 1024; // 3MB per foto produk
+const ALLOWED_PRODUCT_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+
 export function validateQrisFile(file: File): string | null {
 	if (file.size === 0) return 'File QRIS wajib diunggah.';
 	if (file.size > MAX_QRIS_SIZE_BYTES) {
@@ -17,13 +20,27 @@ export function validateQrisFile(file: File): string | null {
 	return null;
 }
 
+export function validateProductImageFile(file: File): string | null {
+	if (file.size === 0) return 'File foto produk kosong.';
+	if (file.size > MAX_PRODUCT_IMAGE_SIZE_BYTES) {
+		return 'Ukuran foto produk maksimal 3MB per foto.';
+	}
+	if (!ALLOWED_PRODUCT_IMAGE_TYPES.includes(file.type)) {
+		return 'Format foto produk harus PNG, JPEG, atau WebP.';
+	}
+	return null;
+}
+
 export async function uploadQrisImage(file: File): Promise<{ url: string; path: string }> {
-	const ext = file.name.split('.').pop() ?? 'png';
-	const path = `qris-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+	const rawExt = file.name.split('.').pop()?.toLowerCase() ?? 'png';
+	const safeExt = ['png', 'jpg', 'jpeg', 'webp'].includes(rawExt) ? rawExt : 'png';
+	const path = `qris-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${safeExt}`;
+
+	const safeContentType = ALLOWED_QRIS_TYPES.includes(file.type) ? file.type : 'image/png';
 
 	const { error } = await supabaseAdmin.storage
 		.from('qris')
-		.upload(path, file, { upsert: true, contentType: file.type });
+		.upload(path, file, { upsert: true, contentType: safeContentType });
 
 	if (error) {
 		throw new Error(`Gagal upload QRIS: ${error.message}`);
@@ -38,12 +55,17 @@ export async function deleteQrisImage(path: string) {
 }
 
 export async function uploadProductImage(file: File): Promise<{ url: string; path: string }> {
-	const ext = file.name.split('.').pop() ?? 'webp';
-	const path = `prod-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+	const rawExt = file.name.split('.').pop()?.toLowerCase() ?? 'webp';
+	const safeExt = ['png', 'jpg', 'jpeg', 'webp'].includes(rawExt) ? rawExt : 'webp';
+	const path = `prod-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${safeExt}`;
+
+	const safeContentType = ALLOWED_PRODUCT_IMAGE_TYPES.includes(file.type)
+		? file.type
+		: 'image/webp';
 
 	const { error } = await supabaseAdmin.storage
 		.from('products')
-		.upload(path, file, { upsert: true, contentType: file.type || 'image/webp' });
+		.upload(path, file, { upsert: true, contentType: safeContentType });
 
 	if (error) {
 		throw new Error(`Gagal upload foto produk: ${error.message}`);
@@ -64,12 +86,15 @@ export async function uploadPaymentProof(
 	orderId: string,
 	file: File
 ): Promise<{ url: string; path: string }> {
-	const ext = file.name.split('.').pop() || 'jpg';
-	const path = `proofs/${orderId}-${Date.now()}.${ext}`;
+	const rawExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+	const safeExt = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif'].includes(rawExt) ? rawExt : 'jpg';
+	const path = `proofs/${orderId}-${Date.now()}.${safeExt}`;
+
+	const safeContentType = file.type && file.type.startsWith('image/') ? file.type : 'image/jpeg';
 
 	const { error } = await supabaseAdmin.storage
 		.from('invoices')
-		.upload(path, file, { upsert: true, contentType: file.type || 'image/jpeg' });
+		.upload(path, file, { upsert: true, contentType: safeContentType });
 
 	if (error) {
 		throw new Error(`Gagal upload bukti transfer: ${error.message}`);

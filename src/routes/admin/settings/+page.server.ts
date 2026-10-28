@@ -22,7 +22,8 @@ export const actions: Actions = {
 			proofContact: formData.get('proofContact'),
 			emergencyFlatRate: formData.get('emergencyFlatRate'),
 			pickupCode: formData.get('pickupCode'),
-			pickupCodeEnabled: formData.get('pickupCodeEnabled') === 'on' || formData.get('pickupCodeEnabled') === 'true',
+			pickupCodeEnabled:
+				formData.get('pickupCodeEnabled') === 'on' || formData.get('pickupCodeEnabled') === 'true',
 			shopeeCheckoutUrl: formData.get('shopeeCheckoutUrl')
 		});
 

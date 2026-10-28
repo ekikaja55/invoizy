@@ -73,6 +73,11 @@ export interface CreateOrderInput {
 }
 
 export async function getActiveCatalog() {
+	// Auto-sweeper: kembalikan stok pesanan PENDING yang kedaluwarsa sebelum katalog di-query
+	await expireAllOverdueOrdersAndRollbackStock().catch((err) => {
+		logger.error('order.sweeper-failed', { error: err });
+	});
+
 	const allCategories = await db.query.categories.findMany({
 		orderBy: [asc(categories.sortOrder)],
 		with: {
@@ -137,11 +142,15 @@ export async function createOrder(input: CreateOrderInput) {
 				if (item.variantId) {
 					const variant = product.variants.find((v) => v.id === item.variantId);
 					if (!variant) {
-						throw new OrderError(`Varian "${item.variantName ?? ''}" untuk "${product.name}" tidak ditemukan.`);
+						throw new OrderError(
+							`Varian "${item.variantName ?? ''}" untuk "${product.name}" tidak ditemukan.`
+						);
 					}
-					const shouldTrack = product.trackStock && (variant.trackStock !== false);
+					const shouldTrack = product.trackStock && variant.trackStock !== false;
 					if (shouldTrack && variant.stock < item.qty) {
-						throw new OrderError(`Stok varian "${variant.name}" (${product.name}) tidak cukup (tersisa ${variant.stock}).`);
+						throw new OrderError(
+							`Stok varian "${variant.name}" (${product.name}) tidak cukup (tersisa ${variant.stock}).`
+						);
 					}
 				} else if (product.trackStock && product.stock < item.qty) {
 					throw new OrderError(`Stok "${product.name}" tidak cukup (tersisa ${product.stock}).`);
@@ -218,7 +227,12 @@ export async function createOrder(input: CreateOrderInput) {
 				const product = byId.get(prodId);
 				if (!product || !product.promos || product.promos.length === 0) continue;
 				for (const promo of product.promos) {
-					if (promo.active && promo.minQty > 0 && totalQty >= promo.minQty && promo.discountAmount > 0) {
+					if (
+						promo.active &&
+						promo.minQty > 0 &&
+						totalQty >= promo.minQty &&
+						promo.discountAmount > 0
+					) {
 						const multiplier = Math.floor(totalQty / promo.minQty);
 						discountTotal += multiplier * promo.discountAmount;
 					}
@@ -233,16 +247,20 @@ export async function createOrder(input: CreateOrderInput) {
 				const product = byId.get(item.productId)!;
 				if (item.variantId) {
 					const variant = product.variants.find((v) => v.id === item.variantId);
-					const shouldTrack = product.trackStock && (variant?.trackStock !== false);
+					const shouldTrack = product.trackStock && variant?.trackStock !== false;
 					if (shouldTrack) {
 						const updated = await tx
 							.update(productVariants)
 							.set({ stock: sql`${productVariants.stock} - ${item.qty}` })
-							.where(and(eq(productVariants.id, item.variantId), gte(productVariants.stock, item.qty)))
+							.where(
+								and(eq(productVariants.id, item.variantId), gte(productVariants.stock, item.qty))
+							)
 							.returning({ id: productVariants.id });
 
 						if (updated.length === 0) {
-							throw new OrderError(`Stok varian "${item.variantName ?? ''}" untuk "${product.name}" habis saat diproses.`);
+							throw new OrderError(
+								`Stok varian "${item.variantName ?? ''}" untuk "${product.name}" habis saat diproses.`
+							);
 						}
 					}
 				} else if (product.trackStock) {
@@ -316,7 +334,9 @@ export async function submitPaymentProof(
 			order.paymentStatus === 'EXPIRED' ||
 			(order.expiresAt && new Date() > order.expiresAt && order.paymentStatus === 'PENDING')
 		) {
-			throw new OrderError('Batas waktu pembayaran pesanan ini telah habis. Silakan buat pesanan baru.');
+			throw new OrderError(
+				'Batas waktu pembayaran pesanan ini telah habis. Silakan buat pesanan baru.'
+			);
 		}
 
 		if (order.paymentStatus === 'CONFIRMED') {
@@ -370,11 +390,7 @@ export async function getOrderByToken(orderId: string, accessToken: string) {
 	if (!order) return null;
 
 	// Deteksi otomatis apakah pesanan pending telah melewati batas kedaluwarsa
-	if (
-		order.paymentStatus === 'PENDING' &&
-		order.expiresAt &&
-		new Date() > order.expiresAt
-	) {
+	if (order.paymentStatus === 'PENDING' && order.expiresAt && new Date() > order.expiresAt) {
 		await expireOrderAndRollbackStock(order.orderId);
 		order.paymentStatus = 'EXPIRED';
 	}
@@ -406,6 +422,34 @@ export async function getOrderByToken(orderId: string, accessToken: string) {
 		paymentMethods: methods,
 		qrisCodes: qris
 	};
+}
+
+export async function expireAllOverdueOrdersAndRollbackStock(): Promise<number> {
+	const overdueOrders = await db.query.orders.findMany({
+		where: and(eq(orders.paymentStatus, 'PENDING'), sql`${orders.expiresAt} < NOW()`),
+		columns: {
+			orderId: true
+		},
+		limit: 50
+	});
+
+	if (overdueOrders.length === 0) return 0;
+
+	let expiredCount = 0;
+	for (const o of overdueOrders) {
+		try {
+			await expireOrderAndRollbackStock(o.orderId);
+			expiredCount++;
+		} catch (err) {
+			logger.error('order.expire-single-failed', { orderId: o.orderId, error: err });
+		}
+	}
+
+	if (expiredCount > 0) {
+		logger.info('orders.sweeper.expired-batch', { count: expiredCount });
+	}
+
+	return expiredCount;
 }
 
 export async function expireOrderAndRollbackStock(orderId: string) {
@@ -451,7 +495,10 @@ export async function expireOrderAndRollbackStock(orderId: string) {
 			if (!product) continue;
 
 			if (item.variantNameSnapshot) {
-				const variant = product.variants.find((v) => v.name === item.variantNameSnapshot);
+				const trimmedSnapshot = item.variantNameSnapshot.trim().toLowerCase();
+				const variant = product.variants.find(
+					(v) => v.name.trim().toLowerCase() === trimmedSnapshot
+				);
 				const shouldTrack = product.trackStock && variant?.trackStock !== false;
 				if (shouldTrack && variant) {
 					await tx
@@ -492,11 +539,7 @@ export async function getOrderById(orderId: string) {
 	if (!order) return null;
 
 	// Deteksi otomatis jika waktu pembayaran sudah kedaluwarsa saat admin membuka detail
-	if (
-		order.paymentStatus === 'PENDING' &&
-		order.expiresAt &&
-		new Date() > order.expiresAt
-	) {
+	if (order.paymentStatus === 'PENDING' && order.expiresAt && new Date() > order.expiresAt) {
 		await expireOrderAndRollbackStock(order.orderId);
 		order.paymentStatus = 'EXPIRED';
 	}

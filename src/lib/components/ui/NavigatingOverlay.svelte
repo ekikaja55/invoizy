@@ -8,9 +8,14 @@
 		showLabel?: boolean;
 	}
 
-	let { message = 'Please wait...', forcedActive = false, showLabel = true }: Props = $props();
+	let { message = 'Preparing', forcedActive = false, showLabel = true }: Props = $props();
 
-	let isVisible = $derived(forcedActive || navigating.to !== null);
+	// Hanya aktif jika navigasi menuju halaman/pathname berbeda,
+	// mengabaikan perubahan query parameter in-page (seperti filter & paginasi).
+	let isVisible = $derived(
+		forcedActive ||
+			(navigating.to !== null && navigating.from?.url.pathname !== navigating.to.url.pathname)
+	);
 
 	$effect(() => {
 		if (isVisible) {
@@ -32,7 +37,7 @@
 
 {#if isVisible}
 	<div
-		class="fixed inset-0 z-[999] flex flex-col items-center justify-center bg-[#f2efe9]/85 backdrop-blur-xs touch-none select-none overscroll-none dark:bg-[#1a1825]/90"
+		class="fixed inset-0 z-[999] flex touch-none flex-col items-center justify-center overscroll-none bg-[#f2efe9]/85 backdrop-blur-xs select-none dark:bg-[#1a1825]/90"
 		role="status"
 		aria-live="polite"
 		onwheel={preventScroll}

@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { formatRupiah } from '$lib/utils/currency';
 	import Modal from '$lib/components/ui/Modal.svelte';
+	import ListSkeleton from '$lib/components/ui/ListSkeleton.svelte';
 	import { toast } from 'svelte-sonner';
 	import {
 		Trash2,
@@ -127,22 +128,21 @@
 </script>
 
 <div class="space-y-8 pb-24">
-	<!-- Page Header -->
+	<!-- Page Header: Warm Monoline Editorial -->
 	<header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-		<div class="space-y-2">
+		<div class="space-y-3">
 			<div
-				class="inline-block -rotate-2 rounded-[6px_2px_5px_1px] border-2 border-brandy bg-papaya px-3.5 py-1.5 font-mono text-xs font-bold tracking-widest text-brandy uppercase shadow-[2px_2px_0px_#78290f] md:text-sm dark:border-papaya/40 dark:bg-ink dark:text-papaya dark:shadow-[2px_2px_0px_rgba(255,236,209,0.2)]"
+				class="inline-flex items-center gap-2 rounded-lg border-2 border-[#262626] bg-[#fea770] px-5 py-2 font-mono text-sm font-black tracking-widest text-[#262626] uppercase shadow-[3px_3px_0px_#262626] sm:text-base dark:border-[#fea770] dark:bg-[#1a1825] dark:text-[#fea770] dark:shadow-[3px_3px_0px_#b4a6d5]"
 			>
-				RIWAYAT PESANAN
+				<span class="h-2.5 w-2.5 rounded-full border border-[#262626] bg-white"></span>
+				<span>RIWAYAT PESANAN</span>
 			</div>
 			<h1
-				class="font-serif text-3xl font-bold tracking-normal text-ink md:text-4xl dark:text-papaya"
+				class="font-serif text-3xl font-black tracking-tight text-[#262626] md:text-4xl dark:text-[#f2efe9]"
 			>
 				Arsip Pemesanan
 			</h1>
-			<p
-				class="font-handwriting text-2xl leading-snug font-semibold text-teal md:text-3xl dark:text-papaya/90"
-			>
+			<p class="font-mono text-xs text-[#404040] md:text-sm dark:text-[#b8b5ad]">
 				Daftar transaksi dan faktur yang pernah Anda buat di perangkat ini.
 			</p>
 		</div>
@@ -151,7 +151,7 @@
 			<button
 				type="button"
 				onclick={() => (modalOpen = true)}
-				class="inline-flex shrink-0 rotate-1 items-center gap-1.5 self-start rounded-[6px_2px_5px_1px] border border-crimson/30 bg-crimson/10 px-3 py-1.5 font-mono text-xs font-bold text-crimson shadow-[1px_1px_0px_#c1121f] transition-all hover:rotate-0 hover:bg-crimson/20 active:translate-y-0.5"
+				class="inline-flex shrink-0 items-center gap-1.5 self-start rounded-lg border-2 border-[#991b1b] bg-[#fee2e2] px-3 py-1.5 font-mono text-xs font-bold text-[#991b1b] shadow-[2px_2px_0px_#991b1b] transition-all hover:bg-[#fecaca] active:translate-y-0.5 active:shadow-none dark:border-[#f87171] dark:bg-[#450a0a] dark:text-[#f87171]"
 			>
 				<Trash2 size={13} strokeWidth={2.5} />
 				<span>Hapus Semua</span>
@@ -161,41 +161,75 @@
 
 	<!-- Local-only Warning Note -->
 	<div
-		class="relative -rotate-1 rounded-[10px_4px_8px_3px] border-2 border-brandy/40 bg-tangerine/10 p-4 text-xs leading-relaxed text-brandy shadow-[2px_2px_0px_rgba(120,41,15,0.15)] transition-transform duration-150 hover:rotate-0 dark:border-papaya/30 dark:bg-tangerine/15 dark:text-papaya"
+		class="relative rounded-[14px_4px_14px_4px] border-2 border-[#262626] bg-white p-4 shadow-[3px_3px_0px_#262626] dark:border-[#a2e1db] dark:bg-[#252331] dark:shadow-[3px_3px_0px_#b4a6d5]"
 	>
-		<p class="font-serif text-sm font-bold text-ink dark:text-papaya">
-			Catatan Penyimpanan Perangkat
-		</p>
-		<p class="mt-1">
+		<span
+			class="absolute top-2 right-2 font-mono text-[10px] text-[#262626]/30 dark:text-[#f2efe9]/30"
+			aria-hidden="true">+</span
+		>
+		<div class="flex items-center gap-2">
+			<div
+				class="flex h-5 w-5 items-center justify-center rounded border border-[#262626] bg-[#b4a6d5] text-[#262626]"
+			>
+				<span class="font-mono text-xs font-bold">i</span>
+			</div>
+			<p class="font-serif text-sm font-bold text-[#262626] dark:text-[#f2efe9]">
+				Catatan Penyimpanan Perangkat
+			</p>
+		</div>
+		<p class="mt-1.5 font-mono text-xs leading-relaxed text-[#404040] dark:text-[#b8b5ad]">
 			Riwayat ini tersimpan otomatis di penyimpanan lokal peramban Anda. Status setiap pesanan
 			diverifikasi langsung secara otomatis ke server.
 		</p>
 	</div>
 
-	{#if entries.length === 0}
+	{#if entries.length === 0 && !isLoadingStatus}
 		<div
-			class="rounded-[16px_8px_14px_6px] border-2 border-dashed border-brandy/40 bg-papaya/40 p-12 text-center shadow-[4px_4px_0px_#78290f] dark:border-papaya/30 dark:bg-ink/40"
+			class="relative rounded-[14px_4px_14px_4px] border-2 border-[#262626] bg-white p-12 text-center shadow-[4px_4px_0px_#262626] dark:border-[#a2e1db] dark:bg-[#252331] dark:shadow-[4px_4px_0px_#b4a6d5]"
 		>
-			<History size={36} class="mx-auto text-brandy/50 dark:text-papaya/50" />
-			<p class="mt-3 font-serif text-lg font-bold text-ink dark:text-papaya">
+			<span
+				class="absolute top-2 right-2 font-mono text-[10px] text-[#262626]/30 dark:text-[#f2efe9]/30"
+				aria-hidden="true">+</span
+			>
+			<div
+				class="mx-auto flex h-14 w-14 items-center justify-center rounded-lg border-2 border-[#262626] bg-[#fea770] text-[#262626] shadow-[2px_2px_0px_#262626]"
+			>
+				<History size={28} strokeWidth={2.25} />
+			</div>
+			<p class="mt-4 font-serif text-lg font-bold text-[#262626] dark:text-[#f2efe9]">
 				Belum Ada Riwayat Pesanan
 			</p>
-			<p class="mt-1 font-sans text-xs text-brandy/80 dark:text-papaya/70">
+			<p class="mt-1 font-mono text-xs text-[#404040] dark:text-[#b8b5ad]">
 				Pesanan yang Anda buat akan otomatis tercatat di sini.
 			</p>
 			<div class="mt-6">
 				<a
 					href={resolve('/(public)/order')}
-					class="inline-flex items-center gap-2 rounded-[8px_4px_7px_3px] border-2 border-brandy bg-tangerine px-4 py-2 font-mono text-xs font-bold text-white shadow-[2px_2px_0px_#78290f]"
+					class="group relative inline-flex items-center justify-center overflow-hidden rounded-lg border-2 border-[#262626] bg-[#fea770] px-4 py-2 font-mono text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:-translate-y-0.5 hover:bg-[#f99252] active:translate-y-0.5 active:shadow-none dark:border-[#a2e1db] dark:bg-[#fea770] dark:text-[#262626] dark:shadow-[2px_2px_0px_#b4a6d5]"
 				>
-					<span>Mulai Belanja</span>
-					<ArrowRight size={14} />
+					<span
+						class="inline-flex items-center gap-1.5 transition-transform duration-300 ease-out group-hover:-translate-y-[150%]"
+					>
+						<span>Mulai Belanja</span>
+						<ArrowRight size={14} />
+					</span>
+					<span
+						class="absolute inset-0 inline-flex translate-y-[150%] items-center justify-center gap-1.5 transition-transform duration-300 ease-out group-hover:translate-y-0"
+						aria-hidden="true"
+					>
+						<span>Mulai Belanja</span>
+						<ArrowRight size={14} />
+					</span>
 				</a>
 			</div>
 		</div>
+	{:else if isLoadingStatus}
+		<div class="space-y-4">
+			<ListSkeleton rows={entries.length > 0 ? Math.min(entries.length, 4) : 3} />
+		</div>
 	{:else}
 		<div class="space-y-4">
-			{#each entries as entry, idx (entry.orderId)}
+			{#each entries as entry (entry.orderId)}
 				{@const status = serverStatuses[entry.orderId]}
 				{@const isInvalid = status && !status.valid}
 				{@const isPending = status?.paymentStatus === 'PENDING' && !status?.isExpired}
@@ -203,62 +237,59 @@
 				{@const isConfirmed = status?.paymentStatus === 'CONFIRMED'}
 				{@const isExpired = status?.paymentStatus === 'EXPIRED' || status?.isExpired}
 				{@const isCancelled = status?.paymentStatus === 'CANCELLED'}
-				{@const tiltClass = idx % 2 === 0 ? '-rotate-[0.5deg]' : 'rotate-[0.5deg]'}
 
 				<div
-					class="group relative rounded-[14px_6px_12px_8px] border-2 border-brandy bg-white p-5 shadow-[4px_4px_0px_#78290f] transition-transform duration-200 transform-gpu backface-hidden hover:rotate-0 hover:shadow-[6px_6px_0px_#78290f] dark:border-papaya/30 dark:bg-ink/90 {tiltClass}"
+					class="group relative rounded-[14px_4px_14px_4px] border-2 border-[#262626] bg-white p-5 shadow-[4px_4px_0px_#262626] transition-all hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_#262626] dark:border-[#a2e1db] dark:bg-[#252331] dark:shadow-[4px_4px_0px_#b4a6d5]"
 				>
+					<span
+						class="absolute top-2 right-2 font-mono text-[10px] text-[#262626]/30 dark:text-[#f2efe9]/30"
+						aria-hidden="true">+</span
+					>
 					<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-						<div class="space-y-1">
-							<div class="flex items-center gap-2.5">
-								<span class="font-mono text-base font-bold text-ink dark:text-papaya">
+						<div class="space-y-1.5">
+							<div class="flex flex-wrap items-center gap-2.5">
+								<span class="font-mono text-base font-bold text-[#262626] dark:text-[#f2efe9]">
 									#{entry.orderId}
 								</span>
 
-								<!-- Status Badge -->
-								{#if isLoadingStatus}
+								<!-- Status Badge Monoline -->
+								{#if isInvalid}
 									<span
-										class="rounded bg-neutral-100 px-2 py-0.5 font-mono text-[11px] text-neutral-500"
-									>
-										Memeriksa status...
-									</span>
-								{:else if isInvalid}
-									<span
-										class="inline-flex items-center gap-1 rounded bg-crimson/15 px-2 py-0.5 font-mono text-[11px] font-bold text-crimson"
+										class="inline-flex items-center gap-1 rounded-full border border-[#991b1b] bg-[#fee2e2] px-2.5 py-0.5 font-mono text-xs font-bold text-[#991b1b] dark:border-[#f87171] dark:bg-[#450a0a] dark:text-[#f87171]"
 									>
 										<AlertTriangle size={12} />
-										<span>Tidak Ditemukan di Server</span>
+										<span>Tidak Ditemukan</span>
 									</span>
 								{:else if isConfirmed}
 									<span
-										class="inline-flex items-center gap-1 rounded bg-emerald-100 px-2 py-0.5 font-mono text-[11px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+										class="inline-flex items-center gap-1 rounded-full border border-[#065f46] bg-[#d1fae5] px-2.5 py-0.5 font-mono text-xs font-bold text-[#065f46] dark:border-[#a2e1db] dark:bg-[#064e3b] dark:text-[#a2e1db]"
 									>
 										<CheckCircle2 size={12} />
 										<span>Lunas & Terverifikasi</span>
 									</span>
 								{:else if isWaiting}
 									<span
-										class="inline-flex items-center gap-1 rounded bg-blue-100 px-2 py-0.5 font-mono text-[11px] font-bold text-blue-800 dark:bg-blue-950 dark:text-blue-300"
+										class="inline-flex items-center gap-1 rounded-full border border-[#3730a3] bg-[#e0e7ff] px-2.5 py-0.5 font-mono text-xs font-bold text-[#3730a3] dark:border-[#b4a6d5] dark:bg-[#312e81] dark:text-[#e0e7ff]"
 									>
 										<Clock size={12} />
-										<span>Menunggu Verifikasi Penjual</span>
+										<span>Menunggu Verifikasi</span>
 									</span>
 								{:else if isExpired}
 									<span
-										class="inline-flex items-center gap-1 rounded bg-neutral-200 px-2 py-0.5 font-mono text-[11px] font-bold text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+										class="inline-flex items-center gap-1 rounded-full border border-[#262626] bg-[#e5e5e5] px-2.5 py-0.5 font-mono text-xs font-bold text-[#262626] dark:border-[#f2efe9] dark:bg-[#1a1825] dark:text-[#f2efe9]"
 									>
 										<span>Kedaluwarsa</span>
 									</span>
 								{:else if isCancelled}
 									<span
-										class="inline-flex items-center gap-1 rounded bg-crimson/15 px-2 py-0.5 font-mono text-[11px] font-bold text-crimson dark:bg-crimson/25 dark:text-red-300"
+										class="inline-flex items-center gap-1 rounded-full border border-[#991b1b] bg-[#fee2e2] px-2.5 py-0.5 font-mono text-xs font-bold text-[#991b1b] dark:border-[#f87171] dark:bg-[#450a0a] dark:text-[#f87171]"
 									>
 										<Ban size={12} />
-										<span>Pesanan Dibatalkan</span>
+										<span>Dibatalkan</span>
 									</span>
 								{:else if isPending}
 									<span
-										class="inline-flex items-center gap-1 rounded bg-amber-100 px-2 py-0.5 font-mono text-[11px] font-bold text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+										class="inline-flex items-center gap-1 rounded-full border border-[#92400e] bg-[#fef3c7] px-2.5 py-0.5 font-mono text-xs font-bold text-[#92400e] dark:border-[#f59e0b] dark:bg-[#78350f] dark:text-[#fde68a]"
 									>
 										<Clock size={12} />
 										<span>Menunggu Bukti Transfer</span>
@@ -267,20 +298,22 @@
 							</div>
 
 							<div
-								class="flex items-center gap-3 font-mono text-xs text-brandy/70 dark:text-papaya/70"
+								class="flex items-center gap-3 font-mono text-xs text-[#404040] dark:text-[#b8b5ad]"
 							>
 								<span>{dateLabel(entry.createdAt)}</span>
 								<span>•</span>
-								<span class="font-bold text-ink dark:text-papaya">
+								<span class="font-bold text-[#065f46] dark:text-[#a2e1db]">
 									{formatRupiah(status?.total ?? entry.total)}
 								</span>
 							</div>
 
 							{#if isInvalid}
-								<p class="mt-2 text-xs leading-relaxed text-crimson">
+								<p
+									class="mt-2 font-mono text-xs leading-relaxed text-[#991b1b] dark:text-[#f87171]"
+								>
 									Pesanan ini tidak ditemukan di database server (mungkin telah dibersihkan atau
-									dibatalkan saat masa pengujian). Jika Anda telah melakukan pembayaran, silakan
-									hubungi penjual dengan menyebutkan ID pesanan ini.
+									dibatalkan). Jika Anda telah melakukan pembayaran, silakan hubungi penjual dengan
+									menyebutkan ID pesanan ini.
 								</p>
 							{/if}
 						</div>
@@ -292,17 +325,28 @@
 									href="{resolve('/(public)/order/bayar/[orderId]', {
 										orderId: entry.orderId
 									})}?token={entry.token}"
-									class="inline-flex items-center gap-1.5 rounded-[8px_3px_7px_2px] border-2 border-brandy bg-tangerine px-3.5 py-1.5 font-mono text-xs font-bold text-white shadow-[2px_2px_0px_#78290f] hover:bg-[#e06d00]"
+									class="group relative inline-flex items-center justify-center overflow-hidden rounded-lg border-2 border-[#262626] bg-[#fea770] px-3.5 py-1.5 font-mono text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:-translate-y-0.5 hover:bg-[#f99252] active:translate-y-0.5 active:shadow-none dark:border-[#a2e1db] dark:bg-[#fea770] dark:text-[#262626] dark:shadow-[2px_2px_0px_#b4a6d5]"
 								>
-									<span>Lanjut Bayar</span>
-									<ArrowRight size={13} />
+									<span
+										class="inline-flex items-center gap-1.5 transition-transform duration-300 ease-out group-hover:-translate-y-[150%]"
+									>
+										<span>Lanjut Bayar</span>
+										<ArrowRight size={13} />
+									</span>
+									<span
+										class="absolute inset-0 inline-flex translate-y-[150%] items-center justify-center gap-1.5 transition-transform duration-300 ease-out group-hover:translate-y-0"
+										aria-hidden="true"
+									>
+										<span>Lanjut Bayar</span>
+										<ArrowRight size={13} />
+									</span>
 								</a>
 							{:else if isWaiting || isConfirmed || isCancelled}
 								<a
 									href="{resolve('/invoice/[orderId]', {
 										orderId: entry.orderId
 									})}?token={entry.token}"
-									class="inline-flex items-center gap-1.5 rounded-[8px_3px_7px_2px] border-2 border-brandy bg-papaya px-3.5 py-1.5 font-mono text-xs font-bold text-ink shadow-[2px_2px_0px_#78290f] hover:bg-brandy/10 dark:border-papaya/40 dark:bg-ink dark:text-papaya"
+									class="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#262626] bg-white px-3.5 py-1.5 font-mono text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#b4a6d5] active:translate-y-0.5 active:shadow-none dark:border-[#f2efe9] dark:bg-[#343044] dark:text-[#f2efe9] dark:shadow-[2px_2px_0px_#f2efe9]"
 								>
 									<span>Lihat Faktur</span>
 									<ExternalLink size={13} />
@@ -312,7 +356,7 @@
 							<button
 								type="button"
 								onclick={() => (itemToDelete = entry.orderId)}
-								class="rounded-lg p-2 text-neutral-400 transition-colors hover:bg-crimson/10 hover:text-crimson"
+								class="rounded-lg p-2 text-[#404040] transition-colors hover:bg-[#fee2e2] hover:text-[#991b1b] dark:text-[#b8b5ad] dark:hover:bg-[#450a0a] dark:hover:text-[#f87171]"
 								aria-label="Hapus dari riwayat perangkat"
 								title="Hapus dari riwayat perangkat"
 							>
@@ -342,29 +386,10 @@
 <Modal
 	open={modalOpen}
 	title="Kosongkan Riwayat?"
+	message="Apakah Anda yakin ingin menghapus seluruh daftar riwayat pesanan dari peramban ini? Tindakan ini tidak dapat dibatalkan."
+	danger={true}
+	confirmLabel="Ya, Bersihkan"
+	cancelLabel="Batal"
+	onConfirm={confirmClearHistory}
 	onCancel={() => (modalOpen = false)}
-	hideActions={true}
->
-	<div class="space-y-4">
-		<p class="text-xs text-neutral-600 dark:text-neutral-300">
-			Apakah Anda yakin ingin menghapus seluruh daftar riwayat pesanan dari peramban ini? Tindakan
-			ini tidak dapat dibatalkan.
-		</p>
-		<div class="flex justify-end gap-2 pt-2">
-			<button
-				type="button"
-				onclick={() => (modalOpen = false)}
-				class="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300"
-			>
-				Batal
-			</button>
-			<button
-				type="button"
-				onclick={confirmClearHistory}
-				class="rounded-lg bg-crimson px-3 py-1.5 text-xs font-bold text-white hover:bg-crimson/90"
-			>
-				Ya, Bersihkan
-			</button>
-		</div>
-	</div>
-</Modal>
+/>

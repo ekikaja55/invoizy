@@ -5,6 +5,7 @@ import { eq, and } from 'drizzle-orm';
 import { getOrderByToken, submitPaymentProof } from '$lib/server/db/queries/order';
 import { uploadPaymentProof } from '$lib/server/storage/supabase';
 import { processNewInvoice } from '$lib/server/invoice/process';
+import { checkPaymentProofRateLimit } from '$lib/server/ratelimit';
 import { logger } from '$lib/server/logger';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -59,7 +60,23 @@ export const load: PageServerLoad = async ({ params, url }) => {
 };
 
 export const actions: Actions = {
-	uploadProof: async ({ params, request, url }) => {
+	uploadProof: async ({ params, request, url, getClientAddress }) => {
+		// Rate limit upload bukti per IP — cegah abuse storage & spam upload.
+		try {
+			const rl = await checkPaymentProofRateLimit(getClientAddress());
+			if (!rl.success) {
+				logger.warn('order.payment-proof.rate-limited', {
+					orderId: params.orderId,
+					remaining: rl.remaining
+				});
+				return fail(429, {
+					error: 'Terlalu banyak percobaan unggah bukti. Silakan tunggu beberapa menit.'
+				});
+			}
+		} catch (err) {
+			logger.error('order.payment-proof.ratelimit-failed', { error: err });
+		}
+
 		const formData = await request.formData();
 		const token = (formData.get('token') as string) || url.searchParams.get('token');
 		if (!token) {
@@ -67,7 +84,9 @@ export const actions: Actions = {
 				orderId: params.orderId,
 				reason: 'Token akses kosong di form maupun URL'
 			});
-			return fail(400, { error: 'Otorisasi token tidak sah. Pastikan Anda membuka tautan yang benar.' });
+			return fail(400, {
+				error: 'Otorisasi token tidak sah. Pastikan Anda membuka tautan yang benar.'
+			});
 		}
 
 		const file = formData.get('proof');
@@ -79,6 +98,25 @@ export const actions: Actions = {
 
 		if (file.size > 5 * 1024 * 1024) {
 			return fail(400, { error: 'Ukuran file foto bukti maksimal 5MB.' });
+		}
+
+		const ALLOWED_MIME_TYPES = [
+			'image/jpeg',
+			'image/jpg',
+			'image/png',
+			'image/webp',
+			'image/heic',
+			'image/heif'
+		];
+		const fileType = file.type ? file.type.toLowerCase() : '';
+		const fileExt = file.name.split('.').pop()?.toLowerCase() ?? '';
+		const isAllowedMime = ALLOWED_MIME_TYPES.includes(fileType);
+		const isAllowedExt = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif'].includes(fileExt);
+
+		if (!isAllowedMime && !isAllowedExt) {
+			return fail(400, {
+				error: 'Format file tidak didukung. Mohon unggah foto bukti transfer (JPG, PNG, atau WEBP).'
+			});
 		}
 
 		logger.info('order.payment-proof.received', {
@@ -107,10 +145,13 @@ export const actions: Actions = {
 
 		if (
 			existingOrder.paymentStatus === 'EXPIRED' ||
-			(existingOrder.expiresAt && new Date() > existingOrder.expiresAt && existingOrder.paymentStatus === 'PENDING')
+			(existingOrder.expiresAt &&
+				new Date() > existingOrder.expiresAt &&
+				existingOrder.paymentStatus === 'PENDING')
 		) {
 			return fail(400, {
-				error: 'Batas waktu pembayaran pesanan ini telah habis. Silakan buat pesanan baru di katalog.'
+				error:
+					'Batas waktu pembayaran pesanan ini telah habis. Silakan buat pesanan baru di katalog.'
 			});
 		}
 

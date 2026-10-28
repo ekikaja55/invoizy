@@ -6,9 +6,19 @@ export function waLink(
 	contact: string,
 	text = 'Halo, saya butuh bantuan order di cho.lazey - CHIBICONXI CATALOGUE.'
 ): string | null {
+	if (!contact || typeof contact !== 'string') return null;
 	const digits = contact.replace(/\D/g, '');
-	if (digits.length < 9 || digits.length > 15) return null;
-	const normalized = digits.startsWith('0') ? `62${digits.slice(1)}` : digits;
+	if (digits.length < 8 || digits.length > 15) return null;
+
+	let normalized = digits;
+	if (normalized.startsWith('0')) {
+		normalized = `62${normalized.slice(1)}`;
+	} else if (!normalized.startsWith('62')) {
+		normalized = `62${normalized}`;
+	}
+
+	if (normalized.length < 10 || normalized.length > 16) return null;
+
 	return `https://wa.me/${normalized}?text=${encodeURIComponent(text)}`;
 }
 

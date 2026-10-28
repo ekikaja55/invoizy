@@ -147,13 +147,14 @@
 			usage: 'Menunggu konfirmasi admin atas bukti transfer, stok produk kritis menipis (≤ 3 pcs).'
 		},
 		{
-			status: 'Bahaya / Batal',
-			label: 'FAILED / EXPIRED',
-			lightBg: '#fee2e2',
-			lightText: '#991b1b',
-			darkBg: '#7f1d1d',
-			darkText: '#f87171',
-			usage: 'Pesanan kedaluwarsa, stok produk habis total, tombol hapus produk/batal transaksi.'
+			status: 'Kadaluarsa / Void',
+			label: 'EXPIRED / VOID (Hitam)',
+			lightBg: '#1a1825',
+			lightText: '#ffffff',
+			darkBg: '#f2efe9',
+			darkText: '#1a1825',
+			usage:
+				'Badge pesanan kedaluwarsa di data table, stempel void akuntansi agar kontras tegas dan tidak tertukar dengan status pembayaran.'
 		},
 		{
 			status: 'Informasi / Dokumen',

@@ -11,10 +11,7 @@ import { logger } from '$lib/server/logger';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params }) => {
-	const [order, settings] = await Promise.all([
-		getOrderById(params.id),
-		getSettings()
-	]);
+	const [order, settings] = await Promise.all([getOrderById(params.id), getSettings()]);
 
 	if (!order) {
 		throw error(404, 'Order tidak ditemukan.');
@@ -42,7 +39,9 @@ export const load: PageServerLoad = async ({ params }) => {
 			paymentStatus: order.paymentStatus,
 			paymentProofUrl: order.paymentProofUrl,
 			paymentProofPath: order.paymentProofPath,
-			paymentProofUploadedAt: order.paymentProofUploadedAt ? order.paymentProofUploadedAt.toISOString() : null,
+			paymentProofUploadedAt: order.paymentProofUploadedAt
+				? order.paymentProofUploadedAt.toISOString()
+				: null,
 			paymentMethod: order.paymentMethod,
 			expiresAt: order.expiresAt ? order.expiresAt.toISOString() : null,
 			invoiceUrl: order.invoiceUrl,
@@ -118,7 +117,10 @@ export const actions: Actions = {
 				await regenerateInvoicePdf(params.id);
 				pdfRegenerated = true;
 			} catch (pdfErr) {
-				logger.warn('admin.payment-status.pdf-regen-deferred', { orderId: params.id, error: pdfErr });
+				logger.warn('admin.payment-status.pdf-regen-deferred', {
+					orderId: params.id,
+					error: pdfErr
+				});
 			}
 
 			return { success: true, pdfRegenerated, paymentStatus: status };

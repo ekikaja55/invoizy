@@ -5,7 +5,11 @@ import { sql, asc, ne, and } from 'drizzle-orm';
 import { productSchema } from '$lib/schemas/product';
 import { getProductById, updateProduct } from '$lib/server/db/queries/product';
 import { getSettings } from '$lib/server/db/queries/settings';
-import { uploadProductImage, deleteProductImage } from '$lib/server/storage/supabase';
+import {
+	uploadProductImage,
+	deleteProductImage,
+	validateProductImageFile
+} from '$lib/server/storage/supabase';
 import { logger } from '$lib/server/logger';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -67,7 +71,18 @@ export const actions: Actions = {
 		const files = formData.getAll('images') as File[];
 		const newUploadedUrls: string[] = [];
 		for (const file of files) {
-			if (file instanceof File && file.size > 0 && retainedUrls.length + newUploadedUrls.length < 4) {
+			if (
+				file instanceof File &&
+				file.size > 0 &&
+				retainedUrls.length + newUploadedUrls.length < 4
+			) {
+				const validationError = validateProductImageFile(file);
+				if (validationError) {
+					for (const url of newUploadedUrls) {
+						await deleteProductImage(url).catch(() => {});
+					}
+					return fail(400, { error: validationError });
+				}
 				try {
 					const res = await uploadProductImage(file);
 					newUploadedUrls.push(res.url);

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { tick } from 'svelte';
 	import { enhance } from '$app/forms';
 	import { base, resolve } from '$app/paths';
 	import { goto } from '$app/navigation';
@@ -14,7 +15,8 @@
 		CheckCircle2,
 		AlertTriangle,
 		Trash2,
-		Info
+		Info,
+		Check
 	} from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
@@ -38,6 +40,7 @@
 	let rows = $state<EditableRow[]>([]);
 	let fileName = $state('');
 	let importFormEl = $state<HTMLFormElement | null>(null);
+	let step3El = $state<HTMLElement | null>(null);
 
 	// Restore draft dari sessionStorage saat awal dibuka
 	$effect(() => {
@@ -115,15 +118,8 @@
 
 		fileName = file.name;
 		const text = await file.text();
-		console.log('[CSV Import] Membaca file:', file.name, 'Ukuran teks:', text.length, 'karakter');
 
 		const parsed = parseProductCsv(text);
-		console.log('[CSV Import] Delimiter terdeteksi:', JSON.stringify(parsed.delimiter));
-		console.log('[CSV Import] Baris valid terdeteksi:', parsed.rows.length);
-
-		if (parsed.errors.length > 0) {
-			console.warn('[CSV Import] Catatan parsing CSV:', parsed.errors);
-		}
 
 		if (parsed.rows.length === 0) {
 			const reason = parsed.errors[0] || 'Tidak ada baris data produk yang valid.';
@@ -150,6 +146,13 @@
 			toast.success(
 				`Berhasil memuat ${rows.length} baris produk (pemisah '${parsed.delimiter}'). Data tersimpan di draf browser.`
 			);
+		}
+
+		if (rows.length > 0) {
+			await tick();
+			if (step3El) {
+				step3El.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			}
 		}
 	}
 
@@ -348,291 +351,340 @@
 </svelte:head>
 
 <BusyOverlay active={isBusy}>
-	<div class="mx-auto max-w-5xl space-y-8 pb-20">
+	<div class="mx-auto max-w-6xl space-y-6 pb-20">
 		<!-- Navigation & Header -->
 		<div class="space-y-3">
 			<a
 				href={resolve('/admin/products')}
-				class="inline-flex items-center gap-2 rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+				class="inline-flex items-center gap-2 rounded-lg border-2 border-[#262626] bg-white px-3 py-1.5 font-mono text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#f2efe9] active:translate-y-0.5 active:shadow-none dark:border-[#f2efe9] dark:bg-[#262335] dark:text-[#f2efe9] dark:shadow-[2px_2px_0px_#f2efe9]"
 			>
-				<ArrowLeft size={14} />
-				<span>Kembali ke Daftar Produk</span>
+				<ArrowLeft size={14} strokeWidth={2.5} />
+				<span>Kembali ke Katalog Produk</span>
 			</a>
 
 			<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 				<div>
-					<h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
-						Import Produk via CSV / Excel
-					</h1>
-					<p class="mt-1 text-xs text-neutral-500">
-						Unggah daftar merchandise secara massal, lakukan penyesuaian di tabel pratinjau, dan
-						simpan langsung ke database.
+					<div class="flex items-center gap-2.5">
+						<span
+							class="rounded-md border-2 border-[#262626] bg-[#fea770] px-2.5 py-0.5 font-mono text-[10px] font-bold tracking-wider text-[#262626] uppercase shadow-[1.5px_1.5px_0px_#262626]"
+						>
+							BATCH CSV IMPORT
+						</span>
+						<h1
+							class="font-serif text-2xl font-bold tracking-tight text-[#262626] sm:text-3xl dark:text-[#f2efe9]"
+						>
+							Import Produk Massal
+						</h1>
+					</div>
+					<p class="mt-1 font-sans text-sm text-[#555] dark:text-[#bbb]">
+						Tambahkan merchandise dalam jumlah banyak melalui spreadsheet, tinjau di tabel editor,
+						dan simpan langsung ke katalog.
 					</p>
 				</div>
 			</div>
 		</div>
 
-		<!-- Card 1: Unduh Template & Tutorial Panduan (Tanpa Ikon di Judul Section) -->
-		<div
-			class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-xs dark:border-neutral-800 dark:bg-neutral-900"
-		>
-			<div
-				class="flex flex-col gap-4 border-b border-neutral-200 pb-5 sm:flex-row sm:items-center sm:justify-between dark:border-neutral-800"
-			>
-				<div>
-					<h2 class="text-base font-bold text-neutral-900 dark:text-neutral-100">
-						1. Unduh Template Resmi
-					</h2>
-					<p class="mt-1 text-xs text-neutral-500">
-						Pilih format template yang Anda sukai untuk diisi di Microsoft Excel atau Google
-						Spreadsheet.
-					</p>
-				</div>
-
-				<div class="flex flex-wrap items-center gap-2.5">
-					<a
-						href="{base}/templates/template-import-produk.xlsx"
-						download="template-import-produk.xlsx"
-						rel="external"
-						class="inline-flex items-center gap-2 rounded-lg bg-emerald-700 px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-emerald-800"
-					>
-						<FileSpreadsheet size={15} />
-						<span>Unduh Template Excel (.xlsx)</span>
-					</a>
-					<button
-						type="button"
-						onclick={downloadCsvTemplate}
-						class="inline-flex items-center gap-2 rounded-lg border border-neutral-300 px-3.5 py-2 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
-					>
-						<FileText size={15} />
-						<span>Unduh Template CSV (.csv)</span>
-					</button>
-				</div>
-			</div>
-
-			<!-- Box Informasi Edukasi Mengenai Gambar & Kecepatan Impor -->
-			<div
-				class="mt-4 flex items-start gap-2.5 rounded-xl border border-teal/20 bg-teal/5 p-3.5 text-xs text-neutral-700 dark:border-teal/30 dark:bg-teal/10 dark:text-neutral-300"
-			>
-				<Info size={16} class="mt-0.5 shrink-0 text-teal" />
-				<p class="leading-relaxed">
-					<strong>Fokus Impor Massal:</strong> Fitur ini dirancang khusus untuk memasukkan data teks
-					dan angka (nama produk, kategori, varian, harga, dan stok) dalam jumlah banyak secara
-					instan. Foto produk dapat dilengkapi setelah impor selesai melalui tombol
-					<strong>Edit</strong> pada masing-masing produk di daftar katalog.
-				</p>
-			</div>
-
-			<!-- Tab Tutorial Step-by-Step yang Jelas -->
-			<div class="mt-5 space-y-4">
+		<!-- 2-Column Workflow: Preparation & Upload Area -->
+		<div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
+			<!-- Col 1 (5 cols): Step 1 - Unduh Template & Panduan Format -->
+			<div class="space-y-4 lg:col-span-5">
 				<div
-					class="flex items-center gap-2 border-b border-neutral-200 text-xs font-medium dark:border-neutral-800"
+					class="rounded-xl border-2 border-[#262626] bg-white p-5 shadow-[3px_3px_0px_#262626] dark:border-[#f2efe9] dark:bg-[#262335] dark:shadow-[3px_3px_0px_#f2efe9]"
 				>
-					<button
-						type="button"
-						onclick={() => (activeTutorialTab = 'rules')}
-						class="border-b-2 px-3 py-2 transition-colors {activeTutorialTab === 'rules'
-							? 'border-neutral-900 font-bold text-neutral-900 dark:border-white dark:text-white'
-							: 'border-transparent text-neutral-500 hover:text-neutral-700'}"
-					>
-						Aturan Pengisian Kolom
-					</button>
-					<button
-						type="button"
-						onclick={() => (activeTutorialTab = 'excel')}
-						class="border-b-2 px-3 py-2 transition-colors {activeTutorialTab === 'excel'
-							? 'border-neutral-900 font-bold text-neutral-900 dark:border-white dark:text-white'
-							: 'border-transparent text-neutral-500 hover:text-neutral-700'}"
-					>
-						Cara Simpan CSV di Microsoft Excel
-					</button>
-					<button
-						type="button"
-						onclick={() => (activeTutorialTab = 'sheets')}
-						class="border-b-2 px-3 py-2 transition-colors {activeTutorialTab === 'sheets'
-							? 'border-neutral-900 font-bold text-neutral-900 dark:border-white dark:text-white'
-							: 'border-transparent text-neutral-500 hover:text-neutral-700'}"
-					>
-						Cara Simpan CSV di Google Spreadsheet
-					</button>
-				</div>
+					<div class="border-b-2 border-[#262626]/10 pb-4 dark:border-[#f2efe9]/10">
+						<span
+							class="rounded border border-[#262626] bg-[#fea770] px-2 py-0.5 font-mono text-xs font-bold text-[#262626]"
+						>
+							LANGKAH 1
+						</span>
+						<h2 class="mt-1 font-serif text-xl font-bold text-[#262626] dark:text-[#f2efe9]">
+							Unduh Template Resmi
+						</h2>
+						<p class="mt-1 font-sans text-sm text-[#404040] dark:text-[#b8b5ad]">
+							Pilih format yang sesuai dengan aplikasi spreadsheet yang Anda gunakan.
+						</p>
 
-				{#if activeTutorialTab === 'rules'}
-					<div class="grid gap-3 text-xs text-neutral-600 sm:grid-cols-2 dark:text-neutral-400">
-						<div class="space-y-2 rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
-							<p class="font-bold text-neutral-900 dark:text-neutral-100">
-								Aturan Kolom Template (7 Kolom):
-							</p>
-							<ol class="list-decimal space-y-1.5 pl-4 leading-relaxed">
-								<li><strong>name:</strong> Nama produk induk (wajib diisi).</li>
-								<li>
-									<strong>description:</strong> Deskripsi produk. Jika tidak ada deskripsi, isi
-									tanda strip <code>-</code>.
-								</li>
-								<li>
-									<strong>category:</strong> Nama kategori (contoh: <code>Merchandise</code>,
-									<code>Print</code>).
-								</li>
-								<li>
-									<strong>variantName:</strong> Nama varian (contoh: <code>Set A</code>,
-									<code>Set B</code>). Jika produk tidak bervarian, isi tanda strip <code>-</code>.
-								</li>
-								<li>
-									<strong>price:</strong> Harga satuan dalam Rupiah. Tulis angka bulat murni tanpa
-									titik atau Rp (contoh: <code>15000</code>).
-								</li>
-								<li><strong>stock:</strong> Jumlah stok unit fisik (contoh: <code>50</code>).</li>
-								<li>
-									<strong>trackStock:</strong> Isi <code>true</code> untuk barang ready stock yang
-									stoknya berkurang saat dibeli, atau <code>false</code> untuk barang pre-order (unlimited).
-								</li>
-							</ol>
-						</div>
-						<div class="space-y-2 rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
-							<p class="font-bold text-neutral-900 dark:text-neutral-100">
-								Cara Menginput Produk Multi-Varian:
-							</p>
-							<p class="leading-relaxed">
-								Jika 1 produk memiliki beberapa varian (misal: 1 jenis stiker dengan 3 pilihan
-								karakter), tulis <strong>nama produk induk yang sama persis</strong> di baris
-								terpisah dan bedakan kolom <strong>variantName</strong>:
-							</p>
-							<div
-								class="space-y-1 rounded-lg bg-neutral-100 p-2.5 font-mono text-[11px] dark:bg-neutral-800"
+						<div class="mt-3 flex flex-wrap gap-2">
+							<a
+								href="{base}/templates/template-import-produk.xlsx"
+								download="template-import-produk.xlsx"
+								rel="external"
+								class="inline-flex items-center gap-2 rounded-lg border-2 border-[#262626] bg-[#2b8a3e] px-3.5 py-2 font-mono text-xs font-bold text-white shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#237032] active:translate-y-0.5 active:shadow-none sm:text-sm dark:border-[#f2efe9] dark:shadow-[2px_2px_0px_#f2efe9]"
 							>
-								<p>Baris 1: Sticker Chibi · Set A · 15000 · 20 · true</p>
-								<p>Baris 2: Sticker Chibi · Set B · 15000 · 30 · true</p>
-							</div>
-							<p class="text-[11px] text-neutral-500">
-								Sistem otomatis mengelompokkan kedua baris di atas menjadi 1 produk induk dengan 2
-								varian.
-							</p>
+								<FileSpreadsheet size={16} strokeWidth={2.5} />
+								<span>Excel (.xlsx)</span>
+							</a>
+							<button
+								type="button"
+								onclick={downloadCsvTemplate}
+								class="inline-flex items-center gap-2 rounded-lg border-2 border-[#262626] bg-[#f2efe9] px-3.5 py-2 font-mono text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#e4e0d7] active:translate-y-0.5 active:shadow-none sm:text-sm dark:border-[#f2efe9] dark:bg-[#343044] dark:text-[#f2efe9] dark:shadow-[2px_2px_0px_#f2efe9]"
+							>
+								<FileText size={16} strokeWidth={2.5} />
+								<span>CSV (.csv)</span>
+							</button>
 						</div>
 					</div>
-				{:else if activeTutorialTab === 'excel'}
+
+					<!-- Tip Box Ringkas -->
 					<div
-						class="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 text-xs text-emerald-900 dark:border-emerald-800/40 dark:bg-emerald-950/20 dark:text-emerald-300"
+						class="mt-4 flex items-start gap-2.5 rounded-lg border-2 border-[#262626] bg-[#fea770]/15 p-3.5 text-sm text-[#262626] dark:border-[#f2efe9] dark:bg-[#fea770]/10 dark:text-[#f2efe9]"
 					>
-						<p class="text-sm font-bold">Langkah Menyimpan File CSV di Microsoft Excel:</p>
-						<ol class="mt-2.5 list-decimal space-y-2 pl-4 leading-relaxed">
-							<li>
-								Buka file <code>template-import-produk.xlsx</code> yang sudah Anda unduh dan isi data
-								produk Anda.
-							</li>
-							<li>Klik menu <strong>File</strong> di pojok kiri atas jendela Excel.</li>
-							<li>
-								Pilih menu <strong>Save As</strong> (Simpan Sebagai) dan pilih folder di komputer Anda.
-							</li>
-							<li>
-								Pada kotak pilihan <strong>Save as type</strong> (Format File), cari dan pilih:
-								<strong class="mt-1 block font-mono text-emerald-800 dark:text-emerald-200"
-									>CSV UTF-8 (Comma delimited) (*.csv)</strong
-								>
-							</li>
-							<li>
-								Klik <strong>Save</strong>. File CSV tersebut siap diunggah pada kotak nomor 2 di
-								bawah. (Sistem sudah mendukung pemisah titik koma <code>;</code> khas Excel Windows secara
-								otomatis).
-							</li>
-						</ol>
+						<Info
+							size={18}
+							class="mt-0.5 shrink-0 text-[#d9532f] dark:text-[#fea770]"
+							strokeWidth={2.5}
+						/>
+						<p class="font-sans leading-relaxed">
+							<strong class="font-bold text-[#d9532f] dark:text-[#fea770]">Catatan Gambar:</strong>
+							File CSV berfokus pada data teks, harga, dan stok. Foto merchandise dapat dilengkapi melalui
+							tombol <strong>Edit</strong> setelah produk masuk katalog.
+						</p>
 					</div>
-				{:else if activeTutorialTab === 'sheets'}
-					<div
-						class="rounded-xl border border-blue-200 bg-blue-50/50 p-4 text-xs text-blue-900 dark:border-blue-800/40 dark:bg-blue-950/20 dark:text-blue-300"
-					>
-						<p class="text-sm font-bold">Langkah Menyimpan File CSV di Google Spreadsheet:</p>
-						<ol class="mt-2.5 list-decimal space-y-2 pl-4 leading-relaxed">
-							<li>Buka Google Spreadsheet dan isi data produk mengikuti susunan kolom template.</li>
-							<li>Klik menu <strong>File</strong> di bagian atas lembar kerja.</li>
-							<li>Arahkan kursor ke menu <strong>Download</strong>.</li>
-							<li>
-								Klik pilihan:
-								<strong class="mt-1 block font-mono text-blue-800 dark:text-blue-200"
-									>Comma Separated Values (.csv)</strong
+
+					<!-- Tabs Panduan Format -->
+					<div class="mt-4 pt-2">
+						<div
+							class="flex flex-wrap gap-1.5 border-b-2 border-[#262626]/20 pb-2 dark:border-[#f2efe9]/20"
+						>
+							<button
+								type="button"
+								onclick={() => (activeTutorialTab = 'rules')}
+								class="rounded-md border px-2.5 py-1 font-mono text-xs font-bold transition-all {activeTutorialTab ===
+								'rules'
+									? 'border-[#262626] bg-[#262626] text-[#f2efe9] dark:border-[#f2efe9] dark:bg-[#f2efe9] dark:text-[#262626]'
+									: 'border-transparent text-[#555] hover:text-[#262626] dark:text-[#aaa] dark:hover:text-[#f2efe9]'}"
+							>
+								Aturan Kolom
+							</button>
+							<button
+								type="button"
+								onclick={() => (activeTutorialTab = 'excel')}
+								class="rounded-md border px-2.5 py-1 font-mono text-xs font-bold transition-all {activeTutorialTab ===
+								'excel'
+									? 'border-[#262626] bg-[#262626] text-[#f2efe9] dark:border-[#f2efe9] dark:bg-[#f2efe9] dark:text-[#262626]'
+									: 'border-transparent text-[#555] hover:text-[#262626] dark:text-[#aaa] dark:hover:text-[#f2efe9]'}"
+							>
+								Panduan Excel
+							</button>
+							<button
+								type="button"
+								onclick={() => (activeTutorialTab = 'sheets')}
+								class="rounded-md border px-2.5 py-1 font-mono text-xs font-bold transition-all {activeTutorialTab ===
+								'sheets'
+									? 'border-[#262626] bg-[#262626] text-[#f2efe9] dark:border-[#f2efe9] dark:bg-[#f2efe9] dark:text-[#262626]'
+									: 'border-transparent text-[#555] hover:text-[#262626] dark:text-[#aaa] dark:hover:text-[#f2efe9]'}"
+							>
+								Google Sheets
+							</button>
+						</div>
+
+						<div class="mt-3">
+							{#if activeTutorialTab === 'rules'}
+								<div
+									class="space-y-2.5 font-sans text-sm leading-relaxed text-[#333] dark:text-[#d4d1c9]"
 								>
-							</li>
-							<li>
-								File .csv akan otomatis terunduh ke folder Downloads laptop/komputer Anda dan siap
-								diunggah ke formulir di bawah.
-							</li>
-						</ol>
+									<p class="font-bold text-[#262626] dark:text-[#f2efe9]">
+										Struktur 7 Kolom Wajib:
+									</p>
+									<ul class="list-disc space-y-1.5 pl-4">
+										<li>
+											<code class="font-mono font-bold text-[#262626] dark:text-[#f2efe9]"
+												>name</code
+											>: Nama produk utama.
+										</li>
+										<li>
+											<code class="font-mono font-bold text-[#262626] dark:text-[#f2efe9]"
+												>description</code
+											>: Keterangan (isi <code>-</code> jika kosong).
+										</li>
+										<li>
+											<code class="font-mono font-bold text-[#262626] dark:text-[#f2efe9]"
+												>category</code
+											>: Kategori barang.
+										</li>
+										<li>
+											<code class="font-mono font-bold text-[#262626] dark:text-[#f2efe9]"
+												>variantName</code
+											>: Nama varian (misal <code>Set A</code>, isi <code>-</code> jika tanpa varian).
+										</li>
+										<li>
+											<code class="font-mono font-bold text-[#262626] dark:text-[#f2efe9]"
+												>price</code
+											>: Angka bulat rupiah tanpa simbol (misal <code>15000</code>).
+										</li>
+										<li>
+											<code class="font-mono font-bold text-[#262626] dark:text-[#f2efe9]"
+												>stock</code
+											>: Jumlah unit fisik (misal <code>50</code>).
+										</li>
+										<li>
+											<code class="font-mono font-bold text-[#262626] dark:text-[#f2efe9]"
+												>trackStock</code
+											>: <code>true</code> (stok terbatas) atau <code>false</code> (unlimited pre-order).
+										</li>
+									</ul>
+								</div>
+							{:else if activeTutorialTab === 'excel'}
+								<div
+									class="space-y-2 font-sans text-sm leading-relaxed text-[#333] dark:text-[#d4d1c9]"
+								>
+									<p class="font-bold text-[#262626] dark:text-[#f2efe9]">
+										Cara Ekspor CSV dari Excel:
+									</p>
+									<ol class="list-decimal space-y-1.5 pl-4">
+										<li>Buka file template dan isi data merchandise Anda.</li>
+										<li>Pilih menu <strong>File</strong> → <strong>Save As</strong>.</li>
+										<li>
+											Ubah format file menjadi: <strong
+												class="font-mono text-[#2b8a3e] dark:text-[#51cf66]"
+												>CSV UTF-8 (Comma delimited) (*.csv)</strong
+											>.
+										</li>
+										<li>
+											Klik <strong>Save</strong> lalu unggah file tersebut ke kolom sebelah kanan.
+										</li>
+									</ol>
+								</div>
+							{:else if activeTutorialTab === 'sheets'}
+								<div
+									class="space-y-2 font-sans text-sm leading-relaxed text-[#333] dark:text-[#d4d1c9]"
+								>
+									<p class="font-bold text-[#262626] dark:text-[#f2efe9]">
+										Cara Ekspor CSV dari Google Sheets:
+									</p>
+									<ol class="list-decimal space-y-1.5 pl-4">
+										<li>Buka spreadsheet data produk Anda.</li>
+										<li>Klik menu <strong>File</strong> → <strong>Download</strong>.</li>
+										<li>
+											Pilih <strong class="font-mono text-[#228be6] dark:text-[#4dabf7]"
+												>Comma Separated Values (.csv)</strong
+											>.
+										</li>
+										<li>File otomatis terunduh dan siap diunggah ke formulir.</li>
+									</ol>
+								</div>
+							{/if}
+						</div>
 					</div>
-				{/if}
+				</div>
 			</div>
-		</div>
 
-		<!-- Card 2: Upload Dropzone File CSV (Pertahankan Ikon di Dropzone Saja) -->
-		<div
-			class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-xs dark:border-neutral-800 dark:bg-neutral-900"
-		>
-			<h2 class="text-base font-bold text-neutral-900 dark:text-neutral-100">
-				2. Unggah File CSV Hasil Export
-			</h2>
-			<p class="mt-1 text-xs text-neutral-500">
-				Pilih file CSV yang sudah Anda isi dan simpan dari Excel atau Google Spreadsheet.
-			</p>
-
-			<div class="mt-4">
-				<label
-					for="csv_input"
-					class="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-50 p-8 text-center transition-colors hover:border-neutral-900 hover:bg-neutral-100/70 dark:border-neutral-700 dark:bg-neutral-800/40 dark:hover:border-neutral-500"
+			<!-- Col 2 (7 cols): Step 2 - Dropzone Unggah CSV -->
+			<div class="space-y-4 lg:col-span-7">
+				<div
+					class="flex h-full flex-col justify-between rounded-xl border-2 border-[#262626] bg-white p-5 shadow-[3px_3px_0px_#262626] dark:border-[#f2efe9] dark:bg-[#262335] dark:shadow-[3px_3px_0px_#f2efe9]"
 				>
-					<UploadCloud size={32} class="text-neutral-400" />
-					<p class="mt-2 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-						{fileName
-							? `File terpilih: ${fileName}`
-							: 'Klik untuk memilih file CSV atau seret ke sini'}
-					</p>
-					<p class="mt-1 text-xs text-neutral-500">
-						Mendukung file .csv dari Excel Windows (pemisah ';') maupun Google Sheets (pemisah ',')
-					</p>
-					<input
-						id="csv_input"
-						type="file"
-						accept=".csv"
-						onchange={handleFileUpload}
-						disabled={isBusy}
-						class="hidden"
-					/>
-				</label>
+					<div>
+						<span
+							class="rounded border border-[#262626] bg-[#a2e1db] px-2 py-0.5 font-mono text-xs font-bold text-[#065f46]"
+						>
+							LANGKAH 2
+						</span>
+						<h2 class="mt-1 font-serif text-xl font-bold text-[#262626] dark:text-[#f2efe9]">
+							Unggah File CSV
+						</h2>
+						<p class="mt-1 font-sans text-sm text-[#404040] dark:text-[#b8b5ad]">
+							Tarik file CSV ke dalam area dropzone atau klik untuk memilih file dari komputer.
+						</p>
+					</div>
+
+					<div class="my-4 flex-1">
+						<label
+							for="csv_input"
+							class="flex h-full min-h-[190px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#262626] bg-[#fcfbf9] p-6 text-center shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#f2efe9] active:translate-y-0.5 active:shadow-none dark:border-[#f2efe9] dark:bg-[#1a1825] dark:shadow-[2px_2px_0px_#f2efe9] dark:hover:bg-[#262335]"
+						>
+							<div
+								class="flex h-12 w-12 items-center justify-center rounded-full border-2 border-[#262626] bg-[#fea770] text-[#262626] shadow-[2px_2px_0px_#262626] dark:border-[#f2efe9]"
+							>
+								<UploadCloud size={24} strokeWidth={2.5} />
+							</div>
+
+							<p class="mt-3 font-sans text-base font-bold text-[#262626] dark:text-[#f2efe9]">
+								{fileName
+									? `File terpilih: ${fileName}`
+									: 'Klik untuk memilih file CSV atau seret ke sini'}
+							</p>
+							<p class="mt-1 font-sans text-xs text-[#555] sm:text-sm dark:text-[#a3a3a3]">
+								Mendukung pemisah koma (,) maupun titik-koma (;) khas Excel Windows secara otomatis.
+							</p>
+							<input
+								id="csv_input"
+								type="file"
+								accept=".csv"
+								onchange={handleFileUpload}
+								disabled={isBusy}
+								class="hidden"
+							/>
+						</label>
+					</div>
+
+					{#if fileName}
+						<div
+							class="flex items-center justify-between rounded-lg border-2 border-[#262626] bg-[#eef7ee] px-4 py-2.5 font-mono text-xs sm:text-sm dark:border-[#f2efe9] dark:bg-[#1e2a22]"
+						>
+							<div class="flex items-center gap-2 text-[#2b8a3e] dark:text-[#51cf66]">
+								<Check size={18} strokeWidth={2.5} />
+								<span class="font-bold">{fileName}</span>
+								<span>({rows.length} baris terbaca)</span>
+							</div>
+							<button
+								type="button"
+								onclick={clearDraft}
+								class="font-bold text-red-600 underline hover:text-red-800 dark:text-red-400"
+							>
+								Ganti File
+							</button>
+						</div>
+					{/if}
+				</div>
 			</div>
 		</div>
 
-		<!-- Section 3: Deteksi Kategori Baru & Konflik Penulisan (Tanpa Ikon di Judul Section) -->
+		<!-- Step 3: Status Analisis Kategori & Duplikat -->
 		{#if rows.length > 0}
 			<div
-				class="space-y-4 rounded-2xl border border-neutral-200 bg-white p-6 shadow-xs dark:border-neutral-800 dark:bg-neutral-900"
+				bind:this={step3El}
+				id="step-verification"
+				class="scroll-mt-6 space-y-4 rounded-xl border-2 border-[#262626] bg-white p-5 shadow-[3px_3px_0px_#262626] dark:border-[#f2efe9] dark:bg-[#262335] dark:shadow-[3px_3px_0px_#f2efe9]"
 			>
 				<div>
-					<h2 class="text-base font-bold text-neutral-900 dark:text-neutral-100">
-						3. Analisis & Deteksi Kategori
+					<span
+						class="rounded border border-[#262626] bg-[#b4a6d5] px-2 py-0.5 font-mono text-xs font-bold text-[#262626]"
+					>
+						LANGKAH 3
+					</span>
+					<h2 class="mt-1 font-serif text-xl font-bold text-[#262626] dark:text-[#f2efe9]">
+						Analisis Kategori & Validasi Duplikasi
 					</h2>
-					<p class="mt-1 text-xs text-neutral-500">
-						Sistem memeriksa nama kategori pada CSV terhadap data kategori yang sudah terdaftar di
-						database.
+					<p class="mt-1 font-sans text-sm text-[#404040] dark:text-[#b8b5ad]">
+						Pengecekan otomatis terhadap integritas katalog yang sudah ada di database toko.
 					</p>
 				</div>
 
 				<div class="grid gap-3 sm:grid-cols-2">
-					<!-- Kategori yang Tercocokkan -->
+					<!-- Kategori yang Cocok -->
 					<div
-						class="rounded-xl border border-green-200 bg-green-50/50 p-4 text-xs dark:border-green-900/40 dark:bg-green-950/20"
+						class="rounded-lg border-2 border-[#262626] bg-[#eef7ee] p-4 font-sans text-sm shadow-[2px_2px_0px_#262626] dark:border-[#f2efe9] dark:bg-[#1e2a22] dark:shadow-[2px_2px_0px_#f2efe9]"
 					>
-						<div class="flex items-center gap-2 font-bold text-green-800 dark:text-green-300">
-							<CheckCircle2 size={16} />
-							<span>Kategori Sudah Terdaftar ({categoryAnalysis.matchedExisting.length}):</span>
+						<div class="flex items-center gap-2 font-bold text-[#2b8a3e] dark:text-[#51cf66]">
+							<CheckCircle2 size={18} strokeWidth={2.5} />
+							<span>Kategori Cocok ({categoryAnalysis.matchedExisting.length}):</span>
 						</div>
 						{#if categoryAnalysis.matchedExisting.length === 0}
-							<p class="mt-2 text-neutral-500">Belum ada kategori yang cocok dengan database.</p>
+							<p class="mt-2 text-[#737373] dark:text-[#a3a3a3]">
+								Belum ada kategori yang cocok dengan database.
+							</p>
 						{:else}
-							<div class="mt-2 flex flex-wrap gap-1.5">
+							<div class="mt-2.5 flex flex-wrap gap-1.5">
 								{#each categoryAnalysis.matchedExisting as item (item.raw)}
 									<span
-										class="inline-flex items-center gap-1 rounded-md border border-green-200 bg-white px-2.5 py-1 font-mono text-[11px] font-semibold text-green-700 shadow-xs dark:border-green-800 dark:bg-neutral-800 dark:text-green-300"
+										class="inline-flex items-center gap-1.5 rounded-md border-2 border-[#262626] bg-white px-2.5 py-1 font-mono text-xs font-bold text-[#2b8a3e] shadow-[1px_1px_0px_#262626] dark:border-[#f2efe9] dark:bg-[#262335] dark:text-[#51cf66] dark:shadow-[1px_1px_0px_#f2efe9]"
 									>
 										<span>{item.raw}</span>
 										{#if item.raw.toLowerCase() === item.matchedTo.toLowerCase() && item.raw !== item.matchedTo}
-											<span class="text-[10px] text-neutral-400">→ {item.matchedTo}</span>
+											<span class="text-[11px] text-[#737373] dark:text-[#a3a3a3]"
+												>→ {item.matchedTo}</span
+											>
 										{/if}
 									</span>
 								{/each}
@@ -640,40 +692,43 @@
 						{/if}
 					</div>
 
-					<!-- Kategori Baru Terdeteksi -->
+					<!-- Kategori Baru -->
 					<div
-						class="rounded-xl border border-amber-200 bg-amber-50/50 p-4 text-xs dark:border-amber-900/40 dark:bg-amber-950/20"
+						class="rounded-lg border-2 border-[#262626] bg-[#fff9db] p-4 font-sans text-sm shadow-[2px_2px_0px_#262626] dark:border-[#f2efe9] dark:bg-[#342b15] dark:shadow-[2px_2px_0px_#f2efe9]"
 					>
-						<div class="flex items-center gap-2 font-bold text-amber-800 dark:text-amber-300">
-							<AlertTriangle size={16} />
+						<div class="flex items-center gap-2 font-bold text-[#d9532f] dark:text-[#ffd43b]">
+							<AlertTriangle size={18} strokeWidth={2.5} />
 							<span>Kategori Baru Terdeteksi ({categoryAnalysis.newCategories.length}):</span>
 						</div>
 						{#if categoryAnalysis.newCategories.length === 0}
-							<p class="mt-2 text-neutral-500">
-								Tidak ada kategori baru. Semua produk memakai kategori yang sudah ada.
+							<p class="mt-2 text-[#737373] dark:text-[#a3a3a3]">
+								Semua produk menggunakan kategori yang sudah terdaftar di database.
 							</p>
 						{:else}
 							<div class="mt-2 space-y-2">
-								<p class="text-neutral-600 dark:text-neutral-400">
+								<p class="text-[#404040] dark:text-[#d4d1c9]">
 									Kategori berikut belum ada di database dan akan dibuat otomatis saat impor, atau
-									Anda bisa menggabungkannya ke kategori lama:
+									Anda dapat mengalihkannya ke kategori yang ada:
 								</p>
-								<div class="space-y-2">
+								<div class="space-y-1.5">
 									{#each categoryAnalysis.newCategories as newCat (newCat)}
 										<div
-											class="flex flex-col justify-between gap-2 rounded-lg border border-amber-200 bg-white p-2.5 sm:flex-row sm:items-center dark:border-amber-800/60 dark:bg-neutral-800"
+											class="flex flex-col justify-between gap-2 rounded-lg border-2 border-[#262626] bg-white p-2.5 text-sm shadow-[1px_1px_0px_#262626] sm:flex-row sm:items-center dark:border-[#f2efe9] dark:bg-[#262335] dark:shadow-[1px_1px_0px_#f2efe9]"
 										>
-											<span class="font-bold text-amber-900 dark:text-amber-200">
-												"{newCat}" (Baru)
+											<span class="font-bold text-[#262626] dark:text-[#f2efe9]">
+												"{newCat}"
+												<span class="font-mono text-[#d9532f] dark:text-[#fea770]">(Baru)</span>
 											</span>
-											<div class="flex items-center gap-2">
-												<span class="text-[11px] text-neutral-500">Alihkan ke:</span>
+											<div class="flex items-center gap-1.5">
+												<span class="font-mono text-xs text-[#737373] dark:text-[#a3a3a3]"
+													>Alihkan:</span
+												>
 												<select
 													onchange={(e) => {
 														const val = (e.target as HTMLSelectElement).value;
 														if (val) remapCategory(newCat, val);
 													}}
-													class="rounded border border-neutral-300 bg-white px-2 py-1 text-xs text-neutral-800 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200"
+													class="rounded border-2 border-[#262626]/40 bg-white px-2.5 py-1 font-sans text-xs text-[#262626] focus:border-[#262626] focus:outline-none sm:text-sm dark:border-[#f2efe9]/40 dark:bg-[#1a1825] dark:text-[#f2efe9]"
 												>
 													<option value="">-- Tetap Buat Baru --</option>
 													{#each data.categories as c (c.id)}
@@ -689,30 +744,28 @@
 					</div>
 				</div>
 
-				<!-- Alert Deteksi Nama Produk Sudah Terdaftar di Toko -->
+				<!-- Alert Deteksi Duplikasi Produk -->
 				{#if duplicateAnalysis.hasDuplicates}
 					<div
-						class="rounded-xl border border-red-200 bg-red-50/70 p-4 text-xs dark:border-red-900/50 dark:bg-red-950/20"
+						class="rounded-lg border-2 border-[#262626] bg-[#ffe3e3] p-4 font-sans text-sm shadow-[2px_2px_0px_#262626] dark:border-[#f2efe9] dark:bg-[#341818] dark:shadow-[2px_2px_0px_#f2efe9]"
 					>
-						<div class="flex items-center gap-2 font-bold text-red-800 dark:text-red-300">
-							<AlertTriangle size={16} />
-							<span
-								>{duplicateAnalysis.list.length} Nama Produk Sudah Terdaftar di Database Toko:</span
-							>
+						<div class="flex items-center gap-2 font-bold text-[#e03131] dark:text-[#ff8787]">
+							<AlertTriangle size={18} strokeWidth={2.5} />
+							<span>{duplicateAnalysis.list.length} Produk Sudah Ada di Katalog Toko:</span>
 						</div>
-						<p class="mt-1 leading-relaxed text-red-700 dark:text-red-300">
-							Produk berikut sudah ada di katalog toko Anda. Sistem akan <strong
+						<p class="mt-1 leading-relaxed text-[#c92a2a] dark:text-[#ffa8a8]">
+							Produk berikut sudah ada di katalog Anda. Sistem akan <strong
 								>otomatis menganulir (melewati)</strong
-							> baris produk ini agar tidak terjadi produk kembar di katalog:
+							> baris-baris ini agar katalog tidak memiliki produk kembar:
 						</p>
 						<div class="mt-2.5 flex flex-wrap gap-1.5">
 							{#each duplicateAnalysis.list as dup (dup.name)}
 								<span
-									class="inline-flex items-center gap-1.5 rounded-md border border-red-200 bg-white px-2.5 py-1 font-mono text-[11px] font-semibold text-red-700 shadow-xs dark:border-red-900/60 dark:bg-neutral-800 dark:text-red-300"
+									class="inline-flex items-center gap-1.5 rounded-md border-2 border-[#262626] bg-white px-2.5 py-1 font-sans text-xs font-semibold text-[#e03131] shadow-[1px_1px_0px_#262626] dark:border-[#f2efe9] dark:bg-[#262335] dark:text-[#ff8787] dark:shadow-[1px_1px_0px_#f2efe9]"
 								>
 									<span>"{dup.name}"</span>
-									<span class="font-sans text-[10px] text-neutral-500"
-										>· Kategori {dup.categoryName}</span
+									<span class="font-mono text-[11px] text-[#737373] dark:text-[#a3a3a3]"
+										>({dup.categoryName})</span
 									>
 								</span>
 							{/each}
@@ -721,120 +774,129 @@
 				{/if}
 			</div>
 
-			<!-- Card 4: Tabel Pratinjau Interaktif & Editable -->
+			<!-- Step 4: Tabel Pratinjau & Edit Data -->
 			<div
-				class="space-y-4 rounded-2xl border border-neutral-200 bg-white p-6 shadow-xs dark:border-neutral-800 dark:bg-neutral-900"
+				class="space-y-4 rounded-xl border-2 border-[#262626] bg-white p-5 shadow-[3px_3px_0px_#262626] dark:border-[#f2efe9] dark:bg-[#262335] dark:shadow-[3px_3px_0px_#f2efe9]"
 			>
-				<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+				<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 					<div>
-						<h2 class="text-base font-bold text-neutral-900 dark:text-neutral-100">
-							4. Pratinjau & Edit Data Sebelum Disimpan
+						<span
+							class="rounded border border-[#262626] bg-[#e87a5d] px-2 py-0.5 font-mono text-xs font-bold text-white"
+						>
+							LANGKAH 4
+						</span>
+						<h2 class="mt-1 font-serif text-xl font-bold text-[#262626] dark:text-[#f2efe9]">
+							Pratinjau & Penyesuaian Data
 						</h2>
-						<p class="mt-1 text-xs text-neutral-500">
-							Data otomatis tersimpan di draf browser. Anda dapat mengubah nama, harga, stok, atau
-							menghapus baris produk langsung dari tabel.
+						<p class="mt-1 font-sans text-sm text-[#404040] dark:text-[#b8b5ad]">
+							Tinjau dan sesuaikan harga, stok, atau hapus baris yang tidak diinginkan sebelum
+							menyimpan.
 						</p>
 					</div>
 				</div>
 
 				<!-- Tabel Editable -->
-				<div class="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-800">
-					<table class="w-full text-left text-xs">
+				<div
+					class="overflow-x-auto rounded-lg border-2 border-[#262626] shadow-[2px_2px_0px_#262626] dark:border-[#f2efe9] dark:shadow-[2px_2px_0px_#f2efe9]"
+				>
+					<table class="w-full text-left font-sans text-xs sm:text-sm">
 						<thead
-							class="border-b border-neutral-200 bg-neutral-50 font-semibold text-neutral-600 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-400"
+							class="border-b-2 border-[#262626] bg-[#f2efe9] font-mono text-xs font-bold tracking-wider text-[#262626] uppercase dark:border-[#f2efe9] dark:bg-[#1a1825] dark:text-[#f2efe9]"
 						>
 							<tr>
-								<th class="w-12 p-3 text-center">#</th>
+								<th class="w-10 p-3 text-center">#</th>
 								<th class="min-w-[200px] p-3">Nama Produk</th>
 								<th class="min-w-[140px] p-3">Kategori</th>
 								<th class="min-w-[140px] p-3">Varian</th>
 								<th class="min-w-[110px] p-3">Harga (Rp)</th>
 								<th class="min-w-[90px] p-3">Stok</th>
 								<th class="min-w-[100px] p-3 text-center">Preorder</th>
-								<th class="w-14 p-3 text-center">Aksi</th>
+								<th class="w-12 p-3 text-center">Aksi</th>
 							</tr>
 						</thead>
-						<tbody class="divide-y divide-neutral-200 dark:divide-neutral-800">
+						<tbody class="divide-y border-[#262626]/10 dark:divide-[#f2efe9]/10">
 							{#each rows as row, index (row.id)}
 								{@const isDup = duplicateAnalysis.isDuplicate(row.name)}
 								<tr
-									class="hover:bg-neutral-50/50 dark:hover:bg-neutral-800/50 {isDup
-										? 'bg-red-50/20'
+									class="transition-colors hover:bg-[#fcfbf9] dark:hover:bg-[#1a1825]/50 {isDup
+										? 'bg-[#ffe3e3]/40 dark:bg-[#341818]/40'
 										: ''}"
 								>
-									<td class="p-3 text-center font-mono text-neutral-400">{index + 1}</td>
-									<td class="p-2">
+									<td class="p-3 text-center font-mono text-[#737373] dark:text-[#a3a3a3]"
+										>{index + 1}</td
+									>
+									<td class="p-2.5">
 										<input
 											type="text"
 											bind:value={row.name}
 											required
-											class="w-full rounded border px-2 py-1 text-xs focus:outline-none {isDup
-												? 'border-red-400 bg-red-50/50 text-red-900 dark:bg-red-950/30 dark:text-red-200'
-												: 'border-neutral-300 bg-white text-neutral-900 focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100'}"
+											class="w-full rounded border px-3 py-2 font-sans text-xs focus:ring-1 focus:ring-[#fea770] focus:outline-none sm:text-sm {isDup
+												? 'border-[#e03131] bg-[#ffe3e3] text-[#c92a2a] dark:bg-[#341818] dark:text-[#ff8787]'
+												: 'border-[#262626]/30 bg-white text-[#262626] focus:border-[#262626] dark:border-[#f2efe9]/30 dark:bg-[#1a1825] dark:text-[#f2efe9] dark:focus:border-[#f2efe9]'}"
 										/>
 										{#if isDup}
 											<span
-												class="mt-0.5 block text-[10px] font-semibold text-red-600 dark:text-red-400"
+												class="mt-1 block font-sans text-xs font-bold text-[#e03131] dark:text-[#ff8787]"
 											>
-												Sudah ada di kategori {duplicateAnalysis.getCategoryName(row.name)} (Dilewati)
+												Sudah terdaftar di kategori {duplicateAnalysis.getCategoryName(row.name)} (Dilewati)
 											</span>
 										{/if}
 									</td>
-									<td class="p-2">
+									<td class="p-2.5">
 										<input
 											type="text"
 											bind:value={row.category}
 											required
-											class="w-full rounded border border-neutral-300 bg-white px-2 py-1 text-xs text-neutral-900 focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+											class="w-full rounded border border-[#262626]/30 bg-white px-3 py-2 font-sans text-xs text-[#262626] focus:border-[#262626] focus:ring-1 focus:ring-[#fea770] focus:outline-none sm:text-sm dark:border-[#f2efe9]/30 dark:bg-[#1a1825] dark:text-[#f2efe9] dark:focus:border-[#f2efe9]"
 										/>
 									</td>
-									<td class="p-2">
+									<td class="p-2.5">
 										<input
 											type="text"
 											bind:value={row.variantName}
 											placeholder="Mis. Set A / -"
-											class="w-full rounded border border-neutral-300 bg-white px-2 py-1 text-xs text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+											class="w-full rounded border border-[#262626]/30 bg-white px-3 py-2 font-sans text-xs text-[#262626] placeholder:text-[#a3a3a3] focus:border-[#262626] focus:ring-1 focus:ring-[#fea770] focus:outline-none sm:text-sm dark:border-[#f2efe9]/30 dark:bg-[#1a1825] dark:text-[#f2efe9] dark:focus:border-[#f2efe9]"
 										/>
 									</td>
-									<td class="p-2">
+									<td class="p-2.5">
 										<input
 											type="number"
 											min="0"
 											step="500"
 											bind:value={row.price}
-											class="w-full rounded border border-neutral-300 bg-white px-2 py-1 font-mono text-xs text-neutral-900 focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+											class="w-full rounded border border-[#262626]/30 bg-white px-3 py-2 font-mono text-xs font-bold text-[#262626] focus:border-[#262626] focus:ring-1 focus:ring-[#fea770] focus:outline-none sm:text-sm dark:border-[#f2efe9]/30 dark:bg-[#1a1825] dark:text-[#f2efe9] dark:focus:border-[#f2efe9]"
 										/>
 									</td>
-									<td class="p-2">
+									<td class="p-2.5">
 										<input
 											type="number"
 											min="0"
 											bind:value={row.stock}
 											disabled={!row.trackStock}
-											class="w-full rounded border border-neutral-300 bg-white px-2 py-1 font-mono text-xs text-neutral-900 focus:border-neutral-900 disabled:opacity-40 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+											class="w-full rounded border border-[#262626]/30 bg-white px-3 py-2 font-mono text-xs font-bold text-[#262626] focus:border-[#262626] focus:ring-1 focus:ring-[#fea770] focus:outline-none disabled:opacity-40 sm:text-sm dark:border-[#f2efe9]/30 dark:bg-[#1a1825] dark:text-[#f2efe9] dark:focus:border-[#f2efe9]"
 										/>
 									</td>
-									<td class="p-2 text-center">
-										<label class="inline-flex cursor-pointer items-center gap-1">
+									<td class="p-2.5 text-center">
+										<label
+											class="inline-flex cursor-pointer items-center gap-1.5 font-sans text-xs font-medium text-[#262626] dark:text-[#f2efe9]"
+										>
 											<input
 												type="checkbox"
 												checked={!row.trackStock}
 												onchange={(e) => (row.trackStock = !(e.target as HTMLInputElement).checked)}
-												class="rounded border-neutral-300 text-neutral-900 focus:ring-0 dark:border-neutral-700"
+												class="h-4 w-4 rounded border-2 border-[#262626] text-[#e87a5d] focus:ring-0 dark:border-[#f2efe9]"
 											/>
-											<span class="text-[11px] text-neutral-600 dark:text-neutral-400"
-												>Unlimited</span
-											>
+											<span>Preorder</span>
 										</label>
 									</td>
-									<td class="p-2 text-center">
+									<td class="p-2.5 text-center">
 										<button
 											type="button"
 											onclick={() => removeRow(row.id)}
-											class="rounded p-1 text-neutral-400 hover:text-red-600 dark:hover:text-red-400"
+											class="rounded-md border border-transparent p-1.5 text-[#737373] transition-colors hover:border-[#262626] hover:bg-[#ffe3e3] hover:text-[#e03131] dark:text-[#a3a3a3] dark:hover:border-[#f2efe9] dark:hover:bg-[#341818] dark:hover:text-[#ff8787]"
 											title="Hapus Baris Ini"
 										>
-											<Trash2 size={15} />
+											<Trash2 size={16} strokeWidth={2.5} />
 										</button>
 									</td>
 								</tr>
@@ -845,21 +907,21 @@
 
 				<!-- Ringkasan & Tombol Komit Final -->
 				<div
-					class="flex flex-col gap-4 border-t border-neutral-200 pt-4 sm:flex-row sm:items-center sm:justify-between dark:border-neutral-800"
+					class="flex flex-col gap-4 border-t-2 border-[#262626] pt-4 font-mono sm:flex-row sm:items-center sm:justify-between dark:border-[#f2efe9]"
 				>
-					<div class="text-xs text-neutral-600 dark:text-neutral-400">
+					<div class="font-sans text-sm text-[#404040] dark:text-[#b8b5ad]">
 						<span>Siap diimpor: </span>
-						<strong class="font-bold text-neutral-900 dark:text-neutral-100"
+						<strong class="font-bold text-[#262626] dark:text-[#f2efe9]"
 							>{groupedSummary.newProductsToInsert} Produk Baru</strong
 						>
 						{#if groupedSummary.totalProducts > groupedSummary.newProductsToInsert}
-							<span class="font-medium text-red-600">
+							<span class="font-bold text-[#e03131] dark:text-[#ff8787]">
 								({groupedSummary.totalProducts - groupedSummary.newProductsToInsert} produk dilewati karena
 								sudah terdaftar)</span
 							>
 						{/if}
 						<span> dengan </span>
-						<strong class="font-bold text-neutral-900 dark:text-neutral-100"
+						<strong class="font-bold text-[#262626] dark:text-[#f2efe9]"
 							>{groupedSummary.totalVariants} Total Baris/Varian</strong
 						>.
 					</div>
@@ -869,7 +931,7 @@
 							type="button"
 							onclick={clearDraft}
 							disabled={isBusy}
-							class="rounded-lg border border-neutral-300 px-4 py-2 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+							class="rounded-lg border-2 border-[#262626] bg-white px-4 py-2 font-mono text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#f2efe9] active:translate-y-0.5 active:shadow-none sm:text-sm dark:border-[#f2efe9] dark:bg-[#343044] dark:text-[#f2efe9] dark:shadow-[2px_2px_0px_#f2efe9]"
 						>
 							Batal / Bersihkan
 						</button>
@@ -877,9 +939,19 @@
 							type="button"
 							onclick={handleSubmitImport}
 							disabled={isBusy || rows.length === 0}
-							class="inline-flex items-center gap-2 rounded-lg bg-neutral-900 px-6 py-2 text-xs font-semibold text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
+							class="group relative inline-flex items-center justify-center overflow-hidden rounded-lg border-2 border-[#262626] bg-[#262626] px-6 py-2.5 font-mono text-xs font-bold text-[#f2efe9] shadow-[2px_2px_0px_#262626] transition-all hover:-translate-y-0.5 hover:bg-[#3d3a37] active:translate-y-0.5 active:shadow-none disabled:pointer-events-none disabled:opacity-50 sm:text-sm dark:border-[#f2efe9] dark:bg-[#f2efe9] dark:text-[#262626] dark:shadow-[2px_2px_0px_#f2efe9] dark:hover:bg-[#e2ded6]"
 						>
-							<span>{isBusy ? 'Menyimpan ke Database...' : 'Proses & Simpan Sekarang'}</span>
+							<span
+								class="inline-flex items-center gap-2 transition-transform duration-300 ease-out group-hover:-translate-y-[150%]"
+							>
+								<span>{isBusy ? 'Menyimpan ke Database...' : 'Proses & Simpan Sekarang'}</span>
+							</span>
+							<span
+								class="absolute inset-0 inline-flex translate-y-[150%] items-center justify-center gap-2 transition-transform duration-300 ease-out group-hover:translate-y-0"
+								aria-hidden="true"
+							>
+								<span>{isBusy ? 'Menyimpan...' : 'Konfirmasi Simpan →'}</span>
+							</span>
 						</button>
 					</div>
 				</div>
