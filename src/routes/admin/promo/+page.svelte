@@ -4,7 +4,7 @@
 	import { formatRupiah } from '$lib/utils/currency';
 	import Modal from '$lib/components/ui/Modal.svelte';
 	import BusyOverlay from '$lib/components/ui/BusyOverlay.svelte';
-	import { Plus, Trash2, Pencil, Sparkles, Search, ArrowUp } from '@lucide/svelte';
+	import { Plus, Trash2, Pencil, Sparkles, Search } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
 
@@ -18,7 +18,6 @@
 	// Filter & Search State
 	let searchQuery = $state('');
 	let statusFilter = $state<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
-	let showBackToTop = $state(false);
 
 	const filteredPromos = $derived(
 		data.promos.filter((p) => {
@@ -344,24 +343,6 @@
 		{/if}
 	</div>
 </BusyOverlay>
-
-<svelte:window
-	onscroll={() => {
-		showBackToTop = window.scrollY > 400;
-	}}
-/>
-
-{#if showBackToTop}
-	<button
-		type="button"
-		onclick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-		class="fixed right-6 bottom-6 z-40 flex h-11 w-11 items-center justify-center rounded-full border-2 border-[#262626] bg-[#fea770] text-[#262626] shadow-[3px_3px_0px_#262626] transition-transform hover:-translate-y-1 active:translate-y-0 active:shadow-none dark:border-[#f2efe9] dark:bg-[#fea770] dark:text-[#262626] dark:shadow-[3px_3px_0px_#f2efe9]"
-		aria-label="Kembali ke atas"
-		title="Kembali ke atas"
-	>
-		<ArrowUp size={20} strokeWidth={2.5} />
-	</button>
-{/if}
 
 <!-- Form Tersembunyi untuk Hapus Promo -->
 <form

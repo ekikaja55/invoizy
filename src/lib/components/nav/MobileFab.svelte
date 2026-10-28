@@ -66,16 +66,17 @@
 
 	async function handleLogout() {
 		close();
-		const signOutPromise = authClient.signOut();
-
-		toast.promise(signOutPromise, {
-			loading: 'Logout, harap tunggu...',
-			success: 'Berhasil logout!',
-			error: 'Gagal logout, coba lagi.'
-		});
-
-		await signOutPromise;
-		navigateTo('/');
+		try {
+			const res = await authClient.signOut();
+			if (res && 'error' in res && res.error) {
+				toast.error(res.error.message || 'Gagal logout, silakan coba lagi.');
+				return;
+			}
+			toast.success('Berhasil logout!');
+			window.location.href = '/';
+		} catch {
+			toast.error('Gagal logout, silakan coba lagi.');
+		}
 	}
 </script>
 

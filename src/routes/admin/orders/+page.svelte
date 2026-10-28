@@ -6,13 +6,12 @@
 	import { formatRupiah } from '$lib/utils/currency';
 	import { invoiceStatusLabel, paymentStatusLabel } from '$lib/utils/status-label';
 	import Pagination from '$lib/components/ui/Pagination.svelte';
-	import { RefreshCw, ArrowUp } from '@lucide/svelte';
+	import { RefreshCw } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 	let refreshing = $state(false);
-	let showBackToTop = $state(false);
 
 	const isTableLoading = $derived(
 		refreshing ||
@@ -421,21 +420,3 @@
 		{/if}
 	</div>
 </div>
-
-<svelte:window
-	onscroll={() => {
-		showBackToTop = window.scrollY > 400;
-	}}
-/>
-
-{#if showBackToTop}
-	<button
-		type="button"
-		onclick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-		class="fixed right-6 bottom-6 z-40 flex h-11 w-11 items-center justify-center rounded-full border-2 border-[#262626] bg-[#fea770] text-[#262626] shadow-[3px_3px_0px_#262626] transition-transform hover:-translate-y-1 active:translate-y-0 active:shadow-none dark:border-[#f2efe9] dark:bg-[#fea770] dark:text-[#262626] dark:shadow-[3px_3px_0px_#f2efe9]"
-		aria-label="Kembali ke atas"
-		title="Kembali ke atas"
-	>
-		<ArrowUp size={20} strokeWidth={2.5} />
-	</button>
-{/if}

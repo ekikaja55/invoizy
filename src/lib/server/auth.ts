@@ -5,7 +5,12 @@ import { sveltekitCookies } from 'better-auth/svelte-kit';
 import { getRequestEvent } from '$app/server';
 import { db } from '$lib/server/db';
 
-const trustedOrigins: string[] = ['http://localhost:5173', 'http://127.0.0.1:5173'];
+const trustedOrigins: string[] = [
+	'http://localhost:5173',
+	'http://127.0.0.1:5173',
+	'http://localhost:4173',
+	'http://127.0.0.1:4173'
+];
 
 if (env.ORIGIN) {
 	trustedOrigins.push(env.ORIGIN);

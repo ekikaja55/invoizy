@@ -15,7 +15,6 @@
 		ArrowLeft,
 		Eye,
 		UploadCloud,
-		Image as ImageIcon,
 		GripVertical,
 		ArrowUpDown,
 		Check
@@ -183,12 +182,12 @@
 <div class="mx-auto max-w-2xl space-y-6 pb-20 select-none">
 	<!-- Page Header -->
 	<div
-		class="flex items-center justify-between border-b-2 border-[#262626]/10 pb-4 dark:border-[#f2efe9]/10"
+		class="flex flex-col gap-4 border-b-2 border-[#262626]/10 pb-4 sm:flex-row sm:items-center sm:justify-between dark:border-[#f2efe9]/10"
 	>
-		<div class="flex items-center gap-3">
+		<div class="flex items-start gap-3">
 			<a
 				href={resolve('/admin/settings')}
-				class="flex h-9 w-9 items-center justify-center rounded-lg border-2 border-[#262626] bg-white text-[#262626] shadow-[2px_2px_0px_#262626] transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 dark:border-[#f2efe9] dark:bg-[#1a1825] dark:text-[#f2efe9]"
+				class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-2 border-[#262626] bg-white text-[#262626] shadow-[2px_2px_0px_#262626] transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 dark:border-[#f2efe9] dark:bg-[#1a1825] dark:text-[#f2efe9]"
 				aria-label="Kembali ke Pengaturan"
 			>
 				<ArrowLeft size={16} />
@@ -199,7 +198,9 @@
 				>
 					<span>PEMBAYARAN QRIS</span>
 				</div>
-				<h1 class="text-2xl font-black tracking-tight text-[#262626] dark:text-[#f2efe9]">
+				<h1
+					class="text-xl font-black tracking-tight text-[#262626] sm:text-2xl dark:text-[#f2efe9]"
+				>
 					Kelola Master QRIS
 				</h1>
 				<p class="font-mono text-xs text-[#262626]/70 sm:text-[13px] dark:text-[#f2efe9]/70">
@@ -208,13 +209,13 @@
 			</div>
 		</div>
 
-		<div class="flex items-center gap-2">
+		<div class="flex flex-wrap items-center gap-2 self-stretch sm:self-auto">
 			{#if data.codes.length > 1 && !isReordering && !showCreateForm}
 				<button
 					type="button"
 					onclick={startReorder}
 					disabled={isBusy}
-					class="flex items-center gap-1.5 rounded-lg border-2 border-[#262626] bg-white px-3 py-2 font-mono text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:opacity-50 sm:text-sm dark:border-[#f2efe9] dark:bg-[#1a1825] dark:text-[#f2efe9]"
+					class="flex flex-1 items-center justify-center gap-1.5 rounded-lg border-2 border-[#262626] bg-white px-3 py-2 font-mono text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:opacity-50 sm:flex-initial sm:text-sm dark:border-[#f2efe9] dark:bg-[#1a1825] dark:text-[#f2efe9]"
 				>
 					<ArrowUpDown size={14} />
 					<span>Atur Urutan</span>
@@ -228,7 +229,7 @@
 						if (!showCreateForm) clearSelectedFile();
 					}}
 					disabled={isBusy}
-					class="flex items-center gap-1.5 rounded-lg border-2 border-[#262626] bg-[#262626] px-4 py-2 font-mono text-xs font-bold text-white shadow-[2px_2px_0px_#262626] transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:opacity-50 sm:text-sm dark:border-[#f2efe9] dark:bg-[#f2efe9] dark:text-[#262626]"
+					class="flex flex-1 items-center justify-center gap-1.5 rounded-lg border-2 border-[#262626] bg-[#262626] px-4 py-2 font-mono text-xs font-bold text-white shadow-[2px_2px_0px_#262626] transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:opacity-50 sm:flex-initial sm:text-sm dark:border-[#f2efe9] dark:bg-[#f2efe9] dark:text-[#262626]"
 				>
 					<Plus size={15} />
 					<span>QRIS Baru</span>

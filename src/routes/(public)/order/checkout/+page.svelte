@@ -715,7 +715,8 @@
 					class="mt-1.5 w-full rounded-lg border-2 border-[#262626] bg-white px-3.5 py-2.5 font-sans text-sm leading-relaxed text-[#262626] shadow-[2px_2px_0px_#262626] placeholder:text-[#404040]/40 focus:ring-2 focus:ring-[#fea770] focus:outline-none disabled:opacity-50 dark:border-[#f2efe9] dark:bg-[#252331] dark:text-[#f2efe9] dark:shadow-[2px_2px_0px_#f2efe9] dark:placeholder:text-[#b8b5ad]/40"
 				></textarea>
 				<p class="mt-1.5 font-mono text-[11px] font-bold text-[#991b1b] dark:text-[#f87171]">
-					PERHATIAN: Emotikon atau simbol dekoratif tidak akan dicetak pada berkas PDF faktur.
+					PERHATIAN: Emotikon atau simbol dekoratif tidak akan dicetak pada invoice PDF yang dikirim
+					ke email, Emoticon atau simbol tetap tampil di invoice web anda.
 				</p>
 			</div>
 
