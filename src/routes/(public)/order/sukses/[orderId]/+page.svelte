@@ -17,9 +17,13 @@
 			: null
 	);
 
-	// Order sukses dibuat → kosongkan keranjang (sekali, saat halaman dimuat).
+	// Order sukses dibuat → kosongkan keranjang (sekali, saat halaman dimuat) & pastikan overflow scroll aktif.
 	$effect(() => {
 		untrack(() => cart.clear());
+		if (browser) {
+			document.body.style.overflow = '';
+			document.documentElement.style.overflow = '';
+		}
 	});
 
 	// Pesan WA menyertakan link invoice absolut (di-encode di dalam waLink).

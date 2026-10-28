@@ -15,6 +15,7 @@
 		Minus,
 		Truck,
 		ArrowRight,
+		ChevronRight,
 		ArrowLeft,
 		Sparkles
 	} from '@lucide/svelte';
@@ -708,17 +709,17 @@
 				class="group relative flex w-full items-center justify-center overflow-hidden rounded-lg border-2 border-[#262626] bg-[#fea770] py-3.5 font-mono text-base font-bold text-[#262626] shadow-[3px_3px_0px_#262626] transition-all hover:-translate-y-0.5 hover:bg-[#f99252] active:translate-y-0.5 active:shadow-none disabled:cursor-not-allowed disabled:border-[#262626]/30 disabled:bg-[#262626]/10 disabled:text-[#262626]/40 disabled:shadow-none dark:border-[#a2e1db] dark:bg-[#fea770] dark:text-[#262626] dark:shadow-[3px_3px_0px_#b4a6d5]"
 			>
 				<span
-					class="inline-flex items-center gap-2 transition-transform duration-300 ease-out group-hover:-translate-y-[150%]"
+					class="inline-flex items-center gap-2 px-2 transition-transform duration-300 ease-out group-hover:-translate-y-[150%]"
 				>
-					<span>{isBusy ? 'Memproses Pesanan...' : 'Lanjut ke Pembayaran & Bukti Transfer'}</span>
-					{#if !isBusy}<ArrowRight size={18} strokeWidth={2.5} />{/if}
+					<span>{isBusy ? 'Memproses Pesanan...' : 'Lanjut ke Pembayaran'}</span>
+					{#if !isBusy}<ChevronRight size={19} strokeWidth={2.5} class="shrink-0" />{/if}
 				</span>
 				<span
-					class="absolute inset-0 inline-flex translate-y-[150%] items-center justify-center gap-2 transition-transform duration-300 ease-out group-hover:translate-y-0"
+					class="absolute inset-0 inline-flex translate-y-[150%] items-center justify-center gap-2 px-2 transition-transform duration-300 ease-out group-hover:translate-y-0"
 					aria-hidden="true"
 				>
-					<span>{isBusy ? 'Memproses Pesanan...' : 'Lanjut ke Pembayaran & Bukti Transfer'}</span>
-					{#if !isBusy}<ArrowRight size={18} strokeWidth={2.5} />{/if}
+					<span>{isBusy ? 'Memproses Pesanan...' : 'Lanjut ke Pembayaran'}</span>
+					{#if !isBusy}<ChevronRight size={19} strokeWidth={2.5} class="shrink-0" />{/if}
 				</span>
 			</button>
 		</form>

@@ -204,7 +204,8 @@
 					role="status"
 					aria-label="Memuat pesanan..."
 				>
-					<table class="w-full min-w-160 text-left font-sans text-sm">
+					<div class="overflow-x-auto">
+						<table class="w-full min-w-160 text-left font-sans text-sm">
 						<thead>
 							<tr
 								class="border-b-2 border-[#262626] bg-[#f2efe9] font-mono text-xs font-bold tracking-wider text-[#262626] uppercase dark:border-[#f2efe9]/20 dark:bg-[#1a1825] dark:text-[#f2efe9]"
@@ -250,6 +251,7 @@
 					</table>
 				</div>
 			</div>
+			</div>
 		{:else if data.orders.length === 0}
 			{#if hasActiveFilter}
 				<div
@@ -291,7 +293,8 @@
 			<div
 				class="relative overflow-hidden rounded-[14px_4px_14px_4px] border-2 border-[#262626] bg-white shadow-[4px_4px_0px_#262626] dark:border-[#a2e1db] dark:bg-[#252331] dark:shadow-[4px_4px_0px_#b4a6d5]"
 			>
-				<table class="w-full min-w-160 text-left font-sans text-sm">
+				<div class="overflow-x-auto">
+					<table class="w-full min-w-160 text-left font-sans text-sm">
 					<thead>
 						<tr
 							class="border-b-2 border-[#262626] bg-[#f2efe9] font-mono text-xs font-bold tracking-wider text-[#262626] uppercase dark:border-[#f2efe9]/20 dark:bg-[#1a1825] dark:text-[#f2efe9]"
@@ -374,6 +377,7 @@
 					</tbody>
 				</table>
 			</div>
+		</div>
 
 			<Pagination page={data.page} totalPages={data.totalPages} buildHref={pageHref} />
 		{/if}

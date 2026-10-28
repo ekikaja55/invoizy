@@ -24,8 +24,9 @@
 			document.body.style.overflow = 'hidden';
 			document.documentElement.style.overflow = 'hidden';
 			return () => {
-				document.body.style.overflow = prevBodyOverflow;
-				document.documentElement.style.overflow = prevHtmlOverflow;
+				document.body.style.overflow = prevBodyOverflow === 'hidden' ? '' : prevBodyOverflow;
+				document.documentElement.style.overflow =
+					prevHtmlOverflow === 'hidden' ? '' : prevHtmlOverflow;
 			};
 		}
 	});

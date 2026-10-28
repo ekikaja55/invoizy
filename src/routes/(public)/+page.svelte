@@ -375,7 +375,7 @@
 		</div>
 
 		<!-- Folder Float Terselip di Tepi Kanan Layar (Layer Interaktif z-20) -->
-		<div class="relative z-20 pr-2 sm:pr-6 md:pr-10">
+		<div class="relative z-20 origin-bottom-right scale-75 pr-2 sm:scale-100 sm:pr-6 md:pr-10">
 			<FolderFloat size={1} />
 		</div>
 	</section>

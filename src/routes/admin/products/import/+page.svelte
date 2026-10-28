@@ -109,7 +109,13 @@
 		if (!input.files || input.files.length === 0) return;
 
 		const file = input.files[0];
-		if (!file.name.toLowerCase().endsWith('.csv')) {
+		const isCsv =
+			file.name.toLowerCase().endsWith('.csv') ||
+			file.type === 'text/csv' ||
+			file.type === 'text/comma-separated-values' ||
+			file.type === 'application/vnd.ms-excel' ||
+			file.type.includes('csv');
+		if (!isCsv) {
 			toast.error(
 				'File harus berformat .csv. Silakan simpan draf Excel/Spreadsheet Anda sebagai CSV terlebih dahulu.'
 			);
@@ -610,10 +616,10 @@
 							<input
 								id="csv_input"
 								type="file"
-								accept=".csv"
+								accept=".csv,text/csv,text/comma-separated-values,application/vnd.ms-excel,text/plain"
 								onchange={handleFileUpload}
 								disabled={isBusy}
-								class="hidden"
+								class="sr-only"
 							/>
 						</label>
 					</div>

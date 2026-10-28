@@ -319,3 +319,25 @@ html.dark body {
 		color: #262626 !important;
 	}
 }
+
+/* Drag & Drop Mobile Touch Action:
+ * Mengembalikan scroll vertikal native di HP pada kontainer kartu draggable,
+ * dan mengisolasi pencegahan scroll (touch-action: none) hanya pada tombol grip handle.
+ */
+.svelte-dnd-draggable,
+[data-sveltednd-draggable] {
+	touch-action: pan-y !important;
+}
+
+@media (max-width: 600px) {
+	.svelte-dnd-draggable {
+		touch-action: pan-y !important;
+	}
+}
+
+.drag-handle,
+.drag-handle-method,
+.drag-handle-qris,
+[data-sveltednd-keyboard-handle] {
+	touch-action: none !important;
+}

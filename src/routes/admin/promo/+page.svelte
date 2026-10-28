@@ -146,7 +146,8 @@
 			<div
 				class="overflow-hidden rounded-[14px_4px_14px_4px] border-2 border-[#262626] bg-white shadow-[4px_4px_0px_#262626] dark:border-[#f2efe9]/20 dark:bg-[#1a1825]"
 			>
-				<table class="w-full text-left text-sm">
+				<div class="overflow-x-auto">
+					<table class="w-full min-w-[640px] text-left text-sm">
 					<thead
 						class="border-b-2 border-[#262626] bg-[#f2efe9] font-mono text-xs font-black tracking-wider text-[#262626] uppercase dark:border-[#f2efe9]/20 dark:bg-black/30 dark:text-[#f2efe9]"
 					>
@@ -254,6 +255,7 @@
 					</tbody>
 				</table>
 			</div>
+		</div>
 		{/if}
 	</div>
 </BusyOverlay>

@@ -14,7 +14,8 @@
 		LayoutDashboard,
 		Headset,
 		MessageCircle,
-		ExternalLink
+		ExternalLink,
+		Pin
 	} from '@lucide/svelte';
 	import InstagramIcon from '$lib/components/icons/InstagramIcon.svelte';
 	import { navActionClass, navItemClass } from '$lib/utils/nav-utils';
@@ -52,6 +53,7 @@
 	let contactRef = $state<HTMLDivElement | null>(null);
 
 	const isExpanded = $derived(!collapsed || isHovered);
+	const isPeeking = $derived(collapsed && isHovered);
 
 	const waHref = $derived(
 		contact?.wa ? waLink(contact.wa, 'Halo, saya ingin bertanya seputar produk/order.') : null
@@ -68,6 +70,18 @@
 		collapsed = !collapsed;
 		contactOpen = false;
 		localStorage.setItem('sidebar-collapsed', String(collapsed));
+	}
+
+	function pinSidebar() {
+		collapsed = false;
+		localStorage.setItem('sidebar-collapsed', 'false');
+	}
+
+	function unpinSidebar() {
+		collapsed = true;
+		isHovered = false;
+		contactOpen = false;
+		localStorage.setItem('sidebar-collapsed', 'true');
 	}
 
 	function toggleContact(e: MouseEvent) {
@@ -112,17 +126,54 @@
 	onmouseenter={() => (isHovered = true)}
 	onmouseleave={() => (isHovered = false)}
 >
-	<button
-		onclick={toggle}
-		class="{navActionClass()} mb-2"
-		aria-label={collapsed ? 'Perluas sidebar' : 'Ciutkan sidebar'}
-	>
-		{#if !isExpanded}
+	{#if !isExpanded}
+		<button
+			onclick={toggle}
+			class="{navActionClass()} mb-2 justify-center"
+			aria-label="Perluas sidebar"
+			title="Perluas sidebar"
+		>
 			<PanelLeftOpen size={16} strokeWidth={2.75} />
-		{:else}
-			<PanelLeftClose size={16} strokeWidth={2.75} />
-		{/if}
-	</button>
+		</button>
+	{:else if isPeeking}
+		<div class="mb-2 flex items-center justify-between gap-1.5 px-1 py-1">
+			<span
+				class="inline-flex items-center gap-1.5 rounded-md border-2 border-[#262626] bg-[#a2e1db] px-2 py-0.5 font-mono text-[11px] font-black tracking-wider text-[#262626] uppercase shadow-[1px_1px_0px_#262626] dark:border-[#f2efe9] dark:bg-[#a2e1db] dark:text-[#262626]"
+				title="Sidebar terbuka sementara (mode hover)"
+			>
+				<span class="inline-block h-2 w-2 animate-pulse rounded-full bg-[#fea770]"></span>
+				Peek
+			</span>
+
+			<button
+				type="button"
+				onclick={pinSidebar}
+				class="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#262626] bg-white px-2 py-1 font-mono text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-transform hover:-translate-y-0.5 hover:bg-[#a2e1db] active:translate-y-0.5 active:shadow-none dark:border-[#f2efe9] dark:bg-[#252331] dark:text-[#f2efe9] dark:hover:bg-[#a2e1db] dark:hover:text-[#262626]"
+				aria-label="Pin Menu"
+				title="Sematkan menu agar tetap terbuka permanen"
+			>
+				<Pin size={13} strokeWidth={2.5} class="rotate-45" />
+				<span>Pin Menu</span>
+			</button>
+		</div>
+	{:else}
+		<div class="mb-2 flex items-center justify-between gap-2 px-1 py-1">
+			<span class="font-serif text-sm font-bold tracking-tight text-[#262626] dark:text-[#f2efe9]">
+				Invoizy
+			</span>
+
+			<button
+				type="button"
+				onclick={unpinSidebar}
+				class="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#262626] bg-white px-2 py-1 font-mono text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-transform hover:-translate-y-0.5 hover:bg-[#fee2e2] hover:text-[#991b1b] active:translate-y-0.5 active:shadow-none dark:border-[#f2efe9] dark:bg-[#252331] dark:text-[#f2efe9] dark:hover:bg-red-950 dark:hover:text-red-300"
+				aria-label="Unpin Menu"
+				title="Ciutkan menu ke mode ikon"
+			>
+				<PanelLeftClose size={13} strokeWidth={2.5} />
+				<span>Unpin Menu</span>
+			</button>
+		</div>
+	{/if}
 
 	<nav class="flex flex-col gap-1">
 		{#each items as item (item.href)}

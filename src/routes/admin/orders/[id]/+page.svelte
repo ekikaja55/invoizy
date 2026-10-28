@@ -347,15 +347,15 @@
 								href={data.order.paymentProofUrl}
 								target="_blank"
 								rel="external noopener noreferrer"
-								class="group relative block max-w-xs overflow-hidden rounded-lg border-2 border-[#262626] shadow-[3px_3px_0px_#262626] hover:opacity-90"
+								class="group relative block w-fit max-w-xs overflow-hidden rounded-lg border-2 border-[#262626] bg-[#f2efe9] shadow-[3px_3px_0px_#262626] transition-transform hover:-translate-y-0.5 dark:border-[#f2efe9]/40 dark:bg-[#1a1825]"
 							>
 								<img
 									src={data.order.paymentProofUrl}
 									alt="Bukti Transfer #{data.order.orderId}"
-									class="max-h-64 w-auto object-contain"
+									class="block max-h-72 w-auto object-contain"
 								/>
 								<span
-									class="absolute right-1 bottom-1 rounded border border-white/20 bg-black/85 px-2 py-0.5 font-mono text-xs text-white"
+									class="absolute right-1 bottom-1 rounded border border-white/20 bg-black/85 px-2 py-0.5 font-mono text-[11px] text-white backdrop-blur-xs transition-opacity group-hover:bg-black"
 								>
 									Buka Ukuran Penuh ↗
 								</span>

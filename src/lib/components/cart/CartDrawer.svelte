@@ -139,35 +139,36 @@
 			class="fixed inset-0 cursor-default bg-[#262626]/70 backdrop-blur-xs transition-opacity dark:bg-black/85"
 		></button>
 
-		<!-- Drawer Panel: Bottom sheet di mobile, right-drawer di tablet/desktop -->
+		<!-- Drawer Panel: Full screen di mobile, right-drawer di tablet/desktop -->
 		<div
 			role="dialog"
 			aria-modal="true"
 			aria-label="Keranjang Belanja"
-			class="drafting-grid relative flex max-h-[85vh] w-full flex-col rounded-t-2xl border-x-2 border-t-2 border-[#262626] bg-[#f2efe9] text-[#262626] shadow-[0_-8px_0px_#262626] transition-all sm:h-full sm:max-h-full sm:max-w-md sm:rounded-none sm:rounded-l-2xl sm:border-t-0 sm:border-r-0 sm:border-b-0 sm:border-l-2 sm:border-[#262626] sm:shadow-[-8px_0px_0px_#262626] dark:border-[#a2e1db] dark:bg-[#1a1825] dark:text-[#f2efe9] dark:shadow-[-8px_0px_0px_#b4a6d5]"
+			class="drafting-grid relative flex h-full max-h-none w-full flex-col rounded-none border-x-0 border-t-0 border-[#262626] bg-[#f2efe9] text-[#262626] shadow-none transition-all sm:h-full sm:max-h-full sm:max-w-md sm:rounded-none sm:rounded-l-2xl sm:border-t-0 sm:border-r-0 sm:border-b-0 sm:border-l-2 sm:border-[#262626] sm:shadow-[-8px_0px_0px_#262626] dark:border-[#a2e1db] dark:bg-[#1a1825] dark:text-[#f2efe9] dark:shadow-[-8px_0px_0px_#b4a6d5]"
 		>
-			<!-- Header: Apricot Monoline Header -->
+			<!-- Header: Apricot Monoline Header (Lega & Rapi) -->
 			<div
-				class="flex items-center justify-between border-b-2 border-[#262626] bg-[#fea770] px-5 py-4 text-[#262626]"
+				class="flex items-center justify-between gap-4 border-b-2 border-[#262626] bg-[#fea770] px-5 py-4.5 text-[#262626]"
 			>
-				<div class="flex items-center gap-2.5">
+				<div class="flex items-center gap-3">
 					<h2 class="font-serif text-lg font-bold">Keranjang Belanja</h2>
 					<span
-						class="rounded-md border-2 border-[#262626] bg-[#a2e1db] px-2 py-0.5 font-mono text-xs font-bold shadow-[1px_1px_0px_#262626]"
+						class="rounded-md border-2 border-[#262626] bg-[#a2e1db] px-2.5 py-0.5 font-mono text-xs font-bold shadow-[1px_1px_0px_#262626]"
 					>
-						{cart.itemCount}
+						{cart.itemCount} item
 					</span>
 				</div>
 
-				<div class="flex items-center gap-2">
+				<div class="flex items-center gap-2.5">
 					{#if !cart.isEmpty}
 						<button
 							type="button"
 							onclick={() => (confirmClearOpen = true)}
-							class="flex items-center gap-1.5 rounded-md border-2 border-[#262626] bg-[#fee2e2] px-2.5 py-1.5 font-mono text-xs font-bold text-[#991b1b] shadow-[1px_1px_0px_#262626] transition-colors hover:bg-red-200"
+							class="flex h-8 w-8 items-center justify-center rounded-md border-2 border-[#262626] bg-[#fee2e2] text-[#991b1b] shadow-[1px_1px_0px_#262626] transition-all hover:bg-red-200 active:translate-y-0.5 active:shadow-none"
+							title="Kosongkan keranjang"
+							aria-label="Kosongkan keranjang"
 						>
-							<Trash2 size={13} strokeWidth={2.5} />
-							<span>Kosongkan</span>
+							<Trash2 size={15} strokeWidth={2.5} />
 						</button>
 					{/if}
 					<button

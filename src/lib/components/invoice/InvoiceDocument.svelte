@@ -251,24 +251,24 @@
 
 			{#if order.shippingLabel}
 				<div
-					class="flex items-center justify-between px-2 font-mono text-xs text-[#404040] sm:text-sm dark:text-[#b8b5ad] print:text-[#404040]"
+					class="flex items-center justify-between gap-3 px-2 font-mono text-xs text-[#404040] sm:text-sm dark:text-[#b8b5ad] print:text-[#404040]"
 				>
-					<span>
+					<span class="min-w-0 break-words">
 						Metode Pengiriman · <span
 							class="font-semibold text-[#262626] dark:text-[#f2efe9] print:text-[#262626]"
 							>{order.shippingLabel}</span
 						>
 					</span>
-					<span class="font-bold text-[#065f46] dark:text-[#34d399] print:text-[#065f46]"
+					<span class="shrink-0 font-bold whitespace-nowrap text-[#065f46] dark:text-[#34d399] print:text-[#065f46]"
 						>{shippingDiff > 0 ? formatRupiah(shippingDiff) : 'Rp 0'}</span
 					>
 				</div>
 			{:else if shippingDiff > 0}
 				<div
-					class="flex items-center justify-between px-2 font-mono text-xs text-[#404040] sm:text-sm dark:text-[#b8b5ad] print:text-[#404040]"
+					class="flex items-center justify-between gap-3 px-2 font-mono text-xs text-[#404040] sm:text-sm dark:text-[#b8b5ad] print:text-[#404040]"
 				>
-					<span>Biaya Pengiriman</span>
-					<span class="font-bold text-[#262626] dark:text-[#f2efe9] print:text-[#262626]"
+					<span class="min-w-0 break-words">Biaya Pengiriman</span>
+					<span class="shrink-0 font-bold whitespace-nowrap text-[#262626] dark:text-[#f2efe9] print:text-[#262626]"
 						>{formatRupiah(shippingDiff)}</span
 					>
 				</div>

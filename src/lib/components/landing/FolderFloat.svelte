@@ -85,17 +85,17 @@
 		paperOffsets = paperOffsets.map((p, idx) => (idx === i ? { x: 0, y: 0 } : p));
 	}
 
-	// 4 Kartu mekar penuh (-28° s/d +28°) keluar dari bukaan atas folder saat open
+	// 4 Kartu mekar penuh (-24° s/d +24°) keluar dari bukaan atas folder saat open
 	function getOpenTransform(i: number): string {
 		switch (i) {
 			case 0:
-				return 'translate(-160%, -105%) rotate(-28deg)';
+				return 'translate(-140%, -95%) rotate(-24deg)';
 			case 1:
-				return 'translate(-85%, -140%) rotate(-10deg)';
+				return 'translate(-75%, -130%) rotate(-8deg)';
 			case 2:
-				return 'translate(20%, -140%) rotate(10deg)';
+				return 'translate(15%, -130%) rotate(8deg)';
 			case 3:
-				return 'translate(95%, -105%) rotate(28deg)';
+				return 'translate(80%, -95%) rotate(24deg)';
 			default:
 				return '';
 		}
@@ -130,13 +130,13 @@
 <div class="relative flex items-center justify-end select-none {className}">
 	<!-- Doodle Curved Arrow & Handwritten Anotasi: "check this out !" (Fades out saat folder mekar) -->
 	<div
-		class="pointer-events-none absolute -top-16 -left-48 z-30 flex items-center gap-2 transition-all duration-300 ease-out sm:-top-20 sm:-left-60 md:-top-24 md:-left-72 {open
+		class="pointer-events-none absolute -top-12 -left-32 z-30 flex items-center gap-1.5 transition-all duration-300 ease-out sm:-top-20 sm:-left-60 md:-top-24 md:-left-72 {open
 			? 'translate-y-2 opacity-0'
 			: 'translate-y-0 opacity-100'}"
 		aria-hidden="true"
 	>
 		<span
-			class="-rotate-6 font-handwriting text-2xl font-bold tracking-wide text-[#262626] drop-shadow-xs sm:text-3xl md:text-4xl dark:text-[#fea770]"
+			class="-rotate-6 font-handwriting text-lg font-bold tracking-wide text-[#262626] drop-shadow-xs sm:text-3xl md:text-4xl dark:text-[#fea770]"
 		>
 			check this out !
 		</span>
@@ -144,11 +144,9 @@
 		<!-- Hand-drawn curved arrow SVG (Ukuran diperpanjang menyapu anggun ke arah folder) -->
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
-			width="96"
-			height="48"
 			viewBox="0 0 100 50"
 			fill="none"
-			class="translate-y-3 rotate-12 text-[#262626] sm:h-[56px] sm:w-[115px] dark:text-[#fea770]"
+			class="h-7 w-14 translate-y-1 rotate-12 text-[#262626] sm:h-[56px] sm:w-[115px] dark:text-[#fea770]"
 		>
 			<!-- Long graceful swooping curve -->
 			<path
