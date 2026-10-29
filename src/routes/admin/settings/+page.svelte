@@ -9,6 +9,26 @@
 	let { data }: { data: PageData } = $props();
 	let isBusy = $state(false);
 
+	let storeName = $state(data.settings?.storeName ?? '');
+	let instagram = $state(data.settings?.instagram ?? '');
+	let twitter = $state(data.settings?.twitter ?? '');
+	let emailFromName = $state(data.settings?.emailFromName ?? '');
+	let proofContact = $state(data.settings?.proofContact ?? '');
+	let paymentNote = $state(data.settings?.paymentNote ?? '');
+	let shopeeCheckoutUrl = $state(data.settings?.shopeeCheckoutUrl ?? '');
+
+	$effect(() => {
+		if (data.settings) {
+			storeName = data.settings.storeName ?? '';
+			instagram = data.settings.instagram ?? '';
+			twitter = data.settings.twitter ?? '';
+			emailFromName = data.settings.emailFromName ?? '';
+			proofContact = data.settings.proofContact ?? '';
+			paymentNote = data.settings.paymentNote ?? '';
+			shopeeCheckoutUrl = data.settings.shopeeCheckoutUrl ?? '';
+		}
+	});
+
 	// =========================================================================
 	// REMARK FOR CHIBICONXI OFFLINE EVENT (Opsi B):
 	// Fitur Pickup / Redeem Code dinonaktifkan sementara untuk event booth offline.
@@ -147,7 +167,7 @@
 				isBusy = true;
 				return async ({ result, update }) => {
 					handleFormResult(result, { success: 'Pengaturan berhasil disimpan.' });
-					await update();
+					await update({ reset: false });
 					isBusy = false;
 				};
 			}}
@@ -168,7 +188,7 @@
 				<input
 					id="storeName"
 					name="storeName"
-					value={data.settings?.storeName ?? ''}
+					bind:value={storeName}
 					required
 					disabled={isBusy}
 					class="mt-1.5 w-full rounded-lg border-2 border-[#262626] bg-[#f2efe9]/30 px-3.5 py-2.5 font-mono text-xs text-[#262626] focus:border-[#262626] focus:outline-none sm:text-sm dark:border-[#f2efe9]/30 dark:bg-black/30 dark:text-[#f2efe9]"
@@ -186,7 +206,7 @@
 					<input
 						id="instagram"
 						name="instagram"
-						value={data.settings?.instagram ?? ''}
+						bind:value={instagram}
 						placeholder="@namatoko"
 						disabled={isBusy}
 						class="mt-1.5 w-full rounded-lg border-2 border-[#262626] bg-[#f2efe9]/30 px-3.5 py-2.5 font-mono text-xs text-[#262626] placeholder:text-[#262626]/40 focus:border-[#262626] focus:outline-none sm:text-sm dark:border-[#f2efe9]/30 dark:bg-black/30 dark:text-[#f2efe9]"
@@ -203,7 +223,7 @@
 					<input
 						id="twitter"
 						name="twitter"
-						value={data.settings?.twitter ?? ''}
+						bind:value={twitter}
 						placeholder="@namatoko"
 						disabled={isBusy}
 						class="mt-1.5 w-full rounded-lg border-2 border-[#262626] bg-[#f2efe9]/30 px-3.5 py-2.5 font-mono text-xs text-[#262626] placeholder:text-[#262626]/40 focus:border-[#262626] focus:outline-none sm:text-sm dark:border-[#f2efe9]/30 dark:bg-black/30 dark:text-[#f2efe9]"
@@ -222,7 +242,7 @@
 					<input
 						id="emailFromName"
 						name="emailFromName"
-						value={data.settings?.emailFromName ?? ''}
+						bind:value={emailFromName}
 						disabled={isBusy}
 						class="mt-1.5 w-full rounded-lg border-2 border-[#262626] bg-[#f2efe9]/30 px-3.5 py-2.5 font-mono text-xs text-[#262626] focus:border-[#262626] focus:outline-none sm:text-sm dark:border-[#f2efe9]/30 dark:bg-black/30 dark:text-[#f2efe9]"
 					/>
@@ -238,7 +258,7 @@
 					<input
 						id="proofContact"
 						name="proofContact"
-						value={data.settings?.proofContact ?? ''}
+						bind:value={proofContact}
 						placeholder="@artist / WA 08xx"
 						disabled={isBusy}
 						class="mt-1.5 w-full rounded-lg border-2 border-[#262626] bg-[#f2efe9]/30 px-3.5 py-2.5 font-mono text-xs text-[#262626] placeholder:text-[#262626]/40 focus:border-[#262626] focus:outline-none sm:text-sm dark:border-[#f2efe9]/30 dark:bg-black/30 dark:text-[#f2efe9]"
@@ -256,11 +276,11 @@
 				<textarea
 					id="paymentNote"
 					name="paymentNote"
+					bind:value={paymentNote}
 					rows="3"
 					disabled={isBusy}
 					class="mt-1.5 w-full rounded-lg border-2 border-[#262626] bg-[#f2efe9]/30 px-3.5 py-2.5 font-mono text-xs text-[#262626] focus:border-[#262626] focus:outline-none sm:text-sm dark:border-[#f2efe9]/30 dark:bg-black/30 dark:text-[#f2efe9]"
-					>{data.settings?.paymentNote ?? ''}</textarea
-				>
+				></textarea>
 			</div>
 
 			<div>
@@ -274,7 +294,7 @@
 					id="shopeeCheckoutUrl"
 					name="shopeeCheckoutUrl"
 					type="url"
-					value={data.settings?.shopeeCheckoutUrl ?? ''}
+					bind:value={shopeeCheckoutUrl}
 					placeholder="https://shopee.co.id/Link-khusus-co-..."
 					disabled={isBusy}
 					class="mt-1.5 w-full rounded-lg border-2 border-[#262626] bg-[#f2efe9]/30 px-3.5 py-2.5 font-mono text-xs text-[#262626] placeholder:text-[#262626]/40 focus:border-[#262626] focus:outline-none sm:text-sm dark:border-[#f2efe9]/30 dark:bg-black/30 dark:text-[#f2efe9]"
@@ -285,6 +305,15 @@
 				</p>
 			</div>
 
+			<!--
+				=========================================================================
+				REMARK FOR CHIBICONXI OFFLINE EVENT (Opsi B):
+				Fitur Ongkir Flat Darurat dinonaktifkan sementara untuk event booth offline.
+				Transaksi event berfokus pada Booth Pickup dan Shopee Mail Order.
+				Buka kembali blok template di bawah dan hapus remark jika ingin mengaktifkan kembali.
+				=========================================================================
+			-->
+			<!--
 			<div>
 				<label
 					for="emergencyFlatRate"
@@ -307,6 +336,7 @@
 					gangguan).
 				</p>
 			</div>
+			-->
 
 			<!--
 				=========================================================================

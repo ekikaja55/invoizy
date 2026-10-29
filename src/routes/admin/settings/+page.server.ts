@@ -13,6 +13,7 @@ export const actions: Actions = {
 	update: async ({ request }) => {
 		const formData = await request.formData();
 
+		const rawFlatRate = formData.get('emergencyFlatRate');
 		const rawPickupCode = formData.get('pickupCode');
 		const parsed = settingsSchema.safeParse({
 			storeName: formData.get('storeName'),
@@ -21,8 +22,9 @@ export const actions: Actions = {
 			emailFromName: formData.get('emailFromName'),
 			paymentNote: formData.get('paymentNote'),
 			proofContact: formData.get('proofContact'),
-			emergencyFlatRate: formData.get('emergencyFlatRate'),
 			// REMARK FOR CHIBICONXI OFFLINE EVENT:
+			// emergencyFlatRate diatur ke 0 (default aman) saat form di-remark
+			emergencyFlatRate: rawFlatRate !== null ? rawFlatRate : 0,
 			// pickupCodeEnabled dipaksa false selama event booth offline.
 			pickupCode: rawPickupCode ? String(rawPickupCode) : undefined,
 			pickupCodeEnabled: false,
