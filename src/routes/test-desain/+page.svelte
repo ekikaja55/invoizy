@@ -151,6 +151,14 @@
 				<Sparkles size={16} />
 				<span>7. OG Banner Studio</span>
 			</button>
+
+			<a
+				href={resolve('/test-desain/creator')}
+				class="inline-flex items-center gap-2 rounded-md border-[1.5px] border-[#262626] bg-[#fea770]/30 px-4 py-2 font-sans text-sm font-bold text-[#262626] transition-all hover:bg-[#fea770] dark:border-[#f2efe9] dark:bg-[#fea770]/20 dark:text-[#f2efe9] dark:hover:bg-[#fea770]/40"
+			>
+				<Sparkles size={16} />
+				<span>8. Creator Web (Sandbox)</span>
+			</a>
 		</nav>
 
 		<!-- Active Tab Contents -->

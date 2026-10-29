@@ -13,6 +13,7 @@ export const actions: Actions = {
 	update: async ({ request }) => {
 		const formData = await request.formData();
 
+		const rawPickupCode = formData.get('pickupCode');
 		const parsed = settingsSchema.safeParse({
 			storeName: formData.get('storeName'),
 			instagram: formData.get('instagram'),
@@ -21,9 +22,10 @@ export const actions: Actions = {
 			paymentNote: formData.get('paymentNote'),
 			proofContact: formData.get('proofContact'),
 			emergencyFlatRate: formData.get('emergencyFlatRate'),
-			pickupCode: formData.get('pickupCode'),
-			pickupCodeEnabled:
-				formData.get('pickupCodeEnabled') === 'on' || formData.get('pickupCodeEnabled') === 'true',
+			// REMARK FOR CHIBICONXI OFFLINE EVENT:
+			// pickupCodeEnabled dipaksa false selama event booth offline.
+			pickupCode: rawPickupCode ? String(rawPickupCode) : undefined,
+			pickupCodeEnabled: false,
 			shopeeCheckoutUrl: formData.get('shopeeCheckoutUrl')
 		});
 

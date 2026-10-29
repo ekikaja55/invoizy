@@ -1,14 +1,23 @@
 <script lang="ts">
-	import { enhance, deserialize } from '$app/forms';
+	import { enhance } from '$app/forms';
 	import { handleFormResult } from '$lib/utils/handle-form-result';
 	import BusyOverlay from '$lib/components/ui/BusyOverlay.svelte';
 	import { resolve } from '$app/paths';
 	import { CreditCard, QrCode } from '@lucide/svelte';
-	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 	let isBusy = $state(false);
+
+	// =========================================================================
+	// REMARK FOR CHIBICONXI OFFLINE EVENT (Opsi B):
+	// Fitur Pickup / Redeem Code dinonaktifkan sementara untuk event booth offline.
+	// Pengambilan booth langsung di tempat menggunakan jadwal Day 1 & Day 2 tanpa kode rahasia.
+	// Buka kembali blok kode di bawah dan hapus remark jika ingin mengaktifkan kembali.
+	// =========================================================================
+	/*
+	import { toast } from 'svelte-sonner';
+	import { deserialize } from '$app/forms';
 
 	let pickupEnabled = $state(false);
 	let pickupCode = $state('');
@@ -95,6 +104,7 @@
 			savingPickupCode = false;
 		}
 	}
+	*/
 </script>
 
 <div class="mx-auto max-w-2xl space-y-6 pb-20">
@@ -298,6 +308,15 @@
 				</p>
 			</div>
 
+			<!--
+				=========================================================================
+				REMARK FOR CHIBICONXI OFFLINE EVENT (Opsi B):
+				Fitur Pickup / Redeem Code dinonaktifkan sementara untuk event booth offline.
+				Pengambilan booth langsung di tempat menggunakan jadwal Day 1 & Day 2 tanpa kode rahasia.
+				Buka kembali blok template di bawah dan hapus remark jika ingin menampilkan kembali form ini ke admin.
+				=========================================================================
+			-->
+			<!--
 			<div
 				class="space-y-3 rounded-lg border-2 border-[#262626] bg-[#f2efe9]/40 p-4 shadow-[2px_2px_0px_#262626] dark:border-[#f2efe9]/20 dark:bg-black/20"
 			>
@@ -385,6 +404,7 @@
 					</div>
 				{/if}
 			</div>
+			-->
 
 			<div class="pt-2">
 				<button

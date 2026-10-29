@@ -11,11 +11,10 @@
 	let confirmClearOpen = $state(false);
 
 	const currentPath = $derived(page.url.pathname);
-	const isExcludedRoute = $derived(
-		currentPath.startsWith('/order/checkout') ||
-			currentPath.startsWith('/order/sukses') ||
-			currentPath.startsWith('/invoice') ||
-			currentPath.startsWith('/admin')
+	const isAllowedRoute = $derived(
+		currentPath === '/order' ||
+			currentPath === '/order/' ||
+			currentPath.startsWith('/order/products/')
 	);
 
 	function openDrawer() {
@@ -66,7 +65,7 @@
 
 <svelte:window onkeydown={onKeydown} />
 
-{#if !cart.isEmpty && !isExcludedRoute}
+{#if !cart.isEmpty && isAllowedRoute}
 	<!-- Floating Bottom Cart Bar: Warm Monoline Bar -->
 	<div
 		class="drafting-grid fixed inset-x-0 bottom-0 z-40 border-t-2 border-[#262626] bg-[#f2efe9]/95 p-3.5 shadow-[0_-4px_0px_#262626] backdrop-blur-xs dark:border-[#a2e1db] dark:bg-[#1a1825]/95 dark:shadow-[0_-4px_0px_#b4a6d5]"
@@ -129,7 +128,7 @@
 {/if}
 
 <!-- Slide-over / Bottom Sheet Drawer -->
-{#if isDrawerOpen && !isExcludedRoute}
+{#if isDrawerOpen && isAllowedRoute}
 	<div class="fixed inset-0 z-50 flex justify-end">
 		<!-- Backdrop -->
 		<button
