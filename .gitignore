@@ -25,6 +25,7 @@ vite.config.ts.timestamp-*
 # Personal notes (tidak di-commit, tidak di-lint)
 /notes
 /scripts
+WORKPAD.md
 # Agent instructions (personal, tidak untuk dibagikan)
 # /AGENTS.md
 # opencode.jsonc
