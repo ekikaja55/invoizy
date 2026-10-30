@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { navigating } from '$app/state';
+	import { manualOverlay } from '$lib/stores/overlay.svelte';
 	import MonolineLoader from './MonolineLoader.svelte';
 
 	interface Props {
@@ -11,11 +12,15 @@
 	let { message = 'Preparing', forcedActive = false, showLabel = true }: Props = $props();
 
 	// Hanya aktif jika navigasi menuju halaman/pathname berbeda,
+	// atau jika dipicu secara manual (manualOverlay.active),
 	// mengabaikan perubahan query parameter in-page (seperti filter & paginasi).
 	let isVisible = $derived(
 		forcedActive ||
+			manualOverlay.active ||
 			(navigating.to !== null && navigating.from?.url.pathname !== navigating.to.url.pathname)
 	);
+
+	let activeMessage = $derived(manualOverlay.active ? manualOverlay.message : message);
 
 	$effect(() => {
 		if (isVisible) {
@@ -44,6 +49,6 @@
 		onwheel={preventScroll}
 		ontouchmove={preventScroll}
 	>
-		<MonolineLoader size="lg" label={message} {showLabel} />
+		<MonolineLoader size="lg" label={activeMessage} {showLabel} />
 	</div>
 {/if}

@@ -23,7 +23,7 @@
 	<MobileFab items={publicNavItems} {isAdmin} contact={data.contactInfo} />
 	<NavigatingOverlay />
 
-	<main class="relative w-full min-w-0 px-4 py-8 sm:px-6 md:pr-8 md:pl-55 lg:pr-12 lg:pl-40">
+	<main class="relative w-full min-w-0 px-4 py-8 sm:px-6 lg:pr-12 lg:pl-40">
 		<div class="max-w-8xl mx-auto w-full">
 			{@render children()}
 		</div>

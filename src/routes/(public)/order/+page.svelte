@@ -476,7 +476,7 @@
 		<button
 			type="button"
 			onclick={scrollToTop}
-			class="fixed right-5 bottom-24 z-30 flex h-11 w-11 items-center justify-center rounded-full border-2 border-[#262626] bg-[#fea770] text-[#262626] shadow-[3px_3px_0px_#262626] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#262626] active:translate-y-0.5 active:shadow-none dark:border-[#a2e1db] dark:bg-[#fea770] dark:text-[#262626] dark:shadow-[3px_3px_0px_#b4a6d5]"
+			class="fixed right-5 bottom-24 z-30 flex h-11 w-11 items-center justify-center rounded-full border-2 border-[#262626] bg-[#fea770] text-[#262626] shadow-[3px_3px_0px_#262626] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#262626] active:translate-y-0.5 active:shadow-none lg:right-6 lg:bottom-6 dark:border-[#a2e1db] dark:bg-[#1a1825] dark:text-[#f2efe9] dark:shadow-[3px_3px_0px_#b4a6d5] dark:hover:bg-[#252331]"
 			aria-label="Kembali ke atas halaman"
 		>
 			<ArrowUp size={18} strokeWidth={2.5} />

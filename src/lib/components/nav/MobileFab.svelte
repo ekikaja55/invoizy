@@ -14,11 +14,12 @@
 		Headset,
 		MessageCircle,
 		ChevronDown,
-		ExternalLink
+		ExternalLink,
+		Code
 	} from '@lucide/svelte';
 	import InstagramIcon from '$lib/components/icons/InstagramIcon.svelte';
 	import { navActionClass, navItemClass } from '$lib/utils/nav-utils';
-	import { navigateTo } from '$lib/utils/navigating';
+	import { navigateTo, navigateWithDelay } from '$lib/utils/navigating';
 	import { waLink, igLink } from '$lib/utils/contact';
 
 	interface Props {
@@ -45,6 +46,7 @@
 	let preventNavigation = $derived(props.preventNavigation ?? false);
 	let currentPath = $derived(page.url.pathname);
 	let isAdminPage = $derived(currentPath.startsWith('/admin'));
+	let isAboutDevActive = $derived(currentPath === '/about-dev');
 
 	let open = $state(false);
 	let contactAccordionOpen = $state(false);
@@ -85,7 +87,7 @@
 <div
 	class="{staticPosition
 		? 'absolute right-4 bottom-4 z-50'
-		: 'fixed right-4 bottom-4 z-50 md:hidden'} {className}"
+		: 'fixed right-4 bottom-4 z-50 lg:hidden'} {className}"
 >
 	{#if open}
 		<div
@@ -199,6 +201,32 @@
 			<div class="mt-2 border-t border-[#262626]/20 pt-2 dark:border-[#f2efe9]/20">
 				<ThemeToggle />
 
+				<!-- Link About Dev di Bawah ThemeToggle di MobileFab -->
+				<a
+					href={resolve('/about-dev')}
+					class="{navItemClass(isAboutDevActive)} mt-1 flex items-center justify-between"
+					onclick={async (e) => {
+						e.preventDefault();
+						close();
+						if (preventNavigation) {
+							toast.info('[Sandbox] Navigasi: Menuju "About Dev" (/about-dev)');
+							return;
+						}
+						await navigateWithDelay('/about-dev', 1500, 'Memuat Profil Dev...');
+					}}
+				>
+					<div class="flex items-center gap-2.5">
+						<Code size={16} strokeWidth={2.5} />
+						<span>About Dev</span>
+					</div>
+					{#if isAboutDevActive}
+						<span
+							class="h-2 w-2 shrink-0 rotate-45 rounded-[1px] border border-[#262626] bg-[#fea770] shadow-[1px_1px_0px_#262626] dark:border-[#1a1825] dark:bg-[#1a1825] dark:shadow-[1px_1px_0px_#a2e1db]"
+							title="Halaman aktif"
+						></span>
+					{/if}
+				</a>
+
 				{#if isAdmin}
 					{#if isAdminPage}
 						<button
@@ -268,7 +296,7 @@
 	<button
 		class="{staticPosition
 			? 'absolute inset-0 z-40 rounded-[30px]'
-			: 'fixed inset-0 z-40 md:hidden'} cursor-default bg-[#262626]/60 backdrop-blur-xs dark:bg-black/75"
+			: 'fixed inset-0 z-40 lg:hidden'} cursor-default bg-[#262626]/60 backdrop-blur-xs dark:bg-black/75"
 		onclick={close}
 		aria-label="Close menu overlay"
 	></button>

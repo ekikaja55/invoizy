@@ -21,7 +21,7 @@ export type AdminRoute =
 	| '/admin/settings/payment-methods'
 	| '/admin/settings/qris';
 
-export type PublicRoute = '/' | '/order' | '/order/riwayat';
+export type PublicRoute = '/' | '/order' | '/order/riwayat' | '/about-dev';
 
 export interface NavItem {
 	label: string;

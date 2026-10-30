@@ -70,9 +70,7 @@
 	<div
 		class="drafting-grid fixed inset-x-0 bottom-0 z-40 border-t-2 border-[#262626] bg-[#f2efe9]/95 p-3.5 shadow-[0_-4px_0px_#262626] backdrop-blur-xs dark:border-[#a2e1db] dark:bg-[#1a1825]/95 dark:shadow-[0_-4px_0px_#b4a6d5]"
 	>
-		<div
-			class="mx-auto flex max-w-4xl items-center justify-between pr-16 md:pr-4 md:pl-24 lg:pl-32"
-		>
+		<div class="mx-auto flex max-w-4xl items-center justify-between pr-16 lg:pr-4 lg:pl-32">
 			<!-- Klik sisi kiri untuk membuka Drawer Keranjang -->
 			<button
 				type="button"

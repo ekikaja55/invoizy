@@ -15,11 +15,12 @@
 		Headset,
 		MessageCircle,
 		ExternalLink,
-		Pin
+		Pin,
+		Code
 	} from '@lucide/svelte';
 	import InstagramIcon from '$lib/components/icons/InstagramIcon.svelte';
 	import { navActionClass, navItemClass } from '$lib/utils/nav-utils';
-	import { navigateTo } from '$lib/utils/navigating';
+	import { navigateTo, navigateWithDelay } from '$lib/utils/navigating';
 	import { waLink, igLink } from '$lib/utils/contact';
 
 	interface Props {
@@ -46,6 +47,7 @@
 	let preventNavigation = $derived(props.preventNavigation ?? false);
 	let currentPath = $derived(page.url.pathname);
 	let isAdminPage = $derived(currentPath.startsWith('/admin'));
+	let isAboutDevActive = $derived(currentPath === '/about-dev');
 
 	let collapsed = $state(false);
 	let isHovered = $state(false);
@@ -121,7 +123,7 @@
 <aside
 	class="{staticPosition
 		? 'relative flex'
-		: 'fixed top-1/2 left-4 z-30 hidden -translate-y-1/2 md:flex'} nav-drafting-grid flex-col rounded-xl border-2 border-[#262626] bg-[#fea770]/95 p-2 text-[#262626] shadow-[4px_4px_0px_#262626] backdrop-blur-xs transition-all duration-200 dark:border-[#a2e1db] dark:bg-[#1a1825]/95 dark:text-[#f2efe9] dark:shadow-[4px_4px_0px_#b4a6d5] {className}"
+		: 'fixed top-1/2 left-4 z-30 hidden -translate-y-1/2 lg:flex'} nav-drafting-grid flex-col rounded-xl border-2 border-[#262626] bg-[#fea770]/95 p-2 text-[#262626] shadow-[4px_4px_0px_#262626] backdrop-blur-xs transition-all duration-200 dark:border-[#a2e1db] dark:bg-[#1a1825]/95 dark:text-[#f2efe9] dark:shadow-[4px_4px_0px_#b4a6d5] {className}"
 	class:w-16={!isExpanded}
 	class:w-60={isExpanded}
 	onmouseenter={() => (isHovered = true)}
@@ -182,6 +184,12 @@
 			<a
 				href={resolve(item.href)}
 				class="{navItemClass(isActive)} group overflow-hidden"
+				onmouseenter={() => {
+					if (item.href === '/about-dev') {
+						const img = new Image();
+						img.src = '/profile_pict_dev.jpeg';
+					}
+				}}
 				onclick={(e) => {
 					if (preventNavigation) {
 						e.preventDefault();
@@ -351,6 +359,55 @@
 
 	<div class="mt-2 space-y-1 border-t border-[#262626]/20 pt-2 dark:border-[#f2efe9]/20">
 		<ThemeToggle collapsed={!isExpanded} />
+
+		<!-- About Dev Link di Bawah ThemeToggle dengan Rolling Hover Text "?????" -->
+		<a
+			href={resolve('/about-dev')}
+			class="{navItemClass(isAboutDevActive)} group overflow-hidden"
+			onmouseenter={() => {
+				const img = new Image();
+				img.src = '/profile_pict_dev.jpeg';
+			}}
+			onclick={async (e) => {
+				e.preventDefault();
+				if (preventNavigation) {
+					toast.info('[Sandbox] Navigasi: Menuju "About Dev" (/about-dev)');
+					return;
+				}
+				await navigateWithDelay('/about-dev', 1500, 'Memuat Profil Dev...');
+			}}
+		>
+			<div class="relative flex shrink-0 items-center justify-center">
+				<Code size={16} strokeWidth={2.5} class="shrink-0" />
+				{#if isAboutDevActive && !isExpanded}
+					<span
+						class="absolute -top-1 -right-1 h-2 w-2 rotate-45 rounded-[1px] border border-[#262626] bg-[#fea770] dark:border-[#1a1825] dark:bg-[#1a1825]"
+						title="Halaman aktif"
+					></span>
+				{/if}
+			</div>
+			{#if isExpanded}
+				<span class="relative block h-5 flex-1 overflow-hidden">
+					<span
+						class="block whitespace-nowrap transition-transform duration-300 ease-out group-hover:-translate-y-full"
+					>
+						About Dev
+					</span>
+					<span
+						class="absolute top-0 left-0 block translate-y-full font-bold whitespace-nowrap text-[#f2efe9] transition-transform duration-300 ease-out group-hover:translate-y-0 dark:text-[#1a1825]"
+						aria-hidden="true"
+					>
+						?????
+					</span>
+				</span>
+				{#if isAboutDevActive}
+					<span
+						class="h-2 w-2 shrink-0 rotate-45 rounded-[1px] border border-[#262626] bg-[#fea770] shadow-[1px_1px_0px_#262626] dark:border-[#1a1825] dark:bg-[#1a1825] dark:shadow-[1px_1px_0px_#a2e1db]"
+						title="Halaman aktif"
+					></span>
+				{/if}
+			{/if}
+		</a>
 
 		{#if isAdmin}
 			{#if isAdminPage}

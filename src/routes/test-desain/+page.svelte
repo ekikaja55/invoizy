@@ -153,11 +153,11 @@
 			</button>
 
 			<a
-				href={resolve('/test-desain/creator')}
+				href={resolve('/about-dev')}
 				class="inline-flex items-center gap-2 rounded-md border-[1.5px] border-[#262626] bg-[#fea770]/30 px-4 py-2 font-sans text-sm font-bold text-[#262626] transition-all hover:bg-[#fea770] dark:border-[#f2efe9] dark:bg-[#fea770]/20 dark:text-[#f2efe9] dark:hover:bg-[#fea770]/40"
 			>
 				<Sparkles size={16} />
-				<span>8. Creator Web (Sandbox)</span>
+				<span>8. About Dev</span>
 			</a>
 		</nav>
 
