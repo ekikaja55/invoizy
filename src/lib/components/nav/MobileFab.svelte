@@ -212,7 +212,7 @@
 							toast.info('[Sandbox] Navigasi: Menuju "About Dev" (/about-dev)');
 							return;
 						}
-						await navigateWithDelay('/about-dev', 1500, 'Memuat Profil Dev...');
+						await navigateWithDelay('/about-dev', 1500, 'Preparing...');
 					}}
 				>
 					<div class="flex items-center gap-2.5">
