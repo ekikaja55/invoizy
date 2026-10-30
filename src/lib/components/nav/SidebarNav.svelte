@@ -20,7 +20,7 @@
 	} from '@lucide/svelte';
 	import InstagramIcon from '$lib/components/icons/InstagramIcon.svelte';
 	import { navActionClass, navItemClass } from '$lib/utils/nav-utils';
-	import { navigateTo, navigateWithDelay } from '$lib/utils/navigating';
+	import { navigateWithDelay } from '$lib/utils/navigating';
 	import { waLink, igLink } from '$lib/utils/contact';
 
 	interface Props {
@@ -411,12 +411,12 @@
 
 		{#if isAdmin}
 			{#if isAdminPage}
-				<button
-					onclick={() => {
+				<a
+					href={resolve('/')}
+					onclick={(e) => {
 						if (preventNavigation) {
+							e.preventDefault();
 							toast.info('[Sandbox] Navigasi: Menuju Beranda ("/")');
-						} else {
-							navigateTo('/');
 						}
 					}}
 					class="{navActionClass()} group overflow-hidden"
@@ -437,14 +437,14 @@
 							</span>
 						</span>
 					{/if}
-				</button>
+				</a>
 			{:else}
-				<button
-					onclick={() => {
+				<a
+					href={resolve('/admin')}
+					onclick={(e) => {
 						if (preventNavigation) {
+							e.preventDefault();
 							toast.info('[Sandbox] Navigasi: Menuju Dashboard ("/admin")');
-						} else {
-							navigateTo('/admin');
 						}
 					}}
 					class="{navActionClass()} group overflow-hidden"
@@ -465,7 +465,7 @@
 							</span>
 						</span>
 					{/if}
-				</button>
+				</a>
 			{/if}
 
 			<button
