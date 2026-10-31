@@ -1,6 +1,9 @@
 name: Invoizy Uptime Watcher
 
 on:
+  push:
+    branches:
+      - event/chibiconxi-offline
   schedule:
     # Berjalan terjadwal setiap 10 menit sekali
     - cron: '*/10 * * * *'
