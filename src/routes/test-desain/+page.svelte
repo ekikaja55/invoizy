@@ -17,7 +17,9 @@
 		Compass,
 		ArrowLeft,
 		SwatchBook,
-		Sparkles
+		Sparkles,
+		Wrench,
+		AlertTriangle
 	} from '@lucide/svelte';
 
 	let activeTab = $state<
@@ -158,6 +160,22 @@
 			>
 				<Sparkles size={16} />
 				<span>8. About Dev</span>
+			</a>
+
+			<a
+				href={resolve('/test-desain/maintenance')}
+				class="inline-flex items-center gap-2 rounded-md border-[1.5px] border-[#262626] bg-[#a2e1db]/30 px-4 py-2 font-sans text-sm font-bold text-[#262626] transition-all hover:bg-[#a2e1db] dark:border-[#f2efe9] dark:bg-[#a2e1db]/20 dark:text-[#f2efe9] dark:hover:bg-[#a2e1db]/40"
+			>
+				<Wrench size={16} />
+				<span>9. Sandbox Maintenance</span>
+			</a>
+
+			<a
+				href={resolve('/test-desain/error-fallback')}
+				class="inline-flex items-center gap-2 rounded-md border-[1.5px] border-[#262626] bg-[#fee2e2]/60 px-4 py-2 font-sans text-sm font-bold text-[#991b1b] transition-all hover:bg-[#fee2e2] dark:border-[#f2efe9] dark:bg-[#fee2e2]/20 dark:text-[#fca5a5] dark:hover:bg-[#fee2e2]/40"
+			>
+				<AlertTriangle size={16} />
+				<span>10. Sandbox Fallback 500</span>
 			</a>
 		</nav>
 

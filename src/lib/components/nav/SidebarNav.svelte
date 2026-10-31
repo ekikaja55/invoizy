@@ -3,7 +3,8 @@
 	import { resolve } from '$app/paths';
 	import { type NavItem } from '$lib/constants';
 	import { authClient } from '$lib/auth-client';
-	// import { goto } from '$app/navigation';
+	import { goto } from '$app/navigation';
+	import { manualOverlay } from '$lib/stores/overlay.svelte';
 	import { toast } from 'svelte-sonner';
 	import ThemeToggle from './ThemeToggle.svelte';
 	import {
@@ -104,16 +105,20 @@
 	}
 
 	async function handleLogout() {
+		manualOverlay.show('Process to logout...');
 		try {
 			const res = await authClient.signOut();
 			if (res && 'error' in res && res.error) {
+				manualOverlay.hide();
 				toast.error(res.error.message || 'Gagal logout, silakan coba lagi.');
 				return;
 			}
-			toast.success('Berhasil logout!');
-			window.location.href = '/';
+			await goto(resolve('/'), { invalidateAll: true });
 		} catch {
+			manualOverlay.hide();
 			toast.error('Gagal logout, silakan coba lagi.');
+		} finally {
+			manualOverlay.hide();
 		}
 	}
 </script>
@@ -360,54 +365,56 @@
 	<div class="mt-2 space-y-1 border-t border-[#262626]/20 pt-2 dark:border-[#f2efe9]/20">
 		<ThemeToggle collapsed={!isExpanded} />
 
-		<!-- About Dev Link di Bawah ThemeToggle dengan Rolling Hover Text "?????" -->
-		<a
-			href={resolve('/about-dev')}
-			class="{navItemClass(isAboutDevActive)} group overflow-hidden"
-			onmouseenter={() => {
-				const img = new Image();
-				img.src = '/profile_pict_dev.jpeg';
-			}}
-			onclick={async (e) => {
-				e.preventDefault();
-				if (preventNavigation) {
-					toast.info('[Sandbox] Navigasi: Menuju "About Dev" (/about-dev)');
-					return;
-				}
-				await navigateWithDelay('/about-dev', 1500, 'Preparing...');
-			}}
-		>
-			<div class="relative flex shrink-0 items-center justify-center">
-				<Code size={16} strokeWidth={2.5} class="shrink-0" />
-				{#if isAboutDevActive && !isExpanded}
-					<span
-						class="absolute -top-1 -right-1 h-2 w-2 rotate-45 rounded-[1px] border border-[#262626] bg-[#fea770] dark:border-[#1a1825] dark:bg-[#1a1825]"
-						title="Halaman aktif"
-					></span>
-				{/if}
-			</div>
-			{#if isExpanded}
-				<span class="relative block h-5 flex-1 overflow-hidden">
-					<span
-						class="block whitespace-nowrap transition-transform duration-300 ease-out group-hover:-translate-y-full"
-					>
-						About Dev
+		<!-- About Dev Link di Bawah ThemeToggle dengan Rolling Hover Text "?????" (Khusus Storefront Publik) -->
+		{#if !isAdminPage}
+			<a
+				href={resolve('/about-dev')}
+				class="{navItemClass(isAboutDevActive)} group overflow-hidden"
+				onmouseenter={() => {
+					const img = new Image();
+					img.src = '/profile_pict_dev.jpeg';
+				}}
+				onclick={async (e) => {
+					e.preventDefault();
+					if (preventNavigation) {
+						toast.info('[Sandbox] Navigasi: Menuju "About Dev" (/about-dev)');
+						return;
+					}
+					await navigateWithDelay('/about-dev', 1500, 'Preparing...');
+				}}
+			>
+				<div class="relative flex shrink-0 items-center justify-center">
+					<Code size={16} strokeWidth={2.5} class="shrink-0" />
+					{#if isAboutDevActive && !isExpanded}
+						<span
+							class="absolute -top-1 -right-1 h-2 w-2 rotate-45 rounded-[1px] border border-[#262626] bg-[#fea770] dark:border-[#1a1825] dark:bg-[#1a1825]"
+							title="Halaman aktif"
+						></span>
+					{/if}
+				</div>
+				{#if isExpanded}
+					<span class="relative block h-5 flex-1 overflow-hidden">
+						<span
+							class="block whitespace-nowrap transition-transform duration-300 ease-out group-hover:-translate-y-full"
+						>
+							About Dev
+						</span>
+						<span
+							class="absolute top-0 left-0 block translate-y-full font-bold whitespace-nowrap text-[#f2efe9] transition-transform duration-300 ease-out group-hover:translate-y-0 dark:text-[#1a1825]"
+							aria-hidden="true"
+						>
+							?????
+						</span>
 					</span>
-					<span
-						class="absolute top-0 left-0 block translate-y-full font-bold whitespace-nowrap text-[#f2efe9] transition-transform duration-300 ease-out group-hover:translate-y-0 dark:text-[#1a1825]"
-						aria-hidden="true"
-					>
-						?????
-					</span>
-				</span>
-				{#if isAboutDevActive}
-					<span
-						class="h-2 w-2 shrink-0 rotate-45 rounded-[1px] border border-[#262626] bg-[#fea770] shadow-[1px_1px_0px_#262626] dark:border-[#1a1825] dark:bg-[#1a1825] dark:shadow-[1px_1px_0px_#a2e1db]"
-						title="Halaman aktif"
-					></span>
+					{#if isAboutDevActive}
+						<span
+							class="h-2 w-2 shrink-0 rotate-45 rounded-[1px] border border-[#262626] bg-[#fea770] shadow-[1px_1px_0px_#262626] dark:border-[#1a1825] dark:bg-[#1a1825] dark:shadow-[1px_1px_0px_#a2e1db]"
+							title="Halaman aktif"
+						></span>
+					{/if}
 				{/if}
-			{/if}
-		</a>
+			</a>
+		{/if}
 
 		{#if isAdmin}
 			{#if isAdminPage}

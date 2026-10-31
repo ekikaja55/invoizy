@@ -1,12 +1,16 @@
 import { fail } from '@sveltejs/kit';
 import { settingsSchema } from '$lib/schemas/settings';
 import { getSettings, updateSettings } from '$lib/server/db/queries/settings';
+import { isMaintenanceMode, setMaintenanceMode } from '$lib/server/maintenance';
 import { logger } from '$lib/server/logger';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-	const settings = await getSettings();
-	return { settings };
+	const [settings, isMaintenanceActive] = await Promise.all([
+		getSettings(),
+		isMaintenanceMode()
+	]);
+	return { settings, isMaintenanceActive };
 };
 
 export const actions: Actions = {
@@ -62,5 +66,17 @@ export const actions: Actions = {
 			logger.error('settings.save-pickup-code-failed', { error: err });
 			return fail(500, { error: 'Gagal menyimpan kode pickup.' });
 		}
+	},
+
+	toggleMaintenance: async ({ request }) => {
+		const formData = await request.formData();
+		const target = formData.get('targetState') === 'true';
+
+		const success = await setMaintenanceMode(target);
+		if (!success) {
+			return fail(500, { error: 'Gagal memperbarui status mode pemeliharaan di Upstash Redis.' });
+		}
+
+		return { success: true, isMaintenanceActive: target };
 	}
 };

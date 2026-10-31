@@ -1,13 +1,19 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { enhance, deserialize } from '$app/forms';
 	import { handleFormResult } from '$lib/utils/handle-form-result';
 	import BusyOverlay from '$lib/components/ui/BusyOverlay.svelte';
 	import { resolve } from '$app/paths';
-	import { CreditCard, QrCode } from '@lucide/svelte';
+	import { CreditCard, QrCode, Power } from '@lucide/svelte';
+	import Modal from '$lib/components/ui/Modal.svelte';
+	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 	let isBusy = $state(false);
+
+	let isMaintenance = $state(data.isMaintenanceActive ?? false);
+	let maintenanceModalOpen = $state(false);
+	let togglingMaintenance = $state(false);
 
 	let storeName = $state(data.settings?.storeName ?? '');
 	let instagram = $state(data.settings?.instagram ?? '');
@@ -18,6 +24,7 @@
 	let shopeeCheckoutUrl = $state(data.settings?.shopeeCheckoutUrl ?? '');
 
 	$effect(() => {
+		isMaintenance = data.isMaintenanceActive ?? false;
 		if (data.settings) {
 			storeName = data.settings.storeName ?? '';
 			instagram = data.settings.instagram ?? '';
@@ -28,6 +35,43 @@
 			shopeeCheckoutUrl = data.settings.shopeeCheckoutUrl ?? '';
 		}
 	});
+
+	async function handleConfirmToggleMaintenance() {
+		togglingMaintenance = true;
+		maintenanceModalOpen = false;
+		isBusy = true;
+
+		const targetState = !isMaintenance;
+		const formData = new FormData();
+		formData.append('targetState', String(targetState));
+
+		try {
+			const res = await fetch('?/toggleMaintenance', {
+				method: 'POST',
+				body: formData
+			});
+			const result = deserialize(await res.text());
+			if (result.type === 'success') {
+				isMaintenance = targetState;
+				toast.success(
+					targetState
+						? 'Mode pemeliharaan diaktifkan. Toko ditutup untuk publik.'
+						: 'Mode pemeliharaan dinonaktifkan. Toko dibuka kembali.'
+				);
+			} else if (result.type === 'failure') {
+				const errMsg =
+					(result.data as { error?: string })?.error ?? 'Gagal mengubah status mode pemeliharaan.';
+				toast.error(errMsg);
+			} else {
+				toast.error('Gagal mengubah status mode pemeliharaan.');
+			}
+		} catch {
+			toast.error('Terjadi kesalahan jaringan saat memperbarui status pemeliharaan.');
+		} finally {
+			togglingMaintenance = false;
+			isBusy = false;
+		}
+	}
 
 	// =========================================================================
 	// REMARK FOR CHIBICONXI OFFLINE EVENT (Opsi B):
@@ -446,5 +490,61 @@
 				</button>
 			</div>
 		</form>
+
+		<!-- Section: Zona Pemeliharaan & Ketersediaan Toko -->
+		<section
+			id="maintenance"
+			class="mt-8 rounded-xl border-2 border-[#262626] bg-white p-6 shadow-[3px_3px_0px_#262626] sm:p-7 dark:border-[#a2e1db] dark:bg-[#1a1825] dark:shadow-[3px_3px_0px_#b4a6d5]"
+		>
+			<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+				<div class="space-y-1.5">
+					<div class="flex items-center gap-2">
+						<span
+							class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono text-[11px] font-bold tracking-wider uppercase {isMaintenance
+								? 'border-[#991b1b] bg-[#fee2e2] text-[#991b1b]'
+								: 'border-[#065f46] bg-[#d1fae5] text-[#065f46]'}"
+						>
+							<span
+								class="h-1.5 w-1.5 rounded-full {isMaintenance ? 'bg-[#991b1b]' : 'bg-[#065f46]'}"
+							></span>
+							<span>{isMaintenance ? 'MODE PEMELIHARAAN AKTIF' : 'TOKO BERJALAN NORMAL'}</span>
+						</span>
+					</div>
+					<h2 class="font-serif text-lg font-bold text-[#262626] dark:text-[#f2efe9]">
+						Zona Pemeliharaan & Ketersediaan Toko
+					</h2>
+					<p class="font-sans text-xs text-[#595959] sm:text-sm dark:text-[#a3a099]">
+						Saat mode pemeliharaan aktif, seluruh pengunjung umum diarahkan ke halaman pemeliharaan
+						(HTTP 503). Pengelola toko tetap dapat login dan mengakses dashboard ini.
+					</p>
+				</div>
+
+				<button
+					type="button"
+					onclick={() => (maintenanceModalOpen = true)}
+					disabled={isBusy || togglingMaintenance}
+					class="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border-2 px-4 py-2.5 font-mono text-xs font-bold shadow-[2px_2px_0px_#262626] transition-transform hover:-translate-y-0.5 active:translate-y-0.5 disabled:opacity-50 {isMaintenance
+						? 'border-[#065f46] bg-[#a2e1db] text-[#065f46] hover:bg-[#86d4cc]'
+						: 'border-[#991b1b] bg-[#fee2e2] text-[#991b1b] hover:bg-red-200'}"
+				>
+					<Power size={14} strokeWidth={2.5} />
+					<span>{isMaintenance ? 'Buka Kembali Toko' : 'Aktifkan Mode Pemeliharaan'}</span>
+				</button>
+			</div>
+		</section>
 	</BusyOverlay>
+
+	<!-- Modal Konfirmasi Mode Pemeliharaan -->
+	<Modal
+		open={maintenanceModalOpen}
+		title={isMaintenance ? 'Matikan Mode Pemeliharaan?' : 'Aktifkan Mode Pemeliharaan Toko?'}
+		message={isMaintenance
+			? 'Toko akan dibuka kembali untuk seluruh pengunjung umum. Pembeli akan dapat kembali mengakses katalog dan membuat pesanan baru.'
+			: 'Seluruh pembeli umum tidak akan bisa membuat pesanan baru dan akan diarahkan ke halaman pemeliharaan sistem (HTTP 503). Anda tetap dapat mengakses panel admin ini.'}
+		confirmLabel={isMaintenance ? 'Ya, Buka Toko' : 'Ya, Aktifkan Pemeliharaan'}
+		cancelLabel="Batal"
+		danger={!isMaintenance}
+		onConfirm={handleConfirmToggleMaintenance}
+		onCancel={() => (maintenanceModalOpen = false)}
+	/>
 </div>

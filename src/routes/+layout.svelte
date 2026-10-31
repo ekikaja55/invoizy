@@ -10,11 +10,12 @@
 	import '@fontsource/space-mono/400.css';
 	import '@fontsource/space-mono/700.css';
 	import { Toaster } from 'svelte-sonner';
-	import { ModeWatcher } from 'mode-watcher';
+	import { ModeWatcher, mode } from 'mode-watcher';
+	import NavigatingOverlay from '$lib/components/ui/NavigatingOverlay.svelte';
 	import { dev } from '$app/environment';
 	import { injectAnalytics } from '@vercel/analytics/sveltekit';
 	import { injectSpeedInsights } from '@vercel/speed-insights/sveltekit';
-	import { CheckCircle, XCircle, AlertTriangle, Info } from '@lucide/svelte';
+	import { CheckCircle, XCircle, AlertTriangle, Info, X } from '@lucide/svelte';
 
 	let { children } = $props();
 
@@ -40,27 +41,42 @@
 </svelte:head>
 <ModeWatcher defaultMode="light" />
 <Toaster
-	position="top-center"
+	position="top-right"
+	theme={mode.current === 'dark' ? 'dark' : 'light'}
+	expand={true}
+	visibleToasts={3}
+	gap={12}
+	duration={3500}
+	closeButton={true}
+	closeButtonAriaLabel="Tutup notifikasi"
 	toastOptions={{
 		classes: {
 			toast:
-				'border-[1.5px] border-[#262626] bg-[#fbf9f5] text-[#262626] shadow-[3px_3px_0px_#262626] rounded-md font-sans text-xs font-semibold dark:border-[#f2efe9] dark:bg-[#252331] dark:text-[#f2efe9] dark:shadow-[3px_3px_0px_#f2efe9]',
-			title: 'font-bold text-[#262626] dark:text-[#f2efe9]',
-			description: 'text-[#595959] dark:text-[#a3a099]'
+				'!w-[calc(100vw-32px)] sm:!w-[380px] md:!w-[410px] min-h-[58px] border-2 border-[#262626] bg-white text-[#262626] shadow-[4px_4px_0px_#262626] rounded-lg font-sans p-3.5 sm:p-4 !pr-12 dark:border-[#f2efe9] dark:bg-[#1a1825] dark:text-[#f2efe9] dark:shadow-[4px_4px_0px_#f2efe9]',
+			title: 'font-bold leading-snug text-[#262626] dark:text-[#f2efe9]',
+			description: 'font-mono text-[#595959] dark:text-[#a3a099] mt-0.5 leading-relaxed',
+			success: '!border-l-[8px] !border-l-[#065f46] dark:!border-l-[#34d399]',
+			error: '!border-l-[8px] !border-l-[#991b1b] dark:!border-l-[#f87171]',
+			warning: '!border-l-[8px] !border-l-[#d97706] dark:!border-l-[#fbbf24]',
+			info: '!border-l-[8px] !border-l-[#1e40af] dark:!border-l-[#60a5fa]'
 		}
 	}}
 >
+	{#snippet closeIcon()}
+		<X size={13} strokeWidth={2.75} class="shrink-0" />
+	{/snippet}
 	{#snippet successIcon()}
-		<CheckCircle size={18} class="shrink-0 text-[#065f46] dark:text-[#34d399]" />
+		<CheckCircle size={20} class="shrink-0 text-[#065f46] dark:text-[#34d399]" />
 	{/snippet}
 	{#snippet errorIcon()}
-		<XCircle size={18} class="shrink-0 text-[#991b1b] dark:text-[#f87171]" />
+		<XCircle size={20} class="shrink-0 text-[#991b1b] dark:text-[#f87171]" />
 	{/snippet}
 	{#snippet warningIcon()}
-		<AlertTriangle size={18} class="shrink-0 text-[#92400e] dark:text-[#fbbf24]" />
+		<AlertTriangle size={20} class="shrink-0 text-[#d97706] dark:text-[#fbbf24]" />
 	{/snippet}
 	{#snippet infoIcon()}
-		<Info size={18} class="shrink-0 text-[#1e40af] dark:text-[#60a5fa]" />
+		<Info size={20} class="shrink-0 text-[#1e40af] dark:text-[#60a5fa]" />
 	{/snippet}
 </Toaster>
+<NavigatingOverlay />
 {@render children()}

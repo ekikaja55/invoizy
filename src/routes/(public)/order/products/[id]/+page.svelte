@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { goto } from '$app/navigation';
 	import { cart } from '$lib/stores/cart.svelte';
 	import { formatRupiah } from '$lib/utils/currency';
 	import { toast } from 'svelte-sonner';
@@ -12,7 +13,9 @@
 		ShoppingBag,
 		Image as ImageIcon,
 		Layers,
-		Sparkles
+		Sparkles,
+		Zap,
+		Loader2
 	} from '@lucide/svelte';
 	import type { PageData } from './$types';
 
@@ -23,6 +26,8 @@
 	let selectedVariantId = $state<string | null>(null);
 	let qty = $state(1);
 	let copied = $state(false);
+	let isDirectBuying = $state(false);
+	let isAddingToCart = $state(false);
 
 	const hasVariants = $derived(Boolean(product.variants && product.variants.length > 0));
 	const selectedVariant = $derived(
@@ -94,6 +99,8 @@
 	}
 
 	function handleAddToCart() {
+		if (isAddingToCart) return;
+
 		if (hasVariants && !selectedVariant) {
 			toast.error('Silakan pilih salah satu varian terlebih dahulu.');
 			return;
@@ -103,6 +110,8 @@
 			toast.error('Maaf, stok untuk pilihan ini sedang habis.');
 			return;
 		}
+
+		isAddingToCart = true;
 
 		const parsedQty = Math.floor(Number(qty)) || 1;
 		const finalQty = Math.max(1, Math.min(effectiveStock, parsedQty));
@@ -123,6 +132,48 @@
 		const variantLabel = selectedVariant ? ` (${selectedVariant.name})` : '';
 		toast.success(`${finalQty}x "${product.name}${variantLabel}" ditambahkan ke keranjang.`);
 		qty = 1;
+
+		setTimeout(() => {
+			isAddingToCart = false;
+		}, 350);
+	}
+
+	async function handleDirectBuy() {
+		if (isDirectBuying) return;
+
+		if (hasVariants && !selectedVariant) {
+			toast.error('Silakan pilih salah satu varian terlebih dahulu.');
+			return;
+		}
+
+		if (effectiveStock <= 0) {
+			toast.error('Maaf, stok untuk pilihan ini sedang habis.');
+			return;
+		}
+
+		isDirectBuying = true;
+
+		try {
+			const parsedQty = Math.floor(Number(qty)) || 1;
+			const finalQty = Math.max(1, Math.min(effectiveStock, parsedQty));
+
+			cart.addItem(
+				{
+					productId: product.id,
+					variantId: selectedVariant?.id ?? null,
+					variantName: selectedVariant?.name ?? null,
+					categoryId: product.categoryId,
+					categoryName: product.category.name,
+					name: product.name,
+					price: product.priceInt
+				},
+				finalQty
+			);
+
+			await goto(resolve('/(public)/order/checkout'));
+		} finally {
+			isDirectBuying = false;
+		}
 	}
 </script>
 
@@ -413,7 +464,7 @@
 				</div>
 			</div>
 
-			<!-- Primary Action Button: Rolling Ticker Persis PrimitivesLab -->
+			<!-- Action Buttons: Dual Action (Tambah ke Keranjang vs Beli Langsung) -->
 			{#if effectiveStock <= 0 || (hasVariants && !selectedVariant)}
 				<button
 					type="button"
@@ -426,25 +477,52 @@
 					</span>
 				</button>
 			{:else}
-				<button
-					type="button"
-					onclick={handleAddToCart}
-					class="group relative flex w-full items-center justify-center overflow-hidden rounded-lg border-2 border-[#262626] bg-[#262626] py-3.5 text-sm font-bold text-[#f2efe9] shadow-[3px_3px_0px_#262626] transition-all hover:-translate-y-0.5 hover:bg-[#3d3a37] active:translate-y-0.5 active:shadow-none dark:border-[#f2efe9] dark:bg-[#f2efe9] dark:text-[#262626] dark:shadow-[3px_3px_0px_#f2efe9] dark:hover:bg-[#e0ded8]"
-				>
-					<span
-						class="inline-flex items-center gap-2 transition-transform duration-300 ease-out group-hover:-translate-y-[165%]"
+				<div class="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+					<!-- Tombol 1 (Sekunder): + Tambah ke Keranjang -->
+					<button
+						type="button"
+						onclick={handleAddToCart}
+						disabled={isAddingToCart || isDirectBuying}
+						class="inline-flex w-full items-center justify-center gap-2 rounded-lg border-2 border-[#262626] bg-white py-3.5 text-sm font-bold text-[#262626] shadow-[2.5px_2.5px_0px_#262626] transition-all hover:-translate-y-0.5 hover:bg-[#b4a6d5]/25 active:translate-y-0.5 active:shadow-none disabled:cursor-not-allowed disabled:opacity-75 dark:border-[#f2efe9] dark:bg-[#252331] dark:text-[#f2efe9] dark:shadow-[2.5px_2.5px_0px_#f2efe9] dark:hover:bg-[#b4a6d5]/20"
 					>
-						<ShoppingBag size={18} strokeWidth={2.5} />
-						<span>+ Tambah ke Keranjang</span>
-					</span>
-					<span
-						class="absolute inset-0 inline-flex translate-y-[150%] items-center justify-center gap-2 transition-transform duration-300 ease-out group-hover:translate-y-0"
-						aria-hidden="true"
+						{#if isAddingToCart}
+							<Check size={18} strokeWidth={2.75} class="text-[#065f46] dark:text-[#34d399]" />
+							<span class="text-[#065f46] dark:text-[#34d399]">Ditambahkan!</span>
+						{:else}
+							<ShoppingBag size={18} strokeWidth={2.5} class="text-[#262626] dark:text-[#f2efe9]" />
+							<span>+ Keranjang</span>
+						{/if}
+					</button>
+
+					<!-- Tombol 2 (Primer): Beli Langsung (Instant Checkout) -->
+					<button
+						type="button"
+						onclick={handleDirectBuy}
+						disabled={isDirectBuying || isAddingToCart}
+						class="group relative inline-flex w-full items-center justify-center overflow-hidden rounded-lg border-2 border-[#262626] bg-[#262626] py-3.5 text-sm font-bold text-[#f2efe9] shadow-[3px_3px_0px_#262626] transition-all hover:-translate-y-0.5 hover:bg-[#3d3a37] active:translate-y-0.5 active:shadow-none disabled:cursor-wait disabled:opacity-85 dark:border-[#f2efe9] dark:bg-[#f2efe9] dark:text-[#262626] dark:shadow-[3px_3px_0px_#f2efe9] dark:hover:bg-[#e0ded8]"
 					>
-						<ShoppingBag size={18} strokeWidth={2.5} />
-						<span>+ Tambah ke Keranjang</span>
-					</span>
-				</button>
+						{#if isDirectBuying}
+							<span class="inline-flex items-center gap-2">
+								<Loader2 size={18} strokeWidth={2.5} class="animate-spin text-[#fea770] dark:text-[#d9532f]" />
+								<span>Menuju Checkout...</span>
+							</span>
+						{:else}
+							<span
+								class="inline-flex items-center gap-2 transition-transform duration-300 ease-out group-hover:-translate-y-[165%]"
+							>
+								<Zap size={18} strokeWidth={2.5} class="text-[#fea770] dark:text-[#d9532f]" />
+								<span>Beli Langsung</span>
+							</span>
+							<span
+								class="absolute inset-0 inline-flex translate-y-[150%] items-center justify-center gap-2 transition-transform duration-300 ease-out group-hover:translate-y-0"
+								aria-hidden="true"
+							>
+								<Zap size={18} strokeWidth={2.5} class="text-[#fea770] dark:text-[#d9532f]" />
+								<span>Beli Langsung &rarr;</span>
+							</span>
+						{/if}
+					</button>
+				</div>
 			{/if}
 		</div>
 	</div>

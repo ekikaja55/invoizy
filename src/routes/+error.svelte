@@ -28,7 +28,7 @@
 			? 'Link mungkin salah ketik atau halaman sudah dipindahkan. Kalau yakin link-nya benar, hubungi kami:'
 			: page.status === 403
 				? 'Halaman ini khusus pengelola toko. Kalau kamu admin dan belum login, silakan masuk dulu:'
-				: 'Server kami sedang pemeliharaan sejenak. Order-mu tetap aman tercatat — hubungi kami lewat:'
+				: 'Terjadi kendala teknis tak terduga pada server kami. Order-mu tetap aman tercatat — hubungi kami lewat:'
 	);
 	const wa = waLink(EMERGENCY_CONTACT.wa, 'Halo, web nya error. Saya butuh bantuan.');
 	const igHandle = EMERGENCY_CONTACT.instagram.replace(/^@/, '');

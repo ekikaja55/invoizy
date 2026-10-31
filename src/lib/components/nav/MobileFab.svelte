@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { authClient } from '$lib/auth-client';
+	import { manualOverlay } from '$lib/stores/overlay.svelte';
 	import { type NavItem } from '$lib/constants';
 	import { toast } from 'svelte-sonner';
 	import ThemeToggle from './ThemeToggle.svelte';
@@ -68,21 +70,35 @@
 
 	async function handleLogout() {
 		close();
+		manualOverlay.show('Process to logout...');
 		try {
 			const res = await authClient.signOut();
 			if (res && 'error' in res && res.error) {
+				manualOverlay.hide();
 				toast.error(res.error.message || 'Gagal logout, silakan coba lagi.');
 				return;
 			}
-			toast.success('Berhasil logout!');
-			window.location.href = '/';
+			await goto(resolve('/'), { invalidateAll: true });
 		} catch {
+			manualOverlay.hide();
 			toast.error('Gagal logout, silakan coba lagi.');
+		} finally {
+			manualOverlay.hide();
 		}
 	}
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
+
+{#if open && !staticPosition}
+	<!-- Backdrop penutup layar saat menu FAB terbuka (menutupi bar keranjang dan konten belakang) -->
+	<button
+		type="button"
+		aria-label="Tutup menu navigasi"
+		onclick={close}
+		class="fixed inset-0 z-[45] bg-[#262626]/50 backdrop-blur-xs transition-opacity lg:hidden dark:bg-black/70"
+	></button>
+{/if}
 
 <div
 	class="{staticPosition
@@ -201,31 +217,33 @@
 			<div class="mt-2 border-t border-[#262626]/20 pt-2 dark:border-[#f2efe9]/20">
 				<ThemeToggle />
 
-				<!-- Link About Dev di Bawah ThemeToggle di MobileFab -->
-				<a
-					href={resolve('/about-dev')}
-					class="{navItemClass(isAboutDevActive)} mt-1 flex items-center justify-between"
-					onclick={async (e) => {
-						e.preventDefault();
-						close();
-						if (preventNavigation) {
-							toast.info('[Sandbox] Navigasi: Menuju "About Dev" (/about-dev)');
-							return;
-						}
-						await navigateWithDelay('/about-dev', 1500, 'Preparing...');
-					}}
-				>
-					<div class="flex items-center gap-2.5">
-						<Code size={16} strokeWidth={2.5} />
-						<span>About Dev</span>
-					</div>
-					{#if isAboutDevActive}
-						<span
-							class="h-2 w-2 shrink-0 rotate-45 rounded-[1px] border border-[#262626] bg-[#fea770] shadow-[1px_1px_0px_#262626] dark:border-[#1a1825] dark:bg-[#1a1825] dark:shadow-[1px_1px_0px_#a2e1db]"
-							title="Halaman aktif"
-						></span>
-					{/if}
-				</a>
+				<!-- Link About Dev di Bawah ThemeToggle di MobileFab (Khusus Storefront Publik) -->
+				{#if !isAdminPage}
+					<a
+						href={resolve('/about-dev')}
+						class="{navItemClass(isAboutDevActive)} mt-1 flex items-center justify-between"
+						onclick={async (e) => {
+							e.preventDefault();
+							close();
+							if (preventNavigation) {
+								toast.info('[Sandbox] Navigasi: Menuju "About Dev" (/about-dev)');
+								return;
+							}
+							await navigateWithDelay('/about-dev', 1500, 'Preparing...');
+						}}
+					>
+						<div class="flex items-center gap-2.5">
+							<Code size={16} strokeWidth={2.5} />
+							<span>About Dev</span>
+						</div>
+						{#if isAboutDevActive}
+							<span
+								class="h-2 w-2 shrink-0 rotate-45 rounded-[1px] border border-[#262626] bg-[#fea770] shadow-[1px_1px_0px_#262626] dark:border-[#1a1825] dark:bg-[#1a1825] dark:shadow-[1px_1px_0px_#a2e1db]"
+								title="Halaman aktif"
+							></span>
+						{/if}
+					</a>
+				{/if}
 
 				{#if isAdmin}
 					{#if isAdminPage}

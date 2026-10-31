@@ -24,7 +24,7 @@ export const GET: RequestHandler = async ({ url, fetch }) => {
 				'Cache-Control': 'public, max-age=3600'
 			}
 		});
-	} catch (err) {
+	} catch {
 		throw error(500, 'Terjadi kesalahan saat memproses unduhan QRIS.');
 	}
 };

@@ -98,7 +98,7 @@
 				<button
 					type="button"
 					onclick={openDrawer}
-					class="hidden items-center rounded-lg border-2 border-[#262626] bg-white px-3.5 py-2 font-mono text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#b4a6d5] active:translate-y-0.5 active:shadow-none sm:inline-flex dark:border-[#f2efe9] dark:bg-[#252331] dark:text-[#f2efe9] dark:shadow-[2px_2px_0px_#f2efe9]"
+					class="hidden items-center rounded-lg border-2 border-[#262626] bg-white px-3.5 py-2 font-mono text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#b4a6d5] active:translate-y-0.5 active:shadow-none sm:inline-flex dark:border-[#f2efe9] dark:bg-[#252331] dark:text-[#f2efe9] dark:shadow-[2px_2px_0px_#b4a6d5]"
 				>
 					Cek Keranjang
 				</button>
@@ -127,7 +127,7 @@
 
 <!-- Slide-over / Bottom Sheet Drawer -->
 {#if isDrawerOpen && isAllowedRoute}
-	<div class="fixed inset-0 z-50 flex justify-end">
+	<div class="fixed inset-0 z-[60] flex justify-end">
 		<!-- Backdrop -->
 		<button
 			type="button"
@@ -143,14 +143,14 @@
 			aria-label="Keranjang Belanja"
 			class="drafting-grid relative flex h-full max-h-none w-full flex-col rounded-none border-x-0 border-t-0 border-[#262626] bg-[#f2efe9] text-[#262626] shadow-none transition-all sm:h-full sm:max-h-full sm:max-w-md sm:rounded-none sm:rounded-l-2xl sm:border-t-0 sm:border-r-0 sm:border-b-0 sm:border-l-2 sm:border-[#262626] sm:shadow-[-8px_0px_0px_#262626] dark:border-[#a2e1db] dark:bg-[#1a1825] dark:text-[#f2efe9] dark:shadow-[-8px_0px_0px_#b4a6d5]"
 		>
-			<!-- Header: Apricot Monoline Header (Lega & Rapi) -->
+			<!-- Header: Apricot Monoline Header (Lega & Rapi, Dark-mode harmonized) -->
 			<div
-				class="flex items-center justify-between gap-4 border-b-2 border-[#262626] bg-[#fea770] px-5 py-4.5 text-[#262626]"
+				class="flex items-center justify-between gap-4 border-b-2 border-[#262626] bg-[#fea770] px-5 py-4.5 text-[#262626] dark:border-[#a2e1db] dark:bg-[#1a1825] dark:text-[#f2efe9]"
 			>
 				<div class="flex items-center gap-3">
 					<h2 class="font-serif text-lg font-bold">Keranjang Belanja</h2>
 					<span
-						class="rounded-md border-2 border-[#262626] bg-[#a2e1db] px-2.5 py-0.5 font-mono text-xs font-bold shadow-[1px_1px_0px_#262626]"
+						class="rounded-md border-2 border-[#262626] bg-[#a2e1db] px-2.5 py-0.5 font-mono text-xs font-bold text-[#065f46] shadow-[1px_1px_0px_#262626] dark:border-[#a2e1db] dark:bg-[#a2e1db]/20 dark:text-[#a2e1db] dark:shadow-[1px_1px_0px_#a2e1db]"
 					>
 						{cart.itemCount} item
 					</span>
@@ -161,7 +161,7 @@
 						<button
 							type="button"
 							onclick={() => (confirmClearOpen = true)}
-							class="flex h-8 w-8 items-center justify-center rounded-md border-2 border-[#262626] bg-[#fee2e2] text-[#991b1b] shadow-[1px_1px_0px_#262626] transition-all hover:bg-red-200 active:translate-y-0.5 active:shadow-none"
+							class="flex h-8 w-8 items-center justify-center rounded-md border-2 border-[#262626] bg-[#fee2e2] text-[#991b1b] shadow-[1px_1px_0px_#262626] transition-all hover:bg-red-200 active:translate-y-0.5 active:shadow-none dark:border-[#f87171] dark:bg-[#450a0a]/60 dark:text-[#f87171] dark:shadow-[1px_1px_0px_#f87171]"
 							title="Kosongkan keranjang"
 							aria-label="Kosongkan keranjang"
 						>
@@ -171,7 +171,7 @@
 					<button
 						type="button"
 						onclick={closeDrawer}
-						class="flex h-8 w-8 items-center justify-center rounded-md border-2 border-[#262626] bg-white text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#b4a6d5] active:translate-y-0.5 active:shadow-none"
+						class="flex h-8 w-8 items-center justify-center rounded-md border-2 border-[#262626] bg-white text-[#262626] shadow-[2px_2px_0px_#262626] transition-all hover:bg-[#b4a6d5] active:translate-y-0.5 active:shadow-none dark:border-[#f2efe9] dark:bg-[#252331] dark:text-[#f2efe9] dark:shadow-[2px_2px_0px_#f2efe9]"
 						aria-label="Tutup"
 					>
 						<X size={16} strokeWidth={2.75} />

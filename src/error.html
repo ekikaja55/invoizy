@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>%sveltekit.status% — Gangguan Sistem | cho.lazey</title>
+	<style>
+		*, *::before, *::after {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+		}
+
+		:root {
+			--bg-canvas: #f2efe9;
+			--bg-card: #ffffff;
+			--bg-subtle: #fbf9f5;
+			--text-main: #262626;
+			--text-muted: #404040;
+			--border-mono: #262626;
+			--shadow-color: #262626;
+			--accent-danger: #991b1b;
+			--accent-danger-bg: #fee2e2;
+			--accent-mint: #a2e1db;
+			--accent-mint-text: #065f46;
+		}
+
+		@media (prefers-color-scheme: dark) {
+			:root {
+				--bg-canvas: #1a1825;
+				--bg-card: #252331;
+				--bg-subtle: #1a1825;
+				--text-main: #f2efe9;
+				--text-muted: #b8b5ad;
+				--border-mono: #a2e1db;
+				--shadow-color: #b4a6d5;
+				--accent-danger: #f87171;
+				--accent-danger-bg: rgba(69, 10, 10, 0.6);
+			}
+		}
+
+		body {
+			background-color: var(--bg-canvas);
+			color: var(--text-main);
+			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+			min-height: 100vh;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 1rem;
+		}
+
+		.container {
+			width: 100%;
+			max-width: 520px;
+			background-color: var(--bg-card);
+			border: 2px solid var(--border-mono);
+			border-radius: 16px 4px 16px 4px;
+			box-shadow: 6px 6px 0px var(--shadow-color);
+			padding: 2rem;
+			text-align: center;
+		}
+
+		.status-badge {
+			display: inline-block;
+			padding: 0.35rem 0.85rem;
+			border: 2px solid var(--accent-danger);
+			border-radius: 9999px;
+			background-color: var(--accent-danger-bg);
+			color: var(--accent-danger);
+			font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+			font-size: 0.75rem;
+			font-weight: 900;
+			letter-spacing: 0.1em;
+			text-transform: uppercase;
+			box-shadow: 1.5px 1.5px 0px var(--accent-danger);
+			margin-bottom: 1.25rem;
+		}
+
+		h1 {
+			font-size: 1.5rem;
+			line-height: 1.25;
+			font-weight: 900;
+			margin-bottom: 0.75rem;
+			color: var(--text-main);
+		}
+
+		p.desc {
+			font-size: 0.875rem;
+			line-height: 1.5;
+			color: var(--text-muted);
+			margin-bottom: 1.25rem;
+		}
+
+		.diagnostic-box {
+			background-color: var(--accent-danger-bg);
+			border: 1px solid var(--accent-danger);
+			border-radius: 6px;
+			padding: 0.75rem;
+			text-align: left;
+			font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+			font-size: 0.75rem;
+			color: var(--accent-danger);
+			word-break: break-all;
+			margin-bottom: 1.5rem;
+		}
+
+		.diagnostic-title {
+			font-weight: 900;
+			text-transform: uppercase;
+			font-size: 0.65rem;
+			letter-spacing: 0.05em;
+			margin-bottom: 0.25rem;
+		}
+
+		.divider {
+			border-top: 2px dashed rgba(38, 38, 38, 0.2);
+			margin: 1.25rem 0;
+		}
+
+		.info-box {
+			background-color: var(--bg-subtle);
+			border: 2px solid var(--border-mono);
+			border-radius: 8px;
+			padding: 0.85rem;
+			text-align: left;
+			font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+			font-size: 0.75rem;
+			line-height: 1.45;
+			color: var(--text-muted);
+			margin-bottom: 1.5rem;
+		}
+
+		.info-title {
+			font-weight: 700;
+			text-transform: uppercase;
+			margin-bottom: 0.25rem;
+			color: var(--text-main);
+		}
+
+		.actions {
+			display: flex;
+			flex-direction: column;
+			gap: 0.75rem;
+		}
+
+		@media (min-width: 480px) {
+			.actions {
+				flex-direction: row;
+			}
+		}
+
+		.btn {
+			flex: 1;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			padding: 0.75rem 1rem;
+			border: 2px solid var(--border-mono);
+			border-radius: 8px;
+			font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+			font-size: 0.8rem;
+			font-weight: 700;
+			text-decoration: none;
+			cursor: pointer;
+			transition: transform 0.1s ease;
+		}
+
+		.btn:active {
+			transform: translateY(2px);
+		}
+
+		.btn-reload {
+			background-color: var(--text-main);
+			color: var(--bg-card);
+			box-shadow: 2px 2px 0px var(--shadow-color);
+		}
+
+		.btn-contact {
+			background-color: var(--accent-mint);
+			color: var(--accent-mint-text);
+			border-color: var(--accent-mint-text);
+			box-shadow: 2px 2px 0px var(--accent-mint-text);
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<div class="status-badge">STATUS DARURAT: %sveltekit.status%</div>
+		<h1>Terjadi Gangguan Sistem Tak Terduga</h1>
+		<p class="desc">
+			Layanan server sedang mengalami kendala teknis sementara. Seluruh transaksi dan data pesanan yang telah terbit tetap tersimpan aman di database.
+		</p>
+
+		<div class="diagnostic-box">
+			<div class="diagnostic-title">Diagnostik Sistem:</div>
+			<div>%sveltekit.error.message%</div>
+		</div>
+
+		<div class="divider"></div>
+
+		<div class="info-box">
+			<div class="info-title">Bantuan Cepat & Laporan Kendala:</div>
+			<div>
+				Jika transaksi Anda terpotong atau faktur belum Anda terima di email, hubungi tim kami langsung via WhatsApp untuk verifikasi manual instan.
+			</div>
+		</div>
+
+		<div class="actions">
+			<button type="button" class="btn btn-reload" onclick="window.location.reload()">
+				Muat Ulang Halaman
+			</button>
+			<a href="https://wa.me/6288806950228?text=Halo%20cho.lazey%2C%20saya%20mendapati%20kendala%20sistem%20500" target="_blank" rel="noopener noreferrer" class="btn btn-contact">
+				Hubungi WhatsApp
+			</a>
+		</div>
+	</div>
+</body>
+</html>
