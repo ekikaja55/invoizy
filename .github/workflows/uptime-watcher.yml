@@ -1,0 +1,59 @@
+name: Invoizy Uptime Watcher
+
+on:
+  schedule:
+    # Berjalan terjadwal setiap 10 menit sekali
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+    # Mengizinkan uji coba manual 1-klik di tab Actions GitHub
+
+jobs:
+  health-check:
+    name: Probe Health & Alert on Failure
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Probe Storefront Health Endpoint
+        id: probe
+        run: |
+          PROBE_URL="https://www.cholazey.store/api/health?token=${{ secrets.HEALTH_CHECK_SECRET }}"
+          echo "Executing health probe to: https://www.cholazey.store/api/health"
+
+          # Eksekusi HTTP GET dengan timeout 15 detik, menangkap body dan status code
+          HTTP_RESPONSE=$(curl -s -S -w "\n%{http_code}" --max-time 15 "$PROBE_URL" || echo -e "\n000")
+          HTTP_STATUS=$(echo "$HTTP_RESPONSE" | tail -n1)
+          RESPONSE_BODY=$(echo "$HTTP_RESPONSE" | sed '$d')
+
+          echo "HTTP_STATUS=$HTTP_STATUS" >> $GITHUB_ENV
+          echo "RESPONSE_BODY=$RESPONSE_BODY" >> $GITHUB_ENV
+          echo "Probe returned HTTP $HTTP_STATUS"
+
+      - name: Dispatch Telegram Alert if Degraded or Down
+        if: env.HTTP_STATUS != '200'
+        run: |
+          echo "Storefront is unhealthy (HTTP ${{ env.HTTP_STATUS }}). Sending alert to Telegram..."
+
+          ALERT_TEXT="[INVOIZY INCIDENT ALERT]
+Service: Invoizy Storefront Production
+Target: https://www.cholazey.store/api/health
+HTTP Status: ${{ env.HTTP_STATUS }}
+Details: ${{ env.RESPONSE_BODY }}
+Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+
+          PAYLOAD=$(jq -n \
+            --arg chat_id "${{ secrets.TELEGRAM_CHAT_ID }}" \
+            --arg text "$ALERT_TEXT" \
+            '{chat_id: $chat_id, text: $text}')
+
+          curl -s -S -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD"
+
+          echo "Telegram incident alert successfully dispatched."
+          exit 1
+
+      - name: Report Healthy Status
+        if: env.HTTP_STATUS == '200'
+        run: |
+          echo "Invoizy Storefront is fully healthy (HTTP 200). All systems operational."
