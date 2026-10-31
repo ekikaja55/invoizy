@@ -28,34 +28,6 @@
 </script>
 
 <div class="mx-auto max-w-5xl space-y-6">
-	<!-- Persistent Maintenance Mode Alert Banner -->
-	{#if data.isMaintenanceActive}
-		<div
-			class="flex flex-col items-start justify-between gap-3 rounded-xl border-2 border-[#991b1b] bg-[#fee2e2] p-4 text-[#991b1b] shadow-[4px_4px_0px_#991b1b] sm:flex-row sm:items-center dark:border-[#f87171] dark:bg-[#450a0a]/60 dark:text-[#fca5a5] dark:shadow-[4px_4px_0px_#f87171]"
-			role="alert"
-		>
-			<div class="flex items-center gap-3">
-				<AlertTriangle size={20} class="shrink-0 text-[#991b1b] dark:text-[#f87171]" />
-				<div>
-					<p class="font-mono text-xs font-black tracking-wider uppercase">
-						STATUS TOKO: MODE PEMELIHARAAN SEDANG AKTIF
-					</p>
-					<p class="font-sans text-xs leading-relaxed opacity-90 sm:text-sm">
-						Situs publik saat ini tertutup bagi pembeli. Seluruh pengunjung diarahkan ke halaman
-						pemeliharaan.
-					</p>
-				</div>
-			</div>
-			<a
-				href={resolve('/admin/settings')}
-				class="inline-flex shrink-0 items-center gap-1.5 rounded-lg border-2 border-[#991b1b] bg-white px-3 py-1.5 font-mono text-xs font-bold text-[#991b1b] shadow-[1.5px_1.5px_0px_#991b1b] transition-transform hover:-translate-y-0.5 active:translate-y-0.5 dark:border-[#f87171] dark:bg-[#252331] dark:text-[#fca5a5]"
-			>
-				<span>Buka Pengaturan Toko</span>
-				<ArrowRight size={13} strokeWidth={2.5} />
-			</a>
-		</div>
-	{/if}
-
 	<!-- Page Header: Warm Monoline Editorial -->
 	<header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 		<div class="space-y-2">
