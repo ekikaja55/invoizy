@@ -103,6 +103,11 @@ const handleMaintenance: Handle = async ({ event, resolve }) => {
 		return resolve(event);
 	}
 
+	// 3b. Izinkan endpoint pemantauan sistem dan webhook bot Telegram
+	if (pathname.startsWith('/api/health') || pathname.startsWith('/api/telegram-webhook')) {
+		return resolve(event);
+	}
+
 	// 4. Kembalikan 503 JSON untuk request API publik non-auth
 	if (pathname.startsWith('/api/')) {
 		return new Response(
