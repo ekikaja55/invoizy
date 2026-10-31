@@ -5,7 +5,6 @@
 	import { ArrowUp, AlertTriangle, ArrowRight, Loader2 } from '@lucide/svelte';
 	import { resolve } from '$app/paths';
 	import { invalidateAll } from '$app/navigation';
-	import { deserialize } from '$app/forms';
 	import { toast } from 'svelte-sonner';
 
 	let { children, data } = $props();
@@ -13,26 +12,31 @@
 	let isUnblocking = $state(false);
 
 	const isAdmin = $derived(Boolean(data.user));
-	const isMaintenanceActive = $derived(Boolean(data.isMaintenanceActive));
+	let unblockedOptimistically = $state(false);
+	const isMaintenanceActive = $derived(
+		unblockedOptimistically ? false : Boolean(data.isMaintenanceActive)
+	);
 
 	async function handleQuickReopenStore() {
 		if (isUnblocking) return;
 		isUnblocking = true;
 
-		const formData = new FormData();
-		formData.append('targetState', 'false');
-
 		try {
-			const res = await fetch(`${resolve('/admin/settings')}?/toggleMaintenance`, {
+			const res = await fetch('/api/admin/maintenance', {
 				method: 'POST',
-				body: formData
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ active: false })
 			});
-			const result = deserialize(await res.text());
-			if (result.type === 'success') {
+			const payload = await res.json().catch(() => null);
+
+			if (res.ok && payload?.success) {
+				unblockedOptimistically = true;
 				toast.success('Mode pemeliharaan dinonaktifkan. Toko dibuka kembali untuk publik.');
 				await invalidateAll();
+				unblockedOptimistically = false;
 			} else {
-				toast.error('Gagal membuka kembali toko.');
+				const errMsg = payload?.message || 'Gagal membuka kembali toko.';
+				toast.error(errMsg);
 			}
 		} catch {
 			toast.error('Terjadi kesalahan jaringan.');

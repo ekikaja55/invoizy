@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { enhance, deserialize } from '$app/forms';
+	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
 	import { handleFormResult } from '$lib/utils/handle-form-result';
 	import BusyOverlay from '$lib/components/ui/BusyOverlay.svelte';
 	import { resolve } from '$app/paths';
@@ -39,37 +40,37 @@
 	async function handleConfirmToggleMaintenance() {
 		togglingMaintenance = true;
 		maintenanceModalOpen = false;
-		isBusy = true;
 
 		const targetState = !isMaintenance;
-		const formData = new FormData();
-		formData.append('targetState', String(targetState));
 
 		try {
-			const res = await fetch('?/toggleMaintenance', {
+			const res = await fetch('/api/admin/maintenance', {
 				method: 'POST',
-				body: formData
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ active: targetState })
 			});
-			const result = deserialize(await res.text());
-			if (result.type === 'success') {
+			const payload = await res.json().catch(() => null);
+
+			if (res.ok && payload?.success) {
 				isMaintenance = targetState;
 				toast.success(
 					targetState
 						? 'Mode pemeliharaan diaktifkan. Toko ditutup untuk publik.'
 						: 'Mode pemeliharaan dinonaktifkan. Toko dibuka kembali.'
 				);
-			} else if (result.type === 'failure') {
-				const errMsg =
-					(result.data as { error?: string })?.error ?? 'Gagal mengubah status mode pemeliharaan.';
-				toast.error(errMsg);
+				await invalidateAll();
 			} else {
-				toast.error('Gagal mengubah status mode pemeliharaan.');
+				const errMsg = payload?.message || 'Gagal mengubah status mode pemeliharaan.';
+				toast.error(errMsg);
 			}
 		} catch {
 			toast.error('Terjadi kesalahan jaringan saat memperbarui status pemeliharaan.');
 		} finally {
 			togglingMaintenance = false;
-			isBusy = false;
+			if (typeof document !== 'undefined') {
+				document.body.style.overflow = '';
+				document.documentElement.style.overflow = '';
+			}
 		}
 	}
 
