@@ -34,12 +34,8 @@ jobs:
         run: |
           echo "Storefront is unhealthy (HTTP ${{ env.HTTP_STATUS }}). Sending alert to Telegram..."
 
-          ALERT_TEXT="[INVOIZY INCIDENT ALERT]
-Service: Invoizy Storefront Production
-Target: https://www.cholazey.store/api/health
-HTTP Status: ${{ env.HTTP_STATUS }}
-Details: ${{ env.RESPONSE_BODY }}
-Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          ALERT_TEXT=$(printf "[INVOIZY INCIDENT ALERT]\nService: Invoizy Storefront Production\nTarget: https://www.cholazey.store/api/health\nHTTP Status: %s\nDetails: %s\nTimestamp: %s" "${{ env.HTTP_STATUS }}" "${{ env.RESPONSE_BODY }}" "$TIMESTAMP")
 
           PAYLOAD=$(jq -n \
             --arg chat_id "${{ secrets.TELEGRAM_CHAT_ID }}" \
