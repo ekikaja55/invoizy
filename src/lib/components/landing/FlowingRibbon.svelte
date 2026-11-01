@@ -4,10 +4,11 @@
 
 	type Props = {
 		speed?: number; // Durasi dalam detik untuk 1 siklus penuh
+		animate?: boolean; // Toggle animasi roller infinite (default false untuk optimasi Core Web Vitals)
 		class?: string;
 	};
 
-	let { speed = 32, class: className = '' }: Props = $props();
+	let { speed = 32, animate = false, class: className = '' }: Props = $props();
 
 	let rootRef: HTMLElement | null = $state(null);
 	let ticker1Ref: HTMLElement | null = $state(null);
@@ -91,6 +92,13 @@
 		updateLayout();
 		window.addEventListener('resize', updateLayout, { passive: true });
 
+		// Jika animasi dinonaktifkan (default), lewati inisialisasi GSAP ticker untuk menghemat CPU/INP
+		if (!animate) {
+			return () => {
+				window.removeEventListener('resize', updateLayout);
+			};
+		}
+
 		// Isolasi seluruh GSAP tween via gsap.context untuk garansi 100% zero memory leak
 		ctx = gsap.context(() => {
 			// Pita 1: Bergerak linear ke KIRI
@@ -144,17 +152,17 @@
 
 	// Hover-to-pause taktil mikro
 	function handleMouseEnter1() {
-		if (tween1 && !tween1.paused()) tween1.pause();
+		if (animate && tween1 && !tween1.paused()) tween1.pause();
 	}
 	function handleMouseLeave1() {
-		if (tween1 && tween1.paused()) tween1.play();
+		if (animate && tween1 && tween1.paused()) tween1.play();
 	}
 
 	function handleMouseEnter2() {
-		if (tween2 && !tween2.paused()) tween2.pause();
+		if (animate && tween2 && !tween2.paused()) tween2.pause();
 	}
 	function handleMouseLeave2() {
-		if (tween2 && tween2.paused()) tween2.play();
+		if (animate && tween2 && tween2.paused()) tween2.play();
 	}
 </script>
 
@@ -163,10 +171,10 @@
 	bind:this={rootRef}
 	class="relative overflow-hidden py-14 select-none sm:py-20 lg:py-28 {className}"
 	style={fullWidth ? `width: ${fullWidth}px; margin-left: ${offsetLeft}px;` : 'width: 100%;'}
-	aria-label="Tiket Rol Polisi Garis Ganda Animasi"
+	aria-label="Tiket Rol Polisi Garis Ganda"
 >
 	<!-- ========================================================================= -->
-	<!-- PITA 1: TANGERINE TICKET ROLL (Miring -4.2°, Gerak ke KIRI, Skala Radikal) -->
+	<!-- PITA 1: TANGERINE TICKET ROLL (Miring -4.2°, Skala Radikal) -->
 	<!-- ========================================================================= -->
 	<div
 		class="relative -left-[7%] z-10 w-[114%] -rotate-[4.2deg] overflow-hidden border-y-3 border-[#262626] bg-[#fea770] shadow-[0_6px_0px_#262626] transition-colors sm:border-y-4 lg:border-y-[5px] lg:shadow-[0_12px_0px_#262626] dark:border-[#a2e1db] dark:bg-[#fea770] dark:shadow-[0_6px_0px_#b4a6d5]"
@@ -187,7 +195,9 @@
 
 		<div
 			bind:this={ticker1Ref}
-			class="flex w-max items-center py-4 will-change-transform sm:py-5.5 lg:py-7"
+			class="flex w-max items-center py-4 sm:py-5.5 lg:py-7 {animate
+				? 'will-change-transform'
+				: ''}"
 		>
 			{#each [0, 1] as copyIndex (copyIndex)}
 				<div class="flex items-center" aria-hidden={copyIndex === 1}>
@@ -239,7 +249,7 @@
 	</div>
 
 	<!-- ========================================================================= -->
-	<!-- PITA 2: CHARCOAL TICKET ROLL (Miring +3.2°, Gerak ke KANAN, Tumpang Tindih) -->
+	<!-- PITA 2: CHARCOAL TICKET ROLL (Miring +3.2°, Tumpang Tindih) -->
 	<!-- ========================================================================= -->
 	<div
 		class="relative -left-[7%] z-20 -mt-6 w-[114%] rotate-[3.2deg] overflow-hidden border-y-3 border-[#262626]/80 bg-[#332f3c] text-[#f2efe9] shadow-[0_8px_0px_rgba(38,38,38,0.4)] transition-colors sm:-mt-8 sm:border-y-4 lg:-mt-12 lg:border-y-[5px] lg:shadow-[0_14px_0px_rgba(38,38,38,0.4)] dark:border-[#a2e1db]/40 dark:bg-[#201d2a]"
@@ -260,7 +270,9 @@
 
 		<div
 			bind:this={ticker2Ref}
-			class="flex w-max items-center py-4 will-change-transform sm:py-5.5 lg:py-7"
+			class="flex w-max items-center py-4 sm:py-5.5 lg:py-7 {animate
+				? 'will-change-transform'
+				: ''}"
 		>
 			{#each [0, 1] as copyIndex (copyIndex)}
 				<div class="flex items-center" aria-hidden={copyIndex === 1}>

@@ -381,7 +381,7 @@
 	</section>
 
 	<!-- Transisi Editorial: Police Line Dual Ticket Roll Full-Bleed Breakout (-4.2° & +3.2°) -->
-	<FlowingRibbon />
+	<FlowingRibbon animate={false} />
 
 	<!-- Section: Real DB Masonry Showcase (Hardware-Accelerated CSS Transitions) -->
 	<div id="masonry-section" class="scroll-mt-6">
