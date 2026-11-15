@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { enhance, applyAction } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import type { ActionResult } from '@sveltejs/kit';
 	import { handleFormResult } from '$lib/utils/handle-form-result';
@@ -130,6 +130,11 @@
 
 		return async ({ result }: { result: ActionResult }) => {
 			isBusy = false;
+			if (result.type === 'redirect') {
+				toast.success('Produk berhasil ditambahkan!');
+				await applyAction(result);
+				return;
+			}
 			handleFormResult(result, {
 				success: 'Produk berhasil ditambahkan!'
 			});
@@ -244,7 +249,7 @@
 							type="number"
 							bind:value={priceInt}
 							min="0"
-							step="1000"
+							step="1"
 							placeholder="25000"
 							required
 							disabled={isBusy}

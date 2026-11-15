@@ -13,7 +13,7 @@
 	let isCreateModalOpen = $state(false);
 	let isEditModalOpen = $state(false);
 	let isBusy = $state(false);
-	let promoToDelete = $state<string | null>(null);
+	let promoToDelete = $state<{ id: string; name: string } | null>(null);
 
 	// Filter & Search State
 	let searchQuery = $state('');
@@ -46,8 +46,6 @@
 	let editMinQty = $state(3);
 	let editDiscountAmount = $state(3000);
 
-	let deleteFormEl = $state<HTMLFormElement | null>(null);
-
 	function openCreateModal() {
 		if (data.products.length > 0) {
 			selectedProductId = data.products[0].id;
@@ -65,13 +63,6 @@
 		editMinQty = promo.minQty;
 		editDiscountAmount = promo.discountAmount;
 		isEditModalOpen = true;
-	}
-
-	function confirmDeletePromo() {
-		if (!promoToDelete) return;
-		if (deleteFormEl) {
-			deleteFormEl.requestSubmit();
-		}
 	}
 </script>
 
@@ -325,7 +316,7 @@
 											</button>
 											<button
 												type="button"
-												onclick={() => (promoToDelete = promo.id)}
+												onclick={() => (promoToDelete = { id: promo.id, name: promo.name })}
 												disabled={isBusy}
 												class="rounded-md border-2 border-[#262626] bg-red-100 p-2 text-red-900 shadow-[1px_1px_0px_#262626] transition-transform hover:-translate-y-0.5 disabled:opacity-50 dark:bg-red-950/60 dark:text-red-300"
 												title="Hapus Promo"
@@ -343,28 +334,6 @@
 		{/if}
 	</div>
 </BusyOverlay>
-
-<!-- Form Tersembunyi untuk Hapus Promo -->
-<form
-	bind:this={deleteFormEl}
-	method="POST"
-	action="?/delete"
-	use:enhance={() => {
-		isBusy = true;
-		return async ({ result, update }) => {
-			handleFormResult(result, {
-				success: 'Promo berhasil dihapus.',
-				failure: 'Gagal menghapus promo.'
-			});
-			if (result.type === 'success') await update();
-			isBusy = false;
-			promoToDelete = null;
-		};
-	}}
-	class="hidden"
->
-	<input type="hidden" name="id" value={promoToDelete ?? ''} />
-</form>
 
 <!-- Modal Tambah Promo Baru -->
 {#if isCreateModalOpen}
@@ -475,7 +444,7 @@
 							name="discountAmount"
 							type="number"
 							min="0"
-							step="500"
+							step="1"
 							bind:value={discountAmount}
 							required
 							disabled={isBusy}
@@ -627,7 +596,7 @@
 							name="discountAmount"
 							type="number"
 							min="0"
-							step="500"
+							step="1"
 							bind:value={editDiscountAmount}
 							required
 							disabled={isBusy}
@@ -659,13 +628,55 @@
 {/if}
 
 <!-- Modal Konfirmasi Hapus Promo -->
-<Modal
-	open={promoToDelete !== null}
-	title="Hapus Promo Diskon?"
-	message="Aturan promo ini akan dihapus permanen. Pesanan yang sudah selesai dibuat sebelumnya tidak akan terpengaruh. Lanjutkan?"
-	danger={true}
-	confirmLabel="Ya, Hapus"
-	cancelLabel="Batal"
-	onConfirm={confirmDeletePromo}
-	onCancel={() => (promoToDelete = null)}
-/>
+{#if promoToDelete}
+	<Modal
+		open={promoToDelete !== null}
+		title="Hapus Promo Diskon?"
+		hideActions={true}
+		onCancel={() => (promoToDelete = null)}
+	>
+		<div class="space-y-4">
+			<p class="text-sm text-[#262626]/80 dark:text-[#f2efe9]/80">
+				Aturan promo <strong>"{promoToDelete.name}"</strong> akan dihapus permanen. Pesanan yang sudah
+				selesai dibuat sebelumnya tidak akan terpengaruh. Lanjutkan?
+			</p>
+
+			<form
+				method="POST"
+				action="?/delete"
+				use:enhance={() => {
+					isBusy = true;
+					return async ({ result, update }) => {
+						promoToDelete = null;
+						handleFormResult(result, {
+							success: 'Promo berhasil dihapus.',
+							failure: 'Gagal menghapus promo.'
+						});
+						if (result.type === 'success') {
+							await update();
+						}
+						isBusy = false;
+					};
+				}}
+				class="flex items-center justify-end gap-2.5 pt-2"
+			>
+				<input type="hidden" name="id" value={promoToDelete.id} />
+				<button
+					type="button"
+					onclick={() => (promoToDelete = null)}
+					disabled={isBusy}
+					class="rounded-lg border-2 border-[#262626] bg-white px-3.5 py-1.5 font-mono text-xs font-bold text-[#262626] shadow-[2px_2px_0px_#262626] transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 dark:border-[#f2efe9] dark:bg-[#1a1825] dark:text-[#f2efe9]"
+				>
+					Batal
+				</button>
+				<button
+					type="submit"
+					disabled={isBusy}
+					class="rounded-lg border-2 border-[#262626] bg-[#c1121f] px-4 py-1.5 font-mono text-xs font-bold text-white shadow-[2px_2px_0px_#262626] transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:opacity-50"
+				>
+					{isBusy ? 'Menghapus...' : 'Ya, Hapus'}
+				</button>
+			</form>
+		</div>
+	</Modal>
+{/if}

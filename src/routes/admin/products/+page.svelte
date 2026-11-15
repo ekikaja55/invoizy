@@ -685,12 +685,15 @@
 						action="?/delete"
 						use:enhance={() => {
 							isBusy = true;
-							return async ({ result }) => {
-								isBusy = false;
+							return async ({ result, update }) => {
 								deleteModalOpen = false;
 								handleFormResult(result, {
 									success: 'Produk berhasil dihapus.'
 								});
+								if (result.type === 'success') {
+									await update();
+								}
+								isBusy = false;
 							};
 						}}
 						class="flex items-center justify-end gap-2 pt-2"

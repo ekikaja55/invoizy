@@ -868,7 +868,7 @@
 										<input
 											type="number"
 											min="0"
-											step="500"
+											step="1"
 											bind:value={row.price}
 											class="w-full rounded border border-[#262626]/30 bg-white px-3 py-2 font-mono text-xs font-bold text-[#262626] focus:border-[#262626] focus:ring-1 focus:ring-[#fea770] focus:outline-none sm:text-sm dark:border-[#f2efe9]/30 dark:bg-[#1a1825] dark:text-[#f2efe9] dark:focus:border-[#f2efe9]"
 										/>

@@ -371,7 +371,7 @@
 					name="emergencyFlatRate"
 					type="number"
 					min="0"
-					step="500"
+					step="1"
 					value={data.settings?.emergencyFlatRate ?? 0}
 					disabled={isBusy}
 					class="mt-1.5 w-full rounded-lg border-2 border-[#262626] bg-[#f2efe9]/30 px-3.5 py-2.5 font-mono text-xs font-bold text-[#262626] focus:border-[#262626] focus:outline-none sm:text-sm dark:border-[#f2efe9]/30 dark:bg-black/30 dark:text-[#f2efe9]"

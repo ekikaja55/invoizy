@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { enhance, applyAction } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import type { ActionResult } from '@sveltejs/kit';
 	import { handleFormResult } from '$lib/utils/handle-form-result';
@@ -146,6 +146,11 @@
 
 		return async ({ result }: { result: ActionResult }) => {
 			isBusy = false;
+			if (result.type === 'redirect') {
+				toast.success('Perubahan produk berhasil disimpan!');
+				await applyAction(result);
+				return;
+			}
 			handleFormResult(result, {
 				success: 'Perubahan produk berhasil disimpan!'
 			});
@@ -262,7 +267,7 @@
 							type="number"
 							bind:value={priceInt}
 							min="0"
-							step="1000"
+							step="1"
 							required
 							disabled={isBusy}
 							class="mt-1.5 w-full rounded-lg border-2 border-[#262626] bg-[#f2efe9]/30 px-3.5 py-2.5 font-mono text-xs font-bold text-[#262626] focus:border-[#262626] focus:outline-none sm:text-sm dark:border-[#f2efe9] dark:bg-[#1a1825] dark:text-[#f2efe9]"
