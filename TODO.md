@@ -1,3 +1,5 @@
+agy --conversation=b1ab0cd5-b21a-4885-8f83-3bc8c23714cc
+
   1. Gunakan Sandbox Internal: Kita tidak membuat rute publik, melainkan menaruh frame banner monoline di dalam sandbox
   yang sudah ada: src/routes/test-desain/components/OgBannerLab.svelte (dengan kontainer terkunci persis w-[1200px] h-
   [630px]).

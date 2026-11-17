@@ -217,7 +217,7 @@
 			</span>
 		</h1>
 
-		<!-- 3. Subtitle: Edisi Khusus Pameran (Batch 1 Tiket Stamp Miring) -->
+		<!-- 3. Subtitle: Edisi Khusus Pameran (Batch 2 Tiket Stamp Miring) -->
 		<div class="relative z-10 mb-8 flex items-center justify-center sm:mb-10">
 			<div
 				class="group relative inline-flex -rotate-3 items-center gap-2 rounded-lg border-2 border-[#262626] bg-[#fea770] px-4 py-1.5 font-mono text-xs font-black tracking-widest text-[#262626] shadow-[3px_3px_0px_#262626] transition-all duration-200 hover:scale-105 hover:rotate-0 sm:text-sm dark:border-[#a2e1db] dark:bg-[#fea770] dark:text-[#262626] dark:shadow-[3px_3px_0px_#b4a6d5]"
@@ -227,7 +227,7 @@
 					aria-hidden="true"
 				></span>
 				<span class="h-2 w-2 rounded-full border border-[#262626] bg-white"></span>
-				<span>BATCH 1 // 2026</span>
+				<span>BATCH 2 // 2026</span>
 			</div>
 		</div>
 
@@ -418,7 +418,7 @@
 						<span
 							class="inline-flex -rotate-2 items-center rounded-md border border-[#262626] bg-[#fea770] px-2 py-0.5 font-mono text-[10px] font-black text-[#262626] uppercase shadow-[1.5px_1.5px_0px_#262626]"
 						>
-							BATCH 1 // 2026
+							BATCH 2 // 2026
 						</span>
 					</div>
 					<p

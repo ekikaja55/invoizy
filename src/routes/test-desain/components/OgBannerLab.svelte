@@ -281,7 +281,7 @@
 								class="h-44 w-full overflow-hidden rounded-xl border-2 border-[#262626] bg-[#fea770]"
 							>
 								<img
-									src="/product_1.jpeg"
+									src="/product_1.webp"
 									alt="Merchandise Art 1"
 									class="h-full w-full object-cover"
 								/>
@@ -296,7 +296,7 @@
 								class="h-44 w-full overflow-hidden rounded-xl border-2 border-[#262626] bg-[#a2e1db]"
 							>
 								<img
-									src="/product_2.jpeg"
+									src="/product_2.webp"
 									alt="Merchandise Art 2"
 									class="h-full w-full object-cover"
 								/>
@@ -326,7 +326,7 @@
 								class="h-44 w-full overflow-hidden rounded-xl border-2 border-[#262626] bg-[#b4a6d5]"
 							>
 								<img
-									src="/product_3.jpeg"
+									src="/product_3.webp"
 									alt="Merchandise Art 3"
 									class="h-full w-full object-cover"
 								/>
@@ -341,7 +341,7 @@
 								class="h-44 w-full overflow-hidden rounded-xl border-2 border-[#262626] bg-[#d9cfbe]"
 							>
 								<img
-									src="/product_4.jpeg"
+									src="/product_4.webp"
 									alt="Merchandise Art 4"
 									class="h-full w-full object-cover"
 								/>
@@ -390,7 +390,7 @@
 							class="absolute bottom-0 left-[calc(50%-42px)] z-10 flex h-11 w-9 -translate-x-1/2 -rotate-15 items-center justify-center rounded-md border border-[#262626] bg-white p-0.5 shadow-[2px_2px_0px_#262626]"
 						>
 							<div class="h-full w-full overflow-hidden rounded-xs bg-[#fea770]">
-								<img src="/product_1.jpeg" alt="" class="h-full w-full object-cover" />
+								<img src="/product_1.webp" alt="" class="h-full w-full object-cover" />
 							</div>
 						</div>
 						<!-- Mini Card Kiri Tengah (-8°) -->
@@ -398,7 +398,7 @@
 							class="absolute bottom-1 left-[calc(50%-21px)] z-15 flex h-11 w-9 -translate-x-1/2 -rotate-8 items-center justify-center rounded-md border border-[#262626] bg-white p-0.5 shadow-[2px_2px_0px_#262626]"
 						>
 							<div class="h-full w-full overflow-hidden rounded-xs bg-[#a2e1db]">
-								<img src="/product_2.jpeg" alt="" class="h-full w-full object-cover" />
+								<img src="/product_2.webp" alt="" class="h-full w-full object-cover" />
 							</div>
 						</div>
 						<!-- Mini Card Maskot Tengah (-1°) -->
@@ -414,7 +414,7 @@
 							class="absolute bottom-1 left-[calc(50%+21px)] z-15 flex h-11 w-9 -translate-x-1/2 rotate-8 items-center justify-center rounded-md border border-[#262626] bg-white p-0.5 shadow-[2px_2px_0px_#262626]"
 						>
 							<div class="h-full w-full overflow-hidden rounded-xs bg-[#b4a6d5]">
-								<img src="/product_3.jpeg" alt="" class="h-full w-full object-cover" />
+								<img src="/product_3.webp" alt="" class="h-full w-full object-cover" />
 							</div>
 						</div>
 						<!-- Mini Card Kanan (+15°) -->
@@ -422,7 +422,7 @@
 							class="absolute bottom-0 left-[calc(50%+42px)] z-10 flex h-11 w-9 -translate-x-1/2 rotate-15 items-center justify-center rounded-md border border-[#262626] bg-white p-0.5 shadow-[2px_2px_0px_#262626]"
 						>
 							<div class="h-full w-full overflow-hidden rounded-xs bg-[#d9cfbe]">
-								<img src="/product_4.jpeg" alt="" class="h-full w-full object-cover" />
+								<img src="/product_4.webp" alt="" class="h-full w-full object-cover" />
 							</div>
 						</div>
 					</div>

@@ -103,8 +103,8 @@
 		}
 	}
 
-	// 3 Opsi Pengiriman Khusus Event Chibiconxi
-	type ShippingKind = 'mail_order' | 'pickup_day_1' | 'pickup_day_2';
+	// 2 Opsi Pengiriman Khusus Event Chibiconxi C4
+	type ShippingKind = 'mail_order' | 'pickup';
 
 	function selectShippingKind(kind: ShippingKind) {
 		cart.setShipping({ kind, cost: 0 });
@@ -158,9 +158,7 @@
 			// Default ke mail_order jika belum ada opsi pengiriman aktif
 			if (
 				!cart.shipping ||
-				(cart.shipping.kind !== 'mail_order' &&
-					cart.shipping.kind !== 'pickup_day_1' &&
-					cart.shipping.kind !== 'pickup_day_2')
+				(cart.shipping.kind !== 'mail_order' && cart.shipping.kind !== 'pickup')
 			) {
 				cart.setShipping({ kind: 'mail_order', cost: 0 });
 			}
@@ -273,7 +271,7 @@
 				</p>
 			</div>
 
-			<!-- 3 Pilihan Pengiriman Event -->
+			<!-- 2 Pilihan Pengiriman Event -->
 			<div class="grid gap-3 sm:grid-cols-1">
 				<!-- Opsi 1: Mail Order (Shopee Link) -->
 				<label
@@ -311,10 +309,10 @@
 					<span class="font-mono text-sm font-black text-[#065f46] dark:text-[#a2e1db]">Rp 0</span>
 				</label>
 
-				<!-- Opsi 2: Self Pickup Day 1 -->
+				<!-- Opsi 2: Self Pickup Chibiconxi C4 -->
 				<label
 					class="flex cursor-pointer items-start justify-between gap-3 rounded-lg border-2 p-4 transition-all duration-150 {cart
-						.shipping?.kind === 'pickup_day_1'
+						.shipping?.kind === 'pickup'
 						? 'border-[#262626] bg-[#fea770]/15 shadow-[2px_2px_0px_#262626] dark:border-[#a2e1db] dark:bg-[#fea770]/20'
 						: 'border-[#262626]/20 bg-[#f9f7f2] hover:border-[#262626] hover:bg-[#f2efe9] dark:border-[#f2efe9]/20 dark:bg-[#1a1825]'}"
 				>
@@ -322,15 +320,15 @@
 						<input
 							type="radio"
 							name="shipping_kind"
-							checked={cart.shipping?.kind === 'pickup_day_1'}
-							onchange={() => selectShippingKind('pickup_day_1')}
+							checked={cart.shipping?.kind === 'pickup'}
+							onchange={() => selectShippingKind('pickup')}
 							disabled={isBusy}
 							class="mt-1 accent-[#262626] dark:accent-[#a2e1db]"
 						/>
 						<div class="space-y-1.5">
 							<div class="flex flex-wrap items-center gap-2">
 								<span class="font-serif text-sm font-bold text-[#262626] dark:text-[#f2efe9]">
-									Self-Pickup: Chibiconxi Day 1
+									Self-Pickup: Chibiconxi C4
 								</span>
 								<span
 									class="rounded border border-[#262626] bg-[#b4a6d5]/40 px-2 py-0.5 font-mono text-xs font-bold tracking-wider text-[#262626] uppercase dark:border-[#f2efe9] dark:text-[#f2efe9]"
@@ -340,55 +338,12 @@
 							</div>
 							<div class="space-y-0.5 font-mono text-xs text-[#404040] dark:text-[#b8b5ad]">
 								<p>
-									Booth: <strong class="text-[#262626] dark:text-[#f2efe9]">@cho.lazey</strong> (No. TBA
+									Booth: <strong class="text-[#262626] dark:text-[#f2efe9]">@cho.lazey</strong> (No. C4
 									· Pasien Waras Dikit)
 								</p>
 								<p>
 									Jadwal: <strong class="text-[#262626] dark:text-[#f2efe9]"
-										>Sabtu, 12 Desember 2026</strong
-									>
-								</p>
-							</div>
-						</div>
-					</div>
-					<span class="font-mono text-sm font-black text-[#065f46] dark:text-[#a2e1db]">Rp 0</span>
-				</label>
-
-				<!-- Opsi 3: Self Pickup Day 2 -->
-				<label
-					class="flex cursor-pointer items-start justify-between gap-3 rounded-lg border-2 p-4 transition-all duration-150 {cart
-						.shipping?.kind === 'pickup_day_2'
-						? 'border-[#262626] bg-[#fea770]/15 shadow-[2px_2px_0px_#262626] dark:border-[#a2e1db] dark:bg-[#fea770]/20'
-						: 'border-[#262626]/20 bg-[#f9f7f2] hover:border-[#262626] hover:bg-[#f2efe9] dark:border-[#f2efe9]/20 dark:bg-[#1a1825]'}"
-				>
-					<div class="flex items-start gap-3">
-						<input
-							type="radio"
-							name="shipping_kind"
-							checked={cart.shipping?.kind === 'pickup_day_2'}
-							onchange={() => selectShippingKind('pickup_day_2')}
-							disabled={isBusy}
-							class="mt-1 accent-[#262626] dark:accent-[#a2e1db]"
-						/>
-						<div class="space-y-1.5">
-							<div class="flex flex-wrap items-center gap-2">
-								<span class="font-serif text-sm font-bold text-[#262626] dark:text-[#f2efe9]">
-									Self-Pickup: Chibiconxi Day 2
-								</span>
-								<span
-									class="rounded border border-[#262626] bg-[#b4a6d5]/40 px-2 py-0.5 font-mono text-xs font-bold tracking-wider text-[#262626] uppercase dark:border-[#f2efe9] dark:text-[#f2efe9]"
-								>
-									Ambil di Booth (Rp 0)
-								</span>
-							</div>
-							<div class="space-y-0.5 font-mono text-xs text-[#404040] dark:text-[#b8b5ad]">
-								<p>
-									Booth: <strong class="text-[#262626] dark:text-[#f2efe9]">@cho.lazey</strong> (No. TBA
-									· Pasien Waras Dikit)
-								</p>
-								<p>
-									Jadwal: <strong class="text-[#262626] dark:text-[#f2efe9]"
-										>Minggu, 13 Desember 2026</strong
+										>Minggu, 6 September 2026</strong
 									>
 								</p>
 							</div>

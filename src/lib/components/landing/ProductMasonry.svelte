@@ -29,12 +29,12 @@
 
 	// Fallback mockup jika DB belum memiliki produk foto saat inisialisasi
 	const fallbackMockups: ShowcaseProduct[] = [
-		{ id: 'mock-1', name: 'Artwork Print 1', imageUrls: ['/product_1.jpeg'] },
-		{ id: 'mock-2', name: 'Artwork Print 2', imageUrls: ['/product_2.jpeg'] },
-		{ id: 'mock-3', name: 'Artwork Print 3', imageUrls: ['/product_3.jpeg'] },
-		{ id: 'mock-4', name: 'Artwork Print 4', imageUrls: ['/product_4.jpeg'] },
-		{ id: 'mock-5', name: 'Artwork Print 5', imageUrls: ['/product_1.jpeg'] },
-		{ id: 'mock-6', name: 'Artwork Print 6', imageUrls: ['/product_2.jpeg'] }
+		{ id: 'mock-1', name: 'Artwork Print 1', imageUrls: ['/product_1.webp'] },
+		{ id: 'mock-2', name: 'Artwork Print 2', imageUrls: ['/product_2.webp'] },
+		{ id: 'mock-3', name: 'Artwork Print 3', imageUrls: ['/product_3.webp'] },
+		{ id: 'mock-4', name: 'Artwork Print 4', imageUrls: ['/product_4.webp'] },
+		{ id: 'mock-5', name: 'Artwork Print 5', imageUrls: ['/product_1.webp'] },
+		{ id: 'mock-6', name: 'Artwork Print 6', imageUrls: ['/product_2.webp'] }
 	];
 
 	const displayProducts = $derived(products.length > 0 ? products : fallbackMockups);

@@ -53,7 +53,7 @@
 		{
 			code: 'DISPATCH // MAIL & BOOTH',
 			title: 'CONVENTION PICKUP & MAIL ORDER',
-			badge: 'BATCH-01',
+			badge: 'BATCH-02',
 			barcode: '|| | |||| || ||'
 		}
 	];

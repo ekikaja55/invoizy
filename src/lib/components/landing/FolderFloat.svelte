@@ -26,10 +26,10 @@
 
 	// 4 Gambar Produk Statis murni koleksi seni (Photocard / Polaroid Print Koleksi)
 	const defaultCards: FolderCard[] = [
-		{ image: '/product_1.jpeg', alt: 'Product 1' },
-		{ image: '/product_2.jpeg', alt: 'Product 2' },
-		{ image: '/product_3.jpeg', alt: 'Product 3' },
-		{ image: '/product_4.jpeg', alt: 'Product 4' }
+		{ image: '/product_1.webp', alt: 'Product 1' },
+		{ image: '/product_2.webp', alt: 'Product 2' },
+		{ image: '/product_3.webp', alt: 'Product 3' },
+		{ image: '/product_4.webp', alt: 'Product 4' }
 	];
 
 	const cards = $derived(items.length >= 4 ? items.slice(0, 4) : defaultCards);
