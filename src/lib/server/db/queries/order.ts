@@ -198,7 +198,7 @@ export async function createOrder(input: CreateOrderInput) {
 			} else if (input.shipping?.kind === 'pickup') {
 				shippingPrice = 0;
 				shippingType = 'PICKUP';
-				shipLabel = 'Self-Pickup: Chibiconxi C4 (Minggu, 6 September 2026)';
+				shipLabel = 'Self-Pickup: Chibiconxi J4 (Minggu, 6 September 2026)';
 			} else {
 				shippingPrice = 0;
 				shippingType = 'MAIL_ORDER';

@@ -65,7 +65,7 @@ export function shippingLabel(s: CartShipping): string {
 	if (s.kind === 'mail_order') return 'Mail Order (Pengiriman via Shopee)';
 	if (s.kind === 'pickup_day_1') return 'Self-Pickup: Chibiconxi Day 1 (12 Des)';
 	if (s.kind === 'pickup_day_2') return 'Self-Pickup: Chibiconxi Day 2 (13 Des)';
-	if (s.kind === 'pickup') return 'Self-Pickup: Chibiconxi C4 (6 Sep 2026)';
+	if (s.kind === 'pickup') return 'Self-Pickup: Chibiconxi J4 (6 Sep 2026)';
 	return s.kind === 'quote' ? `${s.courierLabel} ${s.service}` : 'Ongkir flat darurat';
 }
 
